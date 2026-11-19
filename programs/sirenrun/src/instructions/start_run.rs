@@ -1,5 +1,9 @@
 use anchor_lang::prelude::*;
-use ephemeral_rollups_sdk::anchor::vrf;
+use anchor_lang::solana_program::instruction::{AccountMeta, Instruction};
+use anchor_lang::InstructionData;
+use ephemeral_rollups_sdk::anchor::{vrf, MagicProgram};
+#[allow(deprecated)]
+use ephemeral_rollups_sdk::crank::{ScheduleCrankCpi, ScheduleTaskArgs};
 use ephemeral_rollups_sdk::vrf::consts::{
     program_identity_pubkey, DEFAULT_EPHEMERAL_QUEUE, DEFAULT_EPHEMERAL_TEST_QUEUE,
 };
@@ -9,11 +13,17 @@ use ephemeral_rollups_sdk::vrf::instructions::{
 use ephemeral_rollups_sdk::vrf::types::SerializableAccountMeta;
 use session_keys::{Session, SessionTokenV2};
 
+use crate::constants::{MAX_LIVE_TICKS, SEED_TIMEOUT_TICKS, SETTLE_TICKS, STAGING_TICKS, TICK_MS};
 use crate::errors::SirenrunError;
+use crate::instructions::tick::crank_signer_pda;
+use crate::session::authorize;
 use crate::sim::SimState;
 use crate::state::{Arena, ArenaStatus, Balance, Config, ARENA_SEED, BALANCE_SEED, CONFIG_SEED};
 
 const PROGRAM_IDENTITY: Pubkey = program_identity_pubkey(&crate::ID);
+
+/// Enough iterations for the longest run: staging, seed timeout, live, settle.
+const CRANK_ITERATIONS: u32 = STAGING_TICKS + SEED_TIMEOUT_TICKS + MAX_LIVE_TICKS + SETTLE_TICKS;
 
 #[event]
 pub struct RunStarted {
@@ -47,9 +57,15 @@ pub struct StartRun<'info> {
             || oracle_queue.key() == DEFAULT_EPHEMERAL_TEST_QUEUE
     )]
     pub oracle_queue: UncheckedAccount<'info>,
+    pub magic_program: Program<'info, MagicProgram>,
 }
 
-pub fn start_run(ctx: Context<StartRun>) -> Result<()> {
+pub fn start_run<'info>(ctx: Context<'info, StartRun<'info>>) -> Result<()> {
+    let accounts = &ctx.accounts;
+    authorize(
+        &**accounts,
+        accounts.runner_balance.owner == accounts.signer.key(),
+    )?;
     let config = &ctx.accounts.config;
     let arena = &mut ctx.accounts.arena;
     require!(arena.status == ArenaStatus::Idle, SirenrunError::ArenaBusy);
@@ -106,5 +122,46 @@ pub fn start_run(ctx: Context<StartRun>) -> Result<()> {
 
     ctx.accounts
         .invoke_signed_vrf(&ctx.accounts.signer.to_account_info(), &request)?;
+    schedule_ticks(ctx.accounts)
+}
+
+/// The arena PDA is the task authority, so the crank signer is fixed per arena and `tick`
+/// can verify it without storing anything.
+#[allow(deprecated)]
+fn schedule_ticks<'info>(accounts: &'info StartRun<'info>) -> Result<()> {
+    let arena = &accounts.arena;
+    let arena_key = arena.key();
+    let tick_ix = Instruction {
+        program_id: crate::ID,
+        accounts: vec![
+            AccountMeta::new(arena_key, false),
+            AccountMeta::new(accounts.runner_balance.key(), false),
+            AccountMeta::new(accounts.house_balance.key(), false),
+            AccountMeta::new_readonly(accounts.config.key(), false),
+            AccountMeta::new_readonly(crank_signer_pda(&arena_key), true),
+        ],
+        data: crate::instruction::Tick { nonce: arena.nonce }.data(),
+    };
+    let mut task_id = [0u8; 8];
+    task_id[..4].copy_from_slice(&arena.nonce.to_le_bytes());
+    task_id[4..].copy_from_slice(&arena_key.to_bytes()[..4]);
+
+    ScheduleCrankCpi {
+        payer: arena.as_ref(),
+        magic_program: &accounts.magic_program,
+        instruction_accounts: &[
+            arena.to_account_info(),
+            accounts.runner_balance.to_account_info(),
+            accounts.house_balance.to_account_info(),
+            accounts.config.to_account_info(),
+        ],
+        args: ScheduleTaskArgs {
+            task_id: i64::from_le_bytes(task_id),
+            execution_interval_millis: i64::from(TICK_MS),
+            iterations: i64::from(CRANK_ITERATIONS),
+            instructions: vec![tick_ix],
+        },
+    }
+    .invoke_signed(&[&[ARENA_SEED, &[arena.id], &[arena.bump]]])?;
     Ok(())
 }

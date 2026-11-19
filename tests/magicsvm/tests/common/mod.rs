@@ -122,6 +122,7 @@ pub struct World {
     pub user_token: Pubkey,
     pub config: Pubkey,
     pub vault: Pubkey,
+    pub last_compute_units: u64,
 }
 
 impl World {
@@ -176,6 +177,7 @@ impl World {
             user_token,
             config: pda(&[CONFIG_SEED]),
             vault: pda(&[VAULT_SEED]),
+            last_compute_units: 0,
         }
     }
 
@@ -202,28 +204,15 @@ impl World {
     ) -> Result<(), TransactionError> {
         let message = Message::new(&[instruction], Some(&signer.pubkey()));
         let tx = Transaction::new(&[signer], message, self.svm.latest_blockhash_for(target));
-        let result = self
-            .svm
-            .send_transaction_to(target, tx)
-            .map(|_| ())
-            .map_err(|f| f.err);
+        let result = match self.svm.send_transaction_to(target, tx) {
+            Ok(meta) => {
+                self.last_compute_units = meta.compute_units_consumed;
+                Ok(())
+            }
+            Err(failed) => Err(failed.err),
+        };
         self.svm.expire_blockhash_for(target);
         result
-    }
-
-    /// Advances one slot so pending VRF requests are fulfilled; fails on a failed callback.
-    pub fn fulfill_randomness(&mut self) -> usize {
-        let slot = self.svm.get_sysvar::<Clock>().slot;
-        let results = self.svm.warp_to_slot(slot + 1);
-        for result in &results {
-            if let Err(failed) = result {
-                panic!(
-                    "callback failed: {:?}\nlogs: {:#?}",
-                    failed.err, failed.meta.logs
-                );
-            }
-        }
-        results.len()
     }
 
     pub fn params(&self) -> ConfigParams {
@@ -423,8 +412,9 @@ impl World {
                 house_balance: balance_pda(&key(&self.admin)),
                 config: self.config,
                 arena: arena_pda(id),
-                oracle_queue: DEFAULT_EPHEMERAL_QUEUE,
                 program_identity: program_identity_pubkey(&sirenrun::ID),
+                oracle_queue: DEFAULT_EPHEMERAL_QUEUE,
+                magic_program: MagicProgram::id(),
                 vrf_program: VRF_PROGRAM_ID,
                 slot_hashes: SLOT_HASHES,
                 system_program: system_program::ID,
@@ -449,6 +439,44 @@ impl World {
             },
         );
         self.send(Ephemeral, signer, ix)
+    }
+
+    /// Sends `tick` without the crank: `signer` stands in for the crank signer PDA.
+    pub fn tick_directly(
+        &mut self,
+        signer: &Keypair,
+        id: u8,
+        nonce: u32,
+    ) -> Result<(), TransactionError> {
+        let arena = self.arena(Ephemeral, id);
+        let ix = ix(
+            instruction::Tick { nonce },
+            accounts::Tick {
+                arena: arena_pda(id),
+                runner_balance: balance_pda(&arena.runner),
+                house_balance: balance_pda(&key(&self.admin)),
+                config: self.config,
+                crank_signer: key(signer),
+            },
+        );
+        self.send(Ephemeral, signer, ix)
+    }
+
+    /// Advances one slot, running any due VRF callbacks and crank ticks; fails on any error.
+    /// Returns the compute units of each scheduled transaction that ran.
+    pub fn advance_slot(&mut self) -> Vec<u64> {
+        let slot = self.svm.get_sysvar::<Clock>().slot;
+        self.svm
+            .warp_to_slot(slot + 1)
+            .into_iter()
+            .map(|result| match result {
+                Ok(meta) => meta.compute_units_consumed,
+                Err(failed) => panic!(
+                    "scheduled tx failed: {:?}\nlogs: {:#?}",
+                    failed.err, failed.meta.logs
+                ),
+            })
+            .collect()
     }
 
     pub fn balance(&self, target: TransactionTarget, owner: &Pubkey) -> Balance {

@@ -145,12 +145,16 @@ Effects:
    `seed_ready = false`.
 5. Request randomness (ephemeral queue), `caller_seed` from `(arena.id, nonce, slot)`,
    callback args include `nonce`.
-6. Schedule crank: `tick` every 100 ms, iterations
-   `STAGING_TICKS + 50 + MAX_LIVE_TICKS + SETTLE_TICKS`, accounts
-   `[arena, runner_balance, house_balance]`, task_id = `(id as u64) << 32 | nonce`.
+6. Schedule crank: `tick(nonce)` every `TICK_MS`, iterations
+   `STAGING_TICKS + SEED_TIMEOUT_TICKS + MAX_LIVE_TICKS + SETTLE_TICKS`, accounts
+   `[arena, runner_balance, house_balance, config, crank_signer]`. The arena PDA is the task
+   authority (signs the schedule with its seeds), so `crank_signer =
+   PDA([b"crank-executor", arena], Crank11111111111111111111111111111111111111)`.
+   `task_id` = i64 from `nonce` LE (4 bytes) + the first 4 bytes of the arena key.
 
-If 5 + 6 exceed compute in one instruction, split into `start_run` and `arm_run` sent in
-the same transaction.
+Steps 5 and 6 together cost ~40k CU (MagicSVM), so no `arm_run` split is needed.
+Session checks use `session::authorize` (same rule as `session_auth_or`), because that
+macro drops handler generics and `start_run` needs `'info` for the crank CPI.
 
 ### `vrf_callback_seed` (ER)
 Guarded by `#[vrf_callback]`. If `arena.status == Staging && nonce == arena.nonce &&
@@ -158,13 +162,16 @@ Guarded by `#[vrf_callback]`. If `arena.status == Staging && nonce == arena.nonc
 `emit!(SeedSet)`. Otherwise no-op, so stale fulfilments are not retried.
 
 ### `tick` (ER)
-Accounts: `arena` (mut), `runner_balance` (mut), `house_balance` (mut).
-Must check `runner_balance.owner == arena.runner` and `house_balance.owner == config.house`
-(pass `config` too, or store `house` in the arena at start).
+Args: `nonce`. Accounts: `arena` (mut), `runner_balance` (mut, PDA of `arena.runner`),
+`house_balance` (mut, PDA of `config.house`), `config`, `crank_signer` (signer, must equal
+the arena's crank signer PDA). Only the scheduled crank can produce that signature.
+If `nonce != arena.nonce` the call is a no-op, so a previous run's leftover iterations never
+tick a newer run. The state machine is `Arena::advance` (unit-tested without Anchor); the
+handler applies its payouts with checked math and emits `RunSettled` on entering Settled.
 
 - **Idle:** no-op (leftover crank iterations).
 - **Staging:** `phase_ticks += 1`. If `phase_ticks >= STAGING_TICKS && seed_ready` → Live.
-  If `phase_ticks >= STAGING_TICKS + 50 && !seed_ready` → **abort**: refund runner
+  If `phase_ticks >= STAGING_TICKS + SEED_TIMEOUT_TICKS && !seed_ready` → **abort**: refund runner
   `entry_fee + bond` (house returns entry), return liquidity to house, all markets VOID,
   push result, → Settled.
 - **Live:** `sim::step(&mut arena.sim, seed)`. Then markets:

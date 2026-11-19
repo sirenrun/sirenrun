@@ -144,6 +144,8 @@ use ephemeral_rollups_sdk::crank::{CancelCrankCpi, ScheduleCrankCpi, ScheduleTas
 - `tick_ix` lists `arena`, `runner_balance`, `house_balance` as writable.
 - Pass the arena as `AccountInfo` in the scheduling context so Anchor doesn't overwrite it
   with stale data after the CPI.
+- The arena PDA is the task authority: `ScheduleCrankCpi { payer: arena, .. }.invoke_signed`
+  with the arena seeds. Its crank signer is then fixed per arena and needs no storage.
 - Schedule from inside the ER after the arena is delegated. Keep preflight on for schedule
   and cancel transactions: on the ER, `skipPreflight` only hides errors.
 - **Permissioned tick:** the scheduler can sign for one PDA,
@@ -174,9 +176,15 @@ pub struct Buy<'info> {
     // arena, house_balance, config …
 }
 
-#[session_auth_or(ctx.accounts.trader_balance.owner == ctx.accounts.signer.key(), SessionError::InvalidToken)]
-pub fn buy(ctx: Context<Buy>, …) -> Result<()> { … }
+pub fn buy(ctx: Context<Buy>, …) -> Result<()> {
+    let accounts = &ctx.accounts;
+    session::authorize(&**accounts, accounts.trader_balance.owner == accounts.signer.key())?;
+    …
+}
 ```
+`session::authorize` is the body of `session_auth_or` as a function. The macro drops the
+handler's generics, which breaks handlers that need `'info` (CPIs), so we use the function
+everywhere.
 - Client: `@magicblock-labs/gum-sdk`, `createSessionV2` / `revokeSessionV2` through
   `SessionTokenManager.program`. Not `gum-react-sdk`: its hooks only create V1 tokens.
 - One wallet signature after connecting creates the token on the base layer (expiry 1 h).
@@ -234,6 +242,6 @@ stack (`scripts/local-up.sh --reset`).
 | U1 | Crank min interval, regularity, iteration limit, cancel | Answered: [spike-results.md](spike-results.md) |
 | U2 | ER slot time | Answered: 50 ms |
 | U3 | Session token readable in ER; session signer lamports | Answered: yes; 0 lamports is fine |
-| U4 | VRF request + crank schedule fit in one instruction's compute | program run PR |
+| U4 | VRF request + crank schedule fit in one instruction's compute | Answered: `start_run` 40k CU, `tick` ≤ 27k CU (MagicSVM) |
 | U5 | ER websocket update rate to many subscribers | app scene PR |
 | U6 | Does the ER run the SBPF v3 build Anchor 1.2.2 produces? Local 1.1.1 ER: yes (2026-11-20). Devnet: unchecked | devnet deploy PR |
