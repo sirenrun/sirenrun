@@ -145,12 +145,10 @@ use ephemeral_rollups_sdk::crank::{CancelCrankCpi, ScheduleCrankCpi, ScheduleTas
   Add it read-only as a signer to `tick_ix` and require it in `tick`. Then only the crank
   can call `tick`, which stops anyone from speeding up a run by spamming it.
 
-**SPIKE:** confirm (a) a 100 ms interval works and how regular it is, (b) the minimum
-interval, (c) the iteration limit, (d) cancel, (e) who pays. Log `Clock::slot` per tick.
-
-**Fallback if cranks fail the spike:** `scripts/keeper-tick.ts` sends `tick` every 100 ms
-from a small Node process. Then `tick` is permissionless and needs the slot guard:
-`last_tick_slot` plus `MIN_SLOTS` (measured in the spike), error `TickTooSoon`.
+Spike result (local 1.1.1 ER, see [spike-results.md](spike-results.md)): 100 ms cranks ran
+100 of 100 times at 100 ms ± 4 ms, cost the payer nothing, cancel stopped within one tick,
+and the crank-signer `tick` worked while a direct call was rejected. No keeper process or
+slot guard is needed.
 
 ## 6. Session keys
 
@@ -181,8 +179,8 @@ pub fn buy(ctx: Context<Buy>, …) -> Result<()> { … }
 - Withdrawals stay wallet-only. Sessions cover `set_input`, `buy`, `claim`, `start_run`.
 - Session program id: `KeyspM2ssCJbqUhQ4k7sveSiY4WjnYsrXkC8oDbwde5`.
 
-**SPIKE:** confirm a session token created on the base layer is readable by the ER when
-the session signer sends an ER transaction, and whether the signer needs lamports there.
+Spike result: a token created on the base layer is readable by the ER, and a session signer
+with 0 lamports can send ER transactions (they are fee-free). A wrong signer is rejected.
 
 ## 7. Local development
 
@@ -201,7 +199,8 @@ build.
 `mb-test-validator` runs the `solana-test-validator` on your `PATH` and preloads the
 delegation, Magic, VRF and session-keys programs, so nothing needs to be dumped from devnet.
 `scripts/local-up.sh` starts the stack; deploy with `anchor deploy --provider.cluster localnet`
-from a second terminal.
+from a second terminal. The ER caches programs it has cloned: after redeploying, restart the
+stack (`scripts/local-up.sh --reset`).
 
 ## 8. Client patterns (`packages/sdk`)
 
@@ -226,9 +225,9 @@ from a second terminal.
 
 | # | Question | Answered by |
 |---|---|---|
-| U1 | Crank min interval, regularity, iteration limit, cancel | MagicBlock spike |
-| U2 | ER slot time (only needed for the keeper fallback) | MagicBlock spike |
-| U3 | Session token readable in ER; session signer lamports | MagicBlock spike |
+| U1 | Crank min interval, regularity, iteration limit, cancel | Answered: [spike-results.md](spike-results.md) |
+| U2 | ER slot time | Answered: 50 ms |
+| U3 | Session token readable in ER; session signer lamports | Answered: yes; 0 lamports is fine |
 | U4 | VRF request + crank schedule fit in one instruction's compute | program run PR |
 | U5 | ER websocket update rate to many subscribers | app scene PR |
 | U6 | Does the ER run the SBPF v3 build Anchor 1.2.2 produces? Local 1.1.1 ER: yes (2026-11-20). Devnet: unchecked | devnet deploy PR |

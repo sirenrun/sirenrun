@@ -13,13 +13,10 @@
     "test": "pnpm -r test",
     "lint": "eslint .",
     "format": "prettier --write .",
-    "format:check": "prettier --check .",
-    "spike": "node scripts/spike.ts"
+    "format:check": "prettier --check ."
   },
   "devDependencies": {
-    "@anchor-lang/core": "catalog:",
     "@next/eslint-plugin-next": "catalog:",
-    "@solana/web3.js": "catalog:",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "eslint-plugin-react-hooks": "catalog:",
