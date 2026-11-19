@@ -6,3 +6,4 @@ magicblock-test-storage/
 pnpm-lock.yaml
 Cargo.lock
 *.md
+packages/test-vectors/*.json

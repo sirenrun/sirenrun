@@ -1,6 +1,9 @@
 use anchor_lang::prelude::*;
 use ephemeral_rollups_sdk::anchor::ephemeral;
 
+pub mod constants;
+pub mod sim;
+
 declare_id!("8NnGx94QrpwcUW6LL7NBzbgrTPUfVyaLsd8iHnfserHj");
 
 #[ephemeral]

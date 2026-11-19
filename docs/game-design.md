@@ -142,6 +142,8 @@ Markets react to the new state after the sim step (see [onchain-program.md](onch
 - Driver UI: ← / → (or A / D, or swipe) change `target_lane` by one. Space / tap the nitro
   button presses nitro. Each press sends one `set_input` transaction via session key.
 - Client clamps `target_lane` to 0..4 before sending. Program clamps again.
+- `set_input(target_lane, nitro)` sets `nitro_pressed |= nitro`: a press stays pending until
+  the next tick consumes it, even if a later input before that tick only changes lane.
 - Only the run's driver (or their session key) may call `set_input`.
 
 ## Feel targets (playtest checklist)
@@ -154,7 +156,18 @@ Markets react to the new state after the sim step (see [onchain-program.md](onch
 
 ## Parity tests
 
-`packages/test-vectors/sim.json` holds cases: `{ seed, inputs_by_tick, expected_state_at[] }`.
-The Rust tests and the TS tests both load it and must produce identical state at every
-checkpoint. Generate vectors from the Rust implementation (a `cargo test -- --ignored
-gen_vectors` helper) and commit them.
+`packages/test-vectors/sim.json` holds cases `{ name, seed, inputs, checkpoints }`:
+
+- `seed` is a decimal string (u64 does not fit a JS number).
+- `inputs` are `{ tick, targetLane, nitro }`, applied with `set_input` before the step
+  that runs while `t == tick`.
+- `checkpoints` are the full state at the start, every 50 ticks, and when busted.
+
+Cases cover seeds above 2^53, out-of-range lanes, nitro, crashes, and the perfect bot with
+and without nitro. The Rust tests (`programs/sirenrun/tests/sim.rs`) and the TS tests
+(`packages/sim`) replay every case and must match every checkpoint. After a rule change,
+regenerate with `cargo test -p sirenrun -- --ignored gen_vectors` and commit the file.
+
+A TS test also fails if `packages/sim/src/constants.ts` drifts from
+`programs/sirenrun/src/constants.rs`. `pnpm --filter @sirenrun/sim play [--seed N] [--nitro]`
+prints a perfect-bot run as ASCII lanes.

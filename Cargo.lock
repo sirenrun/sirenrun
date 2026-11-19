@@ -2220,6 +2220,8 @@ dependencies = [
  "anchor-lang",
  "anchor-spl",
  "ephemeral-rollups-sdk",
+ "serde",
+ "serde_json",
  "session-keys",
 ]
 
