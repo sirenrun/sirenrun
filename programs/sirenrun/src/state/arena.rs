@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 
+use super::Balance;
 use crate::constants::{LINES, SEED_TIMEOUT_TICKS, SETTLE_TICKS, STAGING_TICKS};
 use crate::errors::SirenrunError;
 use crate::sim::{step, SimState};
@@ -28,6 +29,18 @@ pub enum MarketStatus {
     Yes,
     No,
     Void,
+}
+
+impl MarketStatus {
+    /// Inverse of the 2-bit encoding in `RunResult::outcomes`.
+    pub fn from_bits(bits: u8) -> Self {
+        match bits & 0b11 {
+            1 => Self::Yes,
+            2 => Self::No,
+            3 => Self::Void,
+            _ => Self::Open,
+        }
+    }
 }
 
 #[derive(
@@ -138,8 +151,53 @@ pub struct TickEffects {
     pub crossed: u8,
 }
 
+impl TickEffects {
+    pub fn apply(&self, runner: &mut Balance, house: &mut Balance) -> Result<()> {
+        runner.credit(self.runner)?;
+        house.credit(self.house_in)?;
+        house.debit(self.house_out)
+    }
+}
+
+/// Stake and liquidity for a new run, copied from `Config`.
+#[derive(Clone, Copy, Debug)]
+pub struct RunTerms {
+    pub entry_fee: u64,
+    pub bond: u64,
+    pub liquidity: u64,
+}
+
 impl Arena {
     pub const SPACE: usize = 8 + Self::INIT_SPACE;
+
+    /// Starts a run: checks everything first, then takes the runner's stake, funds the pools
+    /// from the house and resets the arena.
+    pub fn start(
+        &mut self,
+        runner: &mut Balance,
+        house: &mut Balance,
+        terms: RunTerms,
+    ) -> Result<()> {
+        require!(self.status == ArenaStatus::Idle, SirenrunError::ArenaBusy);
+        let stake = terms
+            .entry_fee
+            .checked_add(terms.bond)
+            .ok_or(SirenrunError::MathOverflow)?;
+        let pools = terms
+            .liquidity
+            .checked_mul(MARKETS as u64)
+            .ok_or(SirenrunError::MathOverflow)?;
+        require!(house.available >= pools, SirenrunError::HouseInsufficient);
+        require!(
+            runner.available >= stake,
+            SirenrunError::InsufficientBalance
+        );
+
+        house.debit(pools)?;
+        house.credit(terms.entry_fee)?;
+        runner.debit(stake)?;
+        self.begin(runner.owner, terms.bond, terms.liquidity)
+    }
 
     /// Resets an idle arena for a new run and opens each market with `liquidity` per side.
     pub fn begin(&mut self, runner: Pubkey, bond: u64, liquidity: u64) -> Result<()> {

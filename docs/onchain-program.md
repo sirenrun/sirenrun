@@ -229,8 +229,11 @@ emit!(Trade { arena, nonce, market, side, net, shares, yes_r, no_r })
 ```
 
 ### `claim` (ER)
-Accounts: `signer`, `session_token` (opt), `trader_balance` (mut), `house_balance` (mut),
-`arena`.
+Args: `entry_index`. Accounts: `signer`, `session_token` (opt), `trader_balance` (mut),
+`house_balance` (mut), `config`, `arena` (read-only, so claims never wait on the crank's
+write lock). An empty entry gives `NoEntry`; an entry from another arena `InvalidArena`;
+a refund the house cannot cover `HouseInsufficient`. Emits
+`Claimed { owner, arena, nonce, market, paid }`.
 
 Find the outcome for `entry.nonce`: if `entry.nonce == arena.nonce` read
 `arena.markets[market]`, otherwise search `arena.results`. Not resolved yet → error
@@ -282,15 +285,18 @@ collateral. Void refunds are debited from the house balance, and voided shares a
 paid, so they cannot create money. NO-side tanking profit is capped by the driver's
 forfeited bond. Max house loss per market ≤ `liquidity`.
 
-Test: a randomized integration test runs many buys/claims and asserts
-`vault.amount >= Σ Balance.available` after every run.
+Test: `programs/sirenrun/tests/solvency.rs` drives 60 random runs (random driver,
+traders, sides, amounts, aborts, late and expired claims) through the same pure logic the
+instructions call (`Arena::start`, `advance`, `buy`, `claim`) and asserts
+`Σ Balance.available <= deposits` after every run. The MagicSVM test checks the onchain
+version to the unit: after all claims, the vault equals the sum of all balances.
 
 ## Errors (`errors.rs`)
 
 `ArenaBusy, ArenaNotLive, MarketClosed, InsufficientBalance, HouseInsufficient,
 TooLarge, Slippage, NoInterestCapReached, RunnerCannotTrade, NoFreeEntry, NotResolved,
 ResultExpired, InvalidLane, Unauthorized, MathOverflow, SeedNotReady, InvalidConfig,
-InvalidArena`.
+InvalidArena, NoEntry`.
 
 Codes are `6000 + position`, so new variants are appended, never inserted. (`TickTooSoon`
 was removed before any deployment, together with `last_tick_slot`.)

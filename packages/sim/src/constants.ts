@@ -35,3 +35,4 @@ export const LINES = [300, 600, 900] as const;
 export const MAX_ENTRIES = 8;
 export const ARENAS = 3;
 export const SEED_TIMEOUT_TICKS = 50;
+export const COOLDOWN_TICKS = 15;

@@ -1,4 +1,5 @@
 pub mod buy;
+pub mod claim;
 pub mod delegate_arena;
 pub mod delegate_balance;
 pub mod deposit;
@@ -14,6 +15,7 @@ pub mod vrf_callback_seed;
 pub mod withdraw;
 
 pub use buy::*;
+pub use claim::*;
 pub use delegate_arena::*;
 pub use delegate_balance::*;
 pub use deposit::*;
