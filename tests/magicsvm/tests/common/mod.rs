@@ -15,8 +15,10 @@ use ephemeral_rollups_sdk::vrf::consts::{
     program_identity_pubkey, DEFAULT_EPHEMERAL_QUEUE, VRF_PROGRAM_ID,
 };
 use magicsvm::{MagicSVM, TransactionTarget};
+use sirenrun::sim::generate_row;
 use sirenrun::state::{
-    Arena, Balance, ConfigParams, ARENA_SEED, BALANCE_SEED, CONFIG_SEED, VAULT_SEED,
+    Arena, ArenaStatus, Balance, ConfigParams, Side, ARENA_SEED, BALANCE_SEED, CONFIG_SEED,
+    VAULT_SEED,
 };
 use sirenrun::{accounts, instruction};
 use solana_account::Account;
@@ -33,6 +35,7 @@ use solana_transaction_error::TransactionError;
 pub use magicsvm::TransactionTarget::{Base, Ephemeral};
 
 pub const TUSDC: u64 = 1_000_000;
+pub const HOUSE_FUNDS: u64 = 200 * TUSDC;
 pub const ACCOUNT_OWNED_BY_WRONG_PROGRAM: u32 = 3007;
 
 const DECIMALS: u8 = 6;
@@ -150,7 +153,7 @@ impl World {
             address(mint),
             Account {
                 lamports: mint_rent,
-                data: mint_data(key(&admin), 100 * TUSDC),
+                data: mint_data(key(&admin), 10_000 * TUSDC),
                 owner: token_program,
                 executable: false,
                 rent_epoch: 0,
@@ -273,20 +276,59 @@ impl World {
     }
 
     pub fn deposit(&mut self, amount: u64) -> Result<(), TransactionError> {
-        let user = self.user.insecure_clone();
+        let (user, token) = (self.user.insecure_clone(), self.user_token);
+        self.deposit_from(&user, token, amount)
+    }
+
+    pub fn deposit_from(
+        &mut self,
+        owner: &Keypair,
+        token: Pubkey,
+        amount: u64,
+    ) -> Result<(), TransactionError> {
         let ix = ix(
             instruction::Deposit { amount },
             accounts::Deposit {
-                owner: key(&user),
-                balance: balance_pda(&key(&user)),
+                owner: key(owner),
+                balance: balance_pda(&key(owner)),
                 config: self.config,
                 mint: self.mint,
-                owner_token: self.user_token,
+                owner_token: token,
                 vault: self.vault,
                 token_program: Token::id(),
             },
         );
-        self.send(Base, &user, ix)
+        self.send(Base, owner, ix)
+    }
+
+    /// Creates a token account holding `amount` tUSDC for `owner`.
+    pub fn token_account(&mut self, owner: &Pubkey, amount: u64) -> Pubkey {
+        let account = Pubkey::new_unique();
+        let lamports = self
+            .svm
+            .minimum_balance_for_rent_exemption(SPL_TOKEN_ACCOUNT_LEN);
+        self.svm
+            .set_account(
+                address(account),
+                Account {
+                    lamports,
+                    data: token_account_data(self.mint, *owner, amount),
+                    owner: address(Token::id()),
+                    executable: false,
+                    rent_epoch: 0,
+                },
+            )
+            .unwrap();
+        account
+    }
+
+    /// Gives `who` a funded balance delegated to the ER.
+    pub fn join(&mut self, who: &Keypair, amount: u64) {
+        self.svm.airdrop(&who.pubkey(), 1_000_000_000).unwrap();
+        let token = self.token_account(&key(who), amount);
+        self.init_balance(who).expect("init_balance");
+        self.deposit_from(who, token, amount).expect("deposit");
+        self.delegate_balance(who).expect("delegate_balance");
     }
 
     pub fn withdraw(&mut self, amount: u64) -> Result<(), TransactionError> {
@@ -385,16 +427,44 @@ impl World {
         self.send(Base, &admin, with_validator(ix, validator))
     }
 
-    /// Funds the user, delegates user and house balances and arena 0 to the ER.
+    /// Funds the user (runner) and the house, delegates both and arena 0 to the ER.
     pub fn ready_for_runs(&mut self, deposit: u64) {
         let (admin, user) = (self.admin.insecure_clone(), self.user.insecure_clone());
         self.deposit(deposit).expect("deposit");
         self.delegate_balance(&user).expect("delegate user balance");
-        self.init_balance(&admin).expect("init house balance");
-        self.delegate_balance(&admin)
-            .expect("delegate house balance");
+        self.join(&admin, HOUSE_FUNDS);
         self.init_arena(&admin, 0).expect("init_arena");
         self.delegate_arena(0).expect("delegate_arena");
+    }
+
+    #[allow(clippy::too_many_arguments)]
+    pub fn buy(
+        &mut self,
+        signer: &Keypair,
+        owner: &Pubkey,
+        id: u8,
+        market: u8,
+        side: Side,
+        amount: u64,
+        min_shares: u64,
+    ) -> Result<(), TransactionError> {
+        let ix = ix(
+            instruction::Buy {
+                market,
+                side,
+                amount,
+                min_shares,
+            },
+            accounts::Buy {
+                signer: key(signer),
+                session_token: None,
+                trader_balance: balance_pda(owner),
+                house_balance: balance_pda(&key(&self.admin)),
+                config: self.config,
+                arena: arena_pda(id),
+            },
+        );
+        self.send(Ephemeral, signer, ix)
     }
 
     pub fn start_run(
@@ -477,6 +547,28 @@ impl World {
                 ),
             })
             .collect()
+    }
+
+    /// Drives arena 0 with the perfect bot until the run is back to `Idle`, one slot at a time,
+    /// and returns the bot's lane inputs as `(tick, lane)` pairs.
+    pub fn drive_with_bot(&mut self, runner: &Keypair) -> Vec<(u32, u8)> {
+        let mut inputs = Vec::new();
+        for _ in 0..10_000 {
+            let arena = self.arena(Ephemeral, 0);
+            if arena.status == ArenaStatus::Idle {
+                return inputs;
+            }
+            if arena.status == ArenaStatus::Live && !arena.sim.busted {
+                let next = generate_row(arena.seed, arena.sim.row, arena.sim.safe_lane);
+                if next.safe_lane != arena.sim.target_lane {
+                    self.set_input(runner, 0, next.safe_lane, false)
+                        .expect("set_input");
+                    inputs.push((arena.sim.t, next.safe_lane));
+                }
+            }
+            self.advance_slot();
+        }
+        panic!("run never finished");
     }
 
     pub fn balance(&self, target: TransactionTarget, owner: &Pubkey) -> Balance {

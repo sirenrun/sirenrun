@@ -17,8 +17,7 @@ use crate::constants::{MAX_LIVE_TICKS, SEED_TIMEOUT_TICKS, SETTLE_TICKS, STAGING
 use crate::errors::SirenrunError;
 use crate::instructions::tick::crank_signer_pda;
 use crate::session::authorize;
-use crate::sim::SimState;
-use crate::state::{Arena, ArenaStatus, Balance, Config, ARENA_SEED, BALANCE_SEED, CONFIG_SEED};
+use crate::state::{Arena, Balance, Config, ARENA_SEED, BALANCE_SEED, CONFIG_SEED, MARKETS};
 
 const PROGRAM_IDENTITY: Pubkey = program_identity_pubkey(&crate::ID);
 
@@ -68,28 +67,25 @@ pub fn start_run<'info>(ctx: Context<'info, StartRun<'info>>) -> Result<()> {
     )?;
     let config = &ctx.accounts.config;
     let arena = &mut ctx.accounts.arena;
-    require!(arena.status == ArenaStatus::Idle, SirenrunError::ArenaBusy);
+    arena.begin(
+        ctx.accounts.runner_balance.owner,
+        config.bond,
+        config.liquidity,
+    )?;
 
     let stake = config
         .entry_fee
         .checked_add(config.bond)
         .ok_or(SirenrunError::MathOverflow)?;
-    ctx.accounts.runner_balance.debit(stake)?;
-    ctx.accounts.house_balance.credit(config.entry_fee)?;
-
-    arena.nonce = arena
-        .nonce
-        .checked_add(1)
+    let pools = config
+        .liquidity
+        .checked_mul(MARKETS as u64)
         .ok_or(SirenrunError::MathOverflow)?;
-    arena.runner = ctx.accounts.runner_balance.owner;
-    arena.status = ArenaStatus::Staging;
-    arena.phase_ticks = 0;
-    arena.seed_ready = false;
-    arena.seed = 0;
-    arena.sim = SimState::start().into();
-    arena.bond = config.bond;
-    arena.no_profit_oi = 0;
-    arena.runner_fees = 0;
+    let house = &mut ctx.accounts.house_balance;
+    require!(house.available >= pools, SirenrunError::HouseInsufficient);
+    house.debit(pools)?;
+    house.credit(config.entry_fee)?;
+    ctx.accounts.runner_balance.debit(stake)?;
 
     let slot = Clock::get()?.slot;
     let mut caller_seed = [0u8; 32];

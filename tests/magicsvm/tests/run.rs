@@ -1,11 +1,10 @@
 mod common;
 
-use common::{custom_code, key, Base, Ephemeral, World, TUSDC};
+use common::{custom_code, key, Base, Ephemeral, World, HOUSE_FUNDS, TUSDC};
 use sirenrun::constants::LINES;
 use sirenrun::errors::SirenrunError;
-use sirenrun::sim::{generate_row, step, SimState};
+use sirenrun::sim::{step, SimState};
 use sirenrun::state::{ArenaStatus, MarketStatus, RunSim};
-use solana_keypair::Keypair;
 
 const CONSTRAINT_ADDRESS: u32 = 2012;
 
@@ -44,7 +43,15 @@ fn start_run_stakes_the_runner_and_seeds_the_course() {
 
     world.start_run(&user, &runner, 0).expect("start_run");
     assert_eq!(world.balance(Ephemeral, &runner).available, 14 * TUSDC);
-    assert_eq!(world.balance(Ephemeral, &house).available, TUSDC);
+    assert_eq!(
+        world.balance(Ephemeral, &house).available,
+        HOUSE_FUNDS - 150 * TUSDC + TUSDC
+    );
+    assert!(world
+        .arena(Ephemeral, 0)
+        .markets
+        .iter()
+        .all(|m| m.status == MarketStatus::Open && m.yes_r == 50 * TUSDC && m.no_r == 50 * TUSDC));
 
     let arena = world.arena(Ephemeral, 0);
     assert_eq!(arena.status, ArenaStatus::Staging);
@@ -109,29 +116,6 @@ fn only_the_runner_steers_and_only_during_a_run() {
     assert!(sim.nitro_pressed);
 }
 
-/// Drives arena 0 with the perfect bot until the run is back to `Idle`, one slot at a time,
-/// and returns the bot's lane inputs as `(tick, lane)` pairs.
-fn drive_with_bot(world: &mut World, runner: &Keypair) -> Vec<(u32, u8)> {
-    let mut inputs = Vec::new();
-    for _ in 0..10_000 {
-        let arena = world.arena(Ephemeral, 0);
-        if arena.status == ArenaStatus::Idle {
-            return inputs;
-        }
-        if arena.status == ArenaStatus::Live && !arena.sim.busted {
-            let next = generate_row(arena.seed, arena.sim.row, arena.sim.safe_lane);
-            if next.safe_lane != arena.sim.target_lane {
-                world
-                    .set_input(runner, 0, next.safe_lane, false)
-                    .expect("set_input");
-                inputs.push((arena.sim.t, next.safe_lane));
-            }
-        }
-        world.advance_slot();
-    }
-    panic!("run never finished");
-}
-
 #[test]
 fn crank_drives_a_full_run_that_matches_the_pure_sim() {
     let mut world = World::ready();
@@ -144,7 +128,7 @@ fn crank_drives_a_full_run_that_matches_the_pure_sim() {
     world.svm.set_vrf_randomness(Some(randomness));
     world.start_run(&user, &runner, 0).expect("start_run");
 
-    let inputs = drive_with_bot(&mut world, &user);
+    let inputs = world.drive_with_bot(&user);
 
     let mut expected = SimState::start();
     let mut pending = inputs.iter().peekable();
@@ -168,7 +152,10 @@ fn crank_drives_a_full_run_that_matches_the_pure_sim() {
     assert_eq!(arena.results_head, 1);
 
     assert_eq!(world.balance(Ephemeral, &runner).available, 39 * TUSDC);
-    assert_eq!(world.balance(Ephemeral, &house).available, TUSDC);
+    assert_eq!(
+        world.balance(Ephemeral, &house).available,
+        HOUSE_FUNDS + TUSDC
+    );
 }
 
 #[test]
@@ -185,7 +172,7 @@ fn tick_only_accepts_the_crank_and_old_cranks_do_not_double_tick() {
         CONSTRAINT_ADDRESS
     );
 
-    drive_with_bot(&mut world, &user);
+    world.drive_with_bot(&user);
     world.start_run(&user, &runner, 0).expect("second run");
     while world.arena(Ephemeral, 0).status != ArenaStatus::Live {
         world.advance_slot();
