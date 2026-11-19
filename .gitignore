@@ -1,0 +1,26 @@
+# Secrets: never commit
+.env*
+!.env.example
+*-keypair.json
+**/id.json
+*.pem
+*.key
+
+# Build output
+target/
+.anchor/
+test-ledger/
+node_modules/
+.next/
+out/
+dist/
+coverage/
+*.tsbuildinfo
+
+# Local / OS
+.DS_Store
+.vscode/
+.idea/
+*.log
+.vercel/
+.claude/settings.local.json
