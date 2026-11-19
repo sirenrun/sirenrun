@@ -34,3 +34,4 @@ pub const LINES: [u32; 3] = [300, 600, 900];
 
 pub const MAX_ENTRIES: usize = 8;
 pub const ARENAS: u8 = 3;
+pub const SEED_TIMEOUT_TICKS: u32 = 50;

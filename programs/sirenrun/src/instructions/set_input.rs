@@ -2,6 +2,7 @@ use anchor_lang::prelude::*;
 use session_keys::{Session, SessionTokenV2};
 
 use crate::errors::SirenrunError;
+use crate::session::authorize;
 use crate::sim::SimState;
 use crate::state::{Arena, ArenaStatus, ARENA_SEED};
 
@@ -15,6 +16,8 @@ pub struct SetInput<'info> {
 }
 
 pub fn set_input(ctx: Context<SetInput>, target_lane: u8, nitro: bool) -> Result<()> {
+    let accounts = &ctx.accounts;
+    authorize(&**accounts, accounts.arena.runner == accounts.signer.key())?;
     let arena = &mut ctx.accounts.arena;
     require!(
         matches!(arena.status, ArenaStatus::Staging | ArenaStatus::Live),

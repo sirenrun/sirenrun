@@ -1,14 +1,13 @@
 use anchor_lang::prelude::*;
 use ephemeral_rollups_sdk::anchor::ephemeral;
-use session_keys::{session_auth_or, SessionError};
 
 pub mod constants;
 pub mod errors;
 pub mod instructions;
+pub mod session;
 pub mod sim;
 pub mod state;
 
-use errors::SirenrunError;
 use instructions::*;
 use state::ConfigParams;
 
@@ -43,10 +42,6 @@ pub mod sirenrun {
         instructions::delegate_balance(ctx)
     }
 
-    #[session_auth_or(
-        ctx.accounts.balance.owner == ctx.accounts.signer.key(),
-        SirenrunError::Unauthorized
-    )]
     pub fn undelegate_balance(ctx: Context<UndelegateBalance>) -> Result<()> {
         instructions::undelegate_balance(ctx)
     }
@@ -59,11 +54,7 @@ pub mod sirenrun {
         instructions::delegate_arena(ctx, id)
     }
 
-    #[session_auth_or(
-        ctx.accounts.runner_balance.owner == ctx.accounts.signer.key(),
-        SirenrunError::Unauthorized
-    )]
-    pub fn start_run(ctx: Context<StartRun>) -> Result<()> {
+    pub fn start_run<'info>(ctx: Context<'info, StartRun<'info>>) -> Result<()> {
         instructions::start_run(ctx)
     }
 
@@ -75,11 +66,11 @@ pub mod sirenrun {
         instructions::vrf_callback_seed(ctx, randomness, nonce)
     }
 
-    #[session_auth_or(
-        ctx.accounts.arena.runner == ctx.accounts.signer.key(),
-        SirenrunError::Unauthorized
-    )]
     pub fn set_input(ctx: Context<SetInput>, target_lane: u8, nitro: bool) -> Result<()> {
         instructions::set_input(ctx, target_lane, nitro)
+    }
+
+    pub fn tick(ctx: Context<Tick>, nonce: u32) -> Result<()> {
+        instructions::tick(ctx, nonce)
     }
 }

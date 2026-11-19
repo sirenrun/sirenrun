@@ -3,8 +3,11 @@ mod common;
 use common::{custom_code, key, Base, Ephemeral, World, TUSDC};
 use sirenrun::constants::LINES;
 use sirenrun::errors::SirenrunError;
-use sirenrun::sim::SimState;
-use sirenrun::state::{ArenaStatus, RunSim};
+use sirenrun::sim::{generate_row, step, SimState};
+use sirenrun::state::{ArenaStatus, MarketStatus, RunSim};
+use solana_keypair::Keypair;
+
+const CONSTRAINT_ADDRESS: u32 = 2012;
 
 #[test]
 fn init_arena_is_admin_only_and_bounded() {
@@ -51,7 +54,7 @@ fn start_run_stakes_the_runner_and_seeds_the_course() {
     assert_eq!(arena.sim, RunSim::from(SimState::start()));
     assert!(!arena.seed_ready);
 
-    assert_eq!(world.fulfill_randomness(), 1);
+    world.advance_slot();
     let arena = world.arena(Ephemeral, 0);
     assert!(arena.seed_ready);
     assert_eq!(arena.seed, 0xDEAD_BEEF);
@@ -104,4 +107,117 @@ fn only_the_runner_steers_and_only_during_a_run() {
     let sim = world.arena(Ephemeral, 0).sim;
     assert_eq!(sim.target_lane, 4);
     assert!(sim.nitro_pressed);
+}
+
+/// Drives arena 0 with the perfect bot until the run is back to `Idle`, one slot at a time,
+/// and returns the bot's lane inputs as `(tick, lane)` pairs.
+fn drive_with_bot(world: &mut World, runner: &Keypair) -> Vec<(u32, u8)> {
+    let mut inputs = Vec::new();
+    for _ in 0..10_000 {
+        let arena = world.arena(Ephemeral, 0);
+        if arena.status == ArenaStatus::Idle {
+            return inputs;
+        }
+        if arena.status == ArenaStatus::Live && !arena.sim.busted {
+            let next = generate_row(arena.seed, arena.sim.row, arena.sim.safe_lane);
+            if next.safe_lane != arena.sim.target_lane {
+                world
+                    .set_input(runner, 0, next.safe_lane, false)
+                    .expect("set_input");
+                inputs.push((arena.sim.t, next.safe_lane));
+            }
+        }
+        world.advance_slot();
+    }
+    panic!("run never finished");
+}
+
+#[test]
+fn crank_drives_a_full_run_that_matches_the_pure_sim() {
+    let mut world = World::ready();
+    world.ready_for_runs(40 * TUSDC);
+    let user = world.user.insecure_clone();
+    let (runner, house) = (key(&user), key(&world.admin));
+
+    let mut randomness = [0u8; 32];
+    randomness[..8].copy_from_slice(&42u64.to_le_bytes());
+    world.svm.set_vrf_randomness(Some(randomness));
+    world.start_run(&user, &runner, 0).expect("start_run");
+
+    let inputs = drive_with_bot(&mut world, &user);
+
+    let mut expected = SimState::start();
+    let mut pending = inputs.iter().peekable();
+    while !expected.busted {
+        while let Some((_, lane)) = pending.next_if(|(t, _)| *t == expected.t) {
+            expected.set_input(*lane, false);
+        }
+        step(&mut expected, 42);
+    }
+
+    let arena = world.arena(Ephemeral, 0);
+    assert_eq!(arena.sim, RunSim::from(expected));
+    assert_eq!(arena.sim.t, 1138);
+    assert!(arena
+        .markets
+        .iter()
+        .zip(LINES)
+        .all(|(m, line)| m.status == MarketStatus::Yes && m.resolved_tick == line));
+    assert_eq!(arena.results[0].nonce, 1);
+    assert_eq!(arena.results[0].outcomes, 0b01_01_01);
+    assert_eq!(arena.results_head, 1);
+
+    assert_eq!(world.balance(Ephemeral, &runner).available, 39 * TUSDC);
+    assert_eq!(world.balance(Ephemeral, &house).available, TUSDC);
+}
+
+#[test]
+fn tick_only_accepts_the_crank_and_old_cranks_do_not_double_tick() {
+    let mut world = World::ready();
+    world.ready_for_runs(80 * TUSDC);
+    let user = world.user.insecure_clone();
+    let runner = key(&user);
+    let stranger = world.stranger();
+
+    world.start_run(&user, &runner, 0).expect("first run");
+    assert_eq!(
+        custom_code(world.tick_directly(&stranger, 0, 1)),
+        CONSTRAINT_ADDRESS
+    );
+
+    drive_with_bot(&mut world, &user);
+    world.start_run(&user, &runner, 0).expect("second run");
+    while world.arena(Ephemeral, 0).status != ArenaStatus::Live {
+        world.advance_slot();
+    }
+    let t0 = world.arena(Ephemeral, 0).sim.t;
+    for _ in 0..40 {
+        world.advance_slot();
+    }
+    let arena = world.arena(Ephemeral, 0);
+    assert_eq!(arena.nonce, 2);
+    assert_eq!(
+        arena.sim.t - t0,
+        20,
+        "one tick per 100 ms despite the first run's crank"
+    );
+}
+
+#[test]
+fn start_run_and_tick_fit_the_compute_budget() {
+    let mut world = World::ready();
+    world.ready_for_runs(40 * TUSDC);
+    let user = world.user.insecure_clone();
+    let runner = key(&user);
+
+    world.start_run(&user, &runner, 0).expect("start_run");
+    let start_run = world.last_compute_units;
+
+    let mut tick_max = 0;
+    while world.arena(Ephemeral, 0).sim.t < 50 {
+        tick_max = world.advance_slot().into_iter().fold(tick_max, u64::max);
+    }
+    println!("start_run {start_run} CU, tick max {tick_max} CU");
+    assert!(start_run < 100_000, "start_run used {start_run} CU");
+    assert!(tick_max < 50_000, "tick used {tick_max} CU");
 }

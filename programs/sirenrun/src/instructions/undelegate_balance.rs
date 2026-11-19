@@ -3,6 +3,7 @@ use ephemeral_rollups_sdk::anchor::commit;
 use ephemeral_rollups_sdk::ephem::{FoldableIntentBuilder, MagicIntentBundleBuilder};
 use session_keys::{Session, SessionTokenV2};
 
+use crate::session::authorize;
 use crate::state::{Balance, BALANCE_SEED};
 
 #[commit]
@@ -17,6 +18,8 @@ pub struct UndelegateBalance<'info> {
 }
 
 pub fn undelegate_balance(ctx: Context<UndelegateBalance>) -> Result<()> {
+    let accounts = &ctx.accounts;
+    authorize(&**accounts, accounts.balance.owner == accounts.signer.key())?;
     ctx.accounts.balance.exit(&crate::ID)?;
     MagicIntentBundleBuilder::new(
         ctx.accounts.signer.to_account_info(),

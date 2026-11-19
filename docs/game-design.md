@@ -25,6 +25,7 @@ and keep the math integer-only.
 |---|---|---|
 | `TICK_MS` | 100 | One sim step = 100 ms (10 Hz) |
 | `STAGING_TICKS` | 100 | 10 s countdown before live |
+| `SEED_TIMEOUT_TICKS` | 50 | Extra staging ticks to wait for VRF before the run aborts |
 | `SETTLE_TICKS` | 30 | 3 s results hold before the arena goes idle |
 | `MAX_LIVE_TICKS` | 1500 | Hard stop at 150 s (counts as busted) |
 | `LANES` | 5 | Lanes 0..4 |
