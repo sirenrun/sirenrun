@@ -12,11 +12,12 @@ debug = 0
 [dev-dependencies]
 anchor-lang = "=1.2.2"
 anchor-spl = "=1.2.2"
-ephemeral-rollups-sdk = { version = "=0.18.0", features = ["anchor"] }
+ephemeral-rollups-sdk = { version = "=0.18.0", features = ["anchor", "vrf"] }
 magicsvm = "=0.3.0"
 solana-account = "4.3.1"
 sirenrun = { path = "../../programs/sirenrun", features = ["no-entrypoint"] }
 solana-address = "~2.6.1"
+solana-clock = "~3.1.1"
 solana-hash = "~4.5.0"
 solana-instruction = { version = "~3.4.0", features = ["bincode"] }
 solana-keypair = "3.1.2"

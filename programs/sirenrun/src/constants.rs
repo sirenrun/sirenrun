@@ -33,3 +33,4 @@ pub const POLICE_ACCEL_DEN: u32 = 100;
 pub const LINES: [u32; 3] = [300, 600, 900];
 
 pub const MAX_ENTRIES: usize = 8;
+pub const ARENAS: u8 = 3;
