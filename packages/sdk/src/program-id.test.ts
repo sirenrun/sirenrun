@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { PROGRAM_ID } from "./index";
+import { PROGRAM_ID } from "./index.ts";
 
 const repoFile = (path: string) =>
   readFileSync(new URL(`../../../${path}`, import.meta.url), "utf8");

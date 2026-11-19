@@ -1,0 +1,20 @@
+{
+  "name": "@sirenrun/sim",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "play": "node src/play.ts"
+  },
+  "devDependencies": {
+    "@sirenrun/test-vectors": "workspace:*",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

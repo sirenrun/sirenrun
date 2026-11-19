@@ -1,0 +1,8 @@
+{
+  "name": "@sirenrun/test-vectors",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./sim.json": "./sim.json"
+  }
+}
