@@ -32,10 +32,10 @@ pub enum SirenrunError {
     Unauthorized,
     #[msg("Math overflow")]
     MathOverflow,
-    #[msg("Tick too soon")]
-    TickTooSoon,
     #[msg("Seed is not ready")]
     SeedNotReady,
     #[msg("Invalid config parameters")]
     InvalidConfig,
+    #[msg("Invalid arena id")]
+    InvalidArena,
 }

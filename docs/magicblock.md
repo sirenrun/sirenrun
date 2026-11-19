@@ -117,7 +117,13 @@ visible on the base layer. Not required for correctness.
   accounts_metas: Some(vec![arena (writable)]), .. }`. Older examples call this
   `create_request_scoped_randomness_ix` (0.16 name); in 0.18 the non-`_const` form is deprecated.
 - Callback context gets `#[vrf_callback]`. Without it the callback still compiles but
-  accepts spoofed randomness. Never copy a callback that trusts the legacy global VRF
+  accepts spoofed randomness.
+- Declare `vrf_program_identity` (callback) and `program_identity` (request) yourself with
+  `#[account(address = CONST)]`, where the constant is `scoped_vrf_identity_const` /
+  `program_identity_pubkey` evaluated in a `const` item. The macros only inject missing
+  fields, and their injected constraints call those `const fn`s at runtime: the callback
+  then burns about 197k CU on the PDA search and fails. With the constant it costs ~12k CU
+  in total (MagicSVM, 2026-11-20). Never copy a callback that trusts the legacy global VRF
   identity (`9irBy75…`).
 - Expected latency inside an ER: about 100 ms. The 10 s staging window is plenty.
 

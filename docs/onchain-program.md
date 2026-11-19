@@ -70,17 +70,16 @@ Seeds: `[b"arena", &[id]]`
 | Field | Type | Notes |
 |---|---|---|
 | id, bump | u8, u8 | |
-| status | u8 | 0 Idle, 1 Staging, 2 Live, 3 Settled |
+| status | u8 enum | 0 Idle, 1 Staging, 2 Live, 3 Settled |
 | phase_ticks | u16 | ticks spent in Staging or Settled |
 | nonce | u32 | run counter, +1 at each start |
 | runner | Pubkey | driver wallet |
 | seed_ready | bool | |
 | seed | u64 | |
-| sim | SimState | ~27 bytes: the fields in [game-design.md](game-design.md) (minus `seed`) + `nitro_pressed` |
+| sim | RunSim | 27 bytes: borsh copy of `sim::SimState` (the fields in [game-design.md](game-design.md) minus `seed`, plus `nitro_pressed`) |
 | bond | u64 | bond held for this run |
 | no_profit_oi | u64 | Σ (shares − cost) over NO buys this run |
 | runner_fees | u64 | accrued driver fee share |
-| last_tick_slot | u64 | anti-double-tick guard (see [magicblock.md](magicblock.md)) |
 | markets | [Market; 3] | |
 | results | [RunResult; 16] | ring of finished runs |
 | results_head | u8 | |
@@ -89,7 +88,7 @@ Seeds: `[b"arena", &[id]]`
 no_r u64, resolved_tick u32`.
 `RunResult` (17 bytes): `nonce u32, outcomes u8 (2 bits per market), resolved_ticks [u32; 3]`.
 
-≈ 465 bytes.
+451 bytes. No slot guard: `tick` only accepts the crank signer (see [spike-results.md](spike-results.md)), so `last_tick_slot` was dropped.
 
 ## Instructions
 
@@ -126,8 +125,12 @@ ledgers in one process) and runs the money round trip. Run `anchor build` first,
 
 ### `start_run` (ER)
 Accounts: `signer`, `session_token` (opt), `runner_balance` (mut), `house_balance` (mut),
-`config`, `arena` (mut), VRF accounts (`oracle_queue` = ephemeral queue, injected by
-`#[vrf]`), `magic_program` (crank schedule).
+`config`, `arena` (mut), `oracle_queue` (`DEFAULT_EPHEMERAL_QUEUE`, or
+`DEFAULT_EPHEMERAL_TEST_QUEUE` locally), VRF accounts (`program_identity`, `vrf_program`,
+`slot_hashes`, `system_program`), `magic_program` (crank schedule).
+
+`caller_seed` = `[id, nonce LE (4), slot LE (8), 0…]`; `callback_args` = `nonce` LE, so
+the callback receives `(randomness, nonce)`.
 
 Checks: `arena.status == Idle`; `runner_balance.available >= entry_fee + bond`;
 `house_balance.available >= 3 * liquidity`; signer authorized for `runner_balance`.
@@ -150,8 +153,9 @@ If 5 + 6 exceed compute in one instruction, split into `start_run` and `arm_run`
 the same transaction.
 
 ### `vrf_callback_seed` (ER)
-Guarded by `#[vrf_callback]`. If `arena.status == Staging && nonce == arena.nonce`:
-`seed = u64::from_le_bytes(randomness[0..8])`, `seed_ready = true`. Otherwise no-op.
+Guarded by `#[vrf_callback]`. If `arena.status == Staging && nonce == arena.nonce &&
+!seed_ready`: `seed = u64::from_le_bytes(randomness[0..8])`, `seed_ready = true`,
+`emit!(SeedSet)`. Otherwise no-op, so stale fulfilments are not retried.
 
 ### `tick` (ER)
 Accounts: `arena` (mut), `runner_balance` (mut), `house_balance` (mut).
@@ -267,10 +271,12 @@ Test: a randomized integration test runs many buys/claims and asserts
 
 `ArenaBusy, ArenaNotLive, MarketClosed, InsufficientBalance, HouseInsufficient,
 TooLarge, Slippage, NoInterestCapReached, RunnerCannotTrade, NoFreeEntry, NotResolved,
-ResultExpired, InvalidLane, Unauthorized, MathOverflow, TickTooSoon, SeedNotReady,
-InvalidConfig`.
+ResultExpired, InvalidLane, Unauthorized, MathOverflow, SeedNotReady, InvalidConfig,
+InvalidArena`.
 
-Codes are `6000 + position`, so new variants are appended, never inserted.
+Codes are `6000 + position`, so new variants are appended, never inserted. (`TickTooSoon`
+was removed before any deployment, together with `last_tick_slot`.)
+`InvalidArena`: `init_arena` requires `id < ARENAS` (3).
 `InvalidConfig`: `init_config` / `update_config` reject `fee_bps > 10_000`,
 `runner_fee_bps > fee_bps`, `liquidity == 0` or `max_buy == 0`.
 
