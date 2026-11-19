@@ -4,12 +4,13 @@ use ephemeral_rollups_sdk::anchor::ephemeral;
 pub mod constants;
 pub mod errors;
 pub mod instructions;
+pub mod market;
 pub mod session;
 pub mod sim;
 pub mod state;
 
 use instructions::*;
-use state::ConfigParams;
+use state::{ConfigParams, Side};
 
 declare_id!("8NnGx94QrpwcUW6LL7NBzbgrTPUfVyaLsd8iHnfserHj");
 
@@ -72,5 +73,15 @@ pub mod sirenrun {
 
     pub fn tick(ctx: Context<Tick>, nonce: u32) -> Result<()> {
         instructions::tick(ctx, nonce)
+    }
+
+    pub fn buy(
+        ctx: Context<Buy>,
+        market: u8,
+        side: Side,
+        amount: u64,
+        min_shares: u64,
+    ) -> Result<()> {
+        instructions::buy(ctx, market, side, amount, min_shares)
     }
 }

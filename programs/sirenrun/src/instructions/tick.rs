@@ -1,6 +1,8 @@
 use anchor_lang::prelude::*;
 
-use crate::state::{Arena, ArenaStatus, Balance, Config, ARENA_SEED, BALANCE_SEED, CONFIG_SEED};
+use crate::state::{
+    Arena, ArenaStatus, Balance, Config, ARENA_SEED, BALANCE_SEED, CONFIG_SEED, MARKETS,
+};
 
 pub const CRANK_PROGRAM_ID: Pubkey = pubkey!("Crank11111111111111111111111111111111111111");
 
@@ -8,6 +10,14 @@ pub const CRANK_PROGRAM_ID: Pubkey = pubkey!("Crank11111111111111111111111111111
 /// task authority, here the arena PDA.
 pub fn crank_signer_pda(arena: &Pubkey) -> Pubkey {
     Pubkey::find_program_address(&[b"crank-executor", arena.as_ref()], &CRANK_PROGRAM_ID).0
+}
+
+#[event]
+pub struct LineCrossed {
+    pub arena: Pubkey,
+    pub nonce: u32,
+    pub market: u8,
+    pub t: u32,
 }
 
 #[event]
@@ -40,13 +50,21 @@ pub fn tick(ctx: Context<Tick>, nonce: u32) -> Result<()> {
         return Ok(());
     }
     let was_settled = arena.status == ArenaStatus::Settled;
-    let payouts = arena.advance(ctx.accounts.config.entry_fee)?;
+    let effects = arena.advance(ctx.accounts.config.entry_fee)?;
 
-    ctx.accounts.runner_balance.credit(payouts.runner)?;
-    ctx.accounts.house_balance.credit(payouts.house_in)?;
-    ctx.accounts.house_balance.debit(payouts.house_out)?;
+    ctx.accounts.runner_balance.credit(effects.runner)?;
+    ctx.accounts.house_balance.credit(effects.house_in)?;
+    ctx.accounts.house_balance.debit(effects.house_out)?;
 
     let arena = &ctx.accounts.arena;
+    for market in (0..MARKETS as u8).filter(|m| effects.crossed & (1 << m) != 0) {
+        emit!(LineCrossed {
+            arena: arena.key(),
+            nonce,
+            market,
+            t: arena.sim.t,
+        });
+    }
     if !was_settled && arena.status == ArenaStatus::Settled {
         emit!(RunSettled {
             arena: arena.key(),

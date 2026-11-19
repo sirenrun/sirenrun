@@ -128,21 +128,48 @@ pub struct Arena {
     pub results_head: u8,
 }
 
-/// Balance changes produced by one tick; the handler applies them with checked math.
+/// What one tick changes outside the arena: balance moves (applied by the handler with
+/// checked math) and the lines crossed, as bit `i` for market `i` (for `LineCrossed`).
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
-pub struct Payouts {
+pub struct TickEffects {
     pub runner: u64,
     pub house_in: u64,
     pub house_out: u64,
+    pub crossed: u8,
 }
 
 impl Arena {
     pub const SPACE: usize = 8 + Self::INIT_SPACE;
 
+    /// Resets an idle arena for a new run and opens each market with `liquidity` per side.
+    pub fn begin(&mut self, runner: Pubkey, bond: u64, liquidity: u64) -> Result<()> {
+        require!(self.status == ArenaStatus::Idle, SirenrunError::ArenaBusy);
+        self.nonce = self
+            .nonce
+            .checked_add(1)
+            .ok_or(SirenrunError::MathOverflow)?;
+        self.runner = runner;
+        self.status = ArenaStatus::Staging;
+        self.phase_ticks = 0;
+        self.seed_ready = false;
+        self.seed = 0;
+        self.sim = SimState::start().into();
+        self.bond = bond;
+        self.no_profit_oi = 0;
+        self.runner_fees = 0;
+        for market in &mut self.markets {
+            market.status = MarketStatus::Open;
+            market.yes_r = liquidity;
+            market.no_r = liquidity;
+            market.resolved_tick = 0;
+        }
+        Ok(())
+    }
+
     /// One crank tick of the run lifecycle: Staging, Live, Settled, Idle.
-    pub fn advance(&mut self, entry_fee: u64) -> Result<Payouts> {
+    pub fn advance(&mut self, entry_fee: u64) -> Result<TickEffects> {
         match self.status {
-            ArenaStatus::Idle => Ok(Payouts::default()),
+            ArenaStatus::Idle => Ok(TickEffects::default()),
             ArenaStatus::Staging => self.advance_staging(entry_fee),
             ArenaStatus::Live => self.advance_live(),
             ArenaStatus::Settled => {
@@ -151,7 +178,7 @@ impl Arena {
                     self.status = ArenaStatus::Idle;
                     self.phase_ticks = 0;
                 }
-                Ok(Payouts::default())
+                Ok(TickEffects::default())
             }
         }
     }
@@ -164,70 +191,84 @@ impl Arena {
             .fold(0, |acc, (i, m)| acc | ((m.status as u8) << (2 * i)))
     }
 
-    fn advance_staging(&mut self, entry_fee: u64) -> Result<Payouts> {
+    fn advance_staging(&mut self, entry_fee: u64) -> Result<TickEffects> {
         self.phase_ticks = self.phase_ticks.saturating_add(1);
         let ticks = u32::from(self.phase_ticks);
         if ticks >= STAGING_TICKS && self.seed_ready {
             self.status = ArenaStatus::Live;
             self.phase_ticks = 0;
-            return Ok(Payouts::default());
+            return Ok(TickEffects::default());
         }
         if ticks < STAGING_TICKS + SEED_TIMEOUT_TICKS {
-            return Ok(Payouts::default());
+            return Ok(TickEffects::default());
         }
+        // `buy` requires the seed, so an aborted run has no trades and each pool still holds
+        // exactly the house's liquidity.
+        let mut pools: u64 = 0;
         for market in &mut self.markets {
             market.status = MarketStatus::Void;
+            pools = pools
+                .checked_add(market.yes_r)
+                .ok_or(SirenrunError::MathOverflow)?;
         }
         self.finish();
         let refund = entry_fee
             .checked_add(self.bond)
             .ok_or(SirenrunError::MathOverflow)?;
-        Ok(Payouts {
+        Ok(TickEffects {
             runner: refund,
-            house_in: 0,
+            house_in: pools,
             house_out: entry_fee,
+            crossed: 0,
         })
     }
 
-    fn advance_live(&mut self) -> Result<Payouts> {
+    fn advance_live(&mut self) -> Result<TickEffects> {
         let mut sim = SimState::from(self.sim);
         step(&mut sim, self.seed);
         self.sim = sim.into();
 
-        for market in &mut self.markets {
+        // The house is the LP: a resolved pool's winning-side reserve is its share.
+        let mut effects = TickEffects::default();
+        for (i, market) in self.markets.iter_mut().enumerate() {
             if market.status == MarketStatus::Open && sim.t >= u32::from(market.line) {
                 market.status = MarketStatus::Yes;
                 market.resolved_tick = sim.t;
+                effects.house_in = effects
+                    .house_in
+                    .checked_add(market.yes_r)
+                    .ok_or(SirenrunError::MathOverflow)?;
+                effects.crossed |= 1 << i;
             }
         }
         if !sim.busted {
-            return Ok(Payouts::default());
+            return Ok(effects);
         }
         for market in &mut self.markets {
             if market.status == MarketStatus::Open {
                 market.status = MarketStatus::No;
                 market.resolved_tick = sim.t;
+                effects.house_in = effects
+                    .house_in
+                    .checked_add(market.no_r)
+                    .ok_or(SirenrunError::MathOverflow)?;
             }
         }
 
-        let made_last_line = self.markets[MARKETS - 1].status == MarketStatus::Yes;
-        let payouts = if made_last_line {
-            Payouts {
-                runner: self
-                    .runner_fees
-                    .checked_add(self.bond)
-                    .ok_or(SirenrunError::MathOverflow)?,
-                ..Payouts::default()
-            }
+        effects.runner = self.runner_fees;
+        if self.markets[MARKETS - 1].status == MarketStatus::Yes {
+            effects.runner = effects
+                .runner
+                .checked_add(self.bond)
+                .ok_or(SirenrunError::MathOverflow)?;
         } else {
-            Payouts {
-                runner: self.runner_fees,
-                house_in: self.bond,
-                house_out: 0,
-            }
-        };
+            effects.house_in = effects
+                .house_in
+                .checked_add(self.bond)
+                .ok_or(SirenrunError::MathOverflow)?;
+        }
         self.finish();
-        Ok(payouts)
+        Ok(effects)
     }
 
     fn finish(&mut self) {
@@ -259,6 +300,8 @@ mod tests {
         let mut markets = [Market::default(); MARKETS];
         for (market, line) in markets.iter_mut().zip(LINES) {
             market.line = line as u16;
+            market.yes_r = 50;
+            market.no_r = 50;
         }
         Arena {
             id: 0,
@@ -279,13 +322,14 @@ mod tests {
         }
     }
 
-    fn run_until(arena: &mut Arena, status: ArenaStatus) -> Payouts {
-        let mut total = Payouts::default();
+    fn run_until(arena: &mut Arena, status: ArenaStatus) -> TickEffects {
+        let mut total = TickEffects::default();
         for _ in 0..5_000 {
             let p = arena.advance(1).unwrap();
             total.runner += p.runner;
             total.house_in += p.house_in;
             total.house_out += p.house_out;
+            total.crossed |= p.crossed;
             if arena.status == status {
                 return total;
             }
@@ -312,10 +356,11 @@ mod tests {
         assert_eq!(arena.phase_ticks, 0);
         assert_eq!(
             payouts,
-            Payouts {
+            TickEffects {
                 runner: 1 + 25,
-                house_in: 0,
-                house_out: 1
+                house_in: 3 * 50,
+                house_out: 1,
+                crossed: 0
             }
         );
         assert!(arena.markets.iter().all(|m| m.status == MarketStatus::Void));
@@ -339,10 +384,11 @@ mod tests {
             .all(|m| m.status == MarketStatus::No && m.resolved_tick == t));
         assert_eq!(
             payouts,
-            Payouts {
+            TickEffects {
                 runner: 3,
-                house_in: 25,
-                house_out: 0
+                house_in: 3 * 50 + 25,
+                house_out: 0,
+                crossed: 0
             }
         );
         assert_eq!(arena.results[0].outcomes, 0b10_10_10);
@@ -357,7 +403,14 @@ mod tests {
         let payouts = arena.advance(1).unwrap();
         assert!(arena.markets.iter().all(|m| m.status == MarketStatus::Yes));
         assert_eq!(arena.markets[2].resolved_tick, LINES[2]);
-        assert_eq!(payouts, Payouts::default());
+        assert_eq!(
+            payouts,
+            TickEffects {
+                house_in: 3 * 50,
+                crossed: 0b111,
+                ..TickEffects::default()
+            }
+        );
 
         arena.sim.police_gap = 1;
         arena.sim.speed = 0;
@@ -368,12 +421,28 @@ mod tests {
     }
 
     #[test]
+    fn begin_opens_markets_and_requires_idle() {
+        let mut arena = staged(true);
+        assert!(arena.begin(Pubkey::new_unique(), 25, 50).is_err());
+        arena.status = ArenaStatus::Idle;
+        arena.markets[1].status = MarketStatus::No;
+        let runner = Pubkey::new_unique();
+        arena.begin(runner, 30, 70).unwrap();
+        assert_eq!((arena.nonce, arena.runner, arena.bond), (8, runner, 30));
+        assert_eq!(arena.status, ArenaStatus::Staging);
+        assert!(arena
+            .markets
+            .iter()
+            .all(|m| m.status == MarketStatus::Open && m.yes_r == 70 && m.no_r == 70));
+    }
+
+    #[test]
     fn settled_returns_to_idle_and_idle_is_a_no_op() {
         let mut arena = staged(true);
         arena.status = ArenaStatus::Settled;
         run_until(&mut arena, ArenaStatus::Idle);
         let before = arena.clone();
-        assert_eq!(arena.advance(1).unwrap(), Payouts::default());
+        assert_eq!(arena.advance(1).unwrap(), TickEffects::default());
         assert_eq!(arena.status, before.status);
         assert_eq!(arena.phase_ticks, before.phase_ticks);
     }

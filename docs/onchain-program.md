@@ -132,8 +132,10 @@ Accounts: `signer`, `session_token` (opt), `runner_balance` (mut), `house_balanc
 `caller_seed` = `[id, nonce LE (4), slot LE (8), 0…]`; `callback_args` = `nonce` LE, so
 the callback receives `(randomness, nonce)`.
 
-Checks: `arena.status == Idle`; `runner_balance.available >= entry_fee + bond`;
-`house_balance.available >= 3 * liquidity`; signer authorized for `runner_balance`.
+Checks, in order: signer authorized for `runner_balance`; `arena.status == Idle`
+(`ArenaBusy`); `house_balance.available >= 3 * liquidity` (`HouseInsufficient`);
+`runner_balance.available >= entry_fee + bond` (`InsufficientBalance`). The arena reset
+lives in `Arena::begin`.
 
 Effects:
 1. Debit runner `entry_fee + bond`; credit house `entry_fee`; `arena.bond = bond`.
@@ -172,7 +174,8 @@ handler applies its payouts with checked math and emits `RunSettled` on entering
 - **Idle:** no-op (leftover crank iterations).
 - **Staging:** `phase_ticks += 1`. If `phase_ticks >= STAGING_TICKS && seed_ready` → Live.
   If `phase_ticks >= STAGING_TICKS + SEED_TIMEOUT_TICKS && !seed_ready` → **abort**: refund runner
-  `entry_fee + bond` (house returns entry), return liquidity to house, all markets VOID,
+  `entry_fee + bond` (house returns entry), return liquidity to house (each pool's
+  `yes_r`, which still equals `liquidity` because `buy` needs the seed), all markets VOID,
   push result, → Settled.
 - **Live:** `sim::step(&mut arena.sim, seed)`. Then markets:
   for each open market: if `t >= line` → resolve YES at `t` and credit the house (see
@@ -182,6 +185,7 @@ handler applies its payouts with checked math and emits `RunSettled` on entering
 
 Settlement when a market resolves (mid-run or at bust): the house is the LP, so it gets
 the pool's winning-side tokens: YES → credit house `yes_r`; NO → credit house `no_r`.
+Each YES resolution emits `LineCrossed { arena, nonce, market, t }`.
 
 Settle run (once, at bust or hard stop):
 - Credit runner `runner_fees`.
@@ -198,8 +202,12 @@ Allowed in Staging and Live. `target_lane = min(target_lane, 4)`; if `nitro`, se
 Accounts: `signer`, `session_token` (opt), `trader_balance` (mut), `house_balance` (mut),
 `config`, `arena` (mut).
 
+Args: `market u8`, `side` (enum `Yes | No`), `amount u64`, `min_shares u64`.
+
 Checks:
-- `arena.status ∈ {Staging, Live}`, `markets[m].status == open`.
+- `arena.status ∈ {Staging, Live}`, `arena.seed_ready` (else `SeedNotReady`),
+  `markets[m].status == open`. Requiring the seed means a run that aborts for lack of VRF
+  has no trades, so its VOID markets owe nobody anything.
 - `trader_balance.owner != arena.runner` (driver can't trade own run from main wallet).
 - `amount <= config.max_buy`, `trader_balance.available >= amount`.
 - A free entry slot exists, or an entry with the same `(arena_id, nonce, market, side)`.
@@ -255,6 +263,9 @@ buy(y, n, side, a):           // a = net collateral in
 
 price_yes(y, n) = n / (y + n)     // display only, computed client-side
 ```
+`ceil_div` keeps the remainder in the pool, so `pool reserve + buyers' shares` equals the
+collateral exactly; a MagicSVM test checks the vault against balances plus unclaimed
+winning shares to the unit. `fee` and `runner_fee` round down.
 
 Properties to unit-test (property tests with random inputs):
 - `shares >= a` (you always get at least 1 share per unit spent).
