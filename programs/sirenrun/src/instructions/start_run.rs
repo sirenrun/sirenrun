@@ -14,10 +14,9 @@ use ephemeral_rollups_sdk::vrf::types::SerializableAccountMeta;
 use session_keys::{Session, SessionTokenV2};
 
 use crate::constants::{MAX_LIVE_TICKS, SEED_TIMEOUT_TICKS, SETTLE_TICKS, STAGING_TICKS, TICK_MS};
-use crate::errors::SirenrunError;
 use crate::instructions::tick::crank_signer_pda;
 use crate::session::authorize;
-use crate::state::{Arena, Balance, Config, ARENA_SEED, BALANCE_SEED, CONFIG_SEED, MARKETS};
+use crate::state::{Arena, Balance, Config, RunTerms, ARENA_SEED, BALANCE_SEED, CONFIG_SEED};
 
 const PROGRAM_IDENTITY: Pubkey = program_identity_pubkey(&crate::ID);
 
@@ -66,26 +65,17 @@ pub fn start_run<'info>(ctx: Context<'info, StartRun<'info>>) -> Result<()> {
         accounts.runner_balance.owner == accounts.signer.key(),
     )?;
     let config = &ctx.accounts.config;
+    let terms = RunTerms {
+        entry_fee: config.entry_fee,
+        bond: config.bond,
+        liquidity: config.liquidity,
+    };
     let arena = &mut ctx.accounts.arena;
-    arena.begin(
-        ctx.accounts.runner_balance.owner,
-        config.bond,
-        config.liquidity,
+    arena.start(
+        &mut ctx.accounts.runner_balance,
+        &mut ctx.accounts.house_balance,
+        terms,
     )?;
-
-    let stake = config
-        .entry_fee
-        .checked_add(config.bond)
-        .ok_or(SirenrunError::MathOverflow)?;
-    let pools = config
-        .liquidity
-        .checked_mul(MARKETS as u64)
-        .ok_or(SirenrunError::MathOverflow)?;
-    let house = &mut ctx.accounts.house_balance;
-    require!(house.available >= pools, SirenrunError::HouseInsufficient);
-    house.debit(pools)?;
-    house.credit(config.entry_fee)?;
-    ctx.accounts.runner_balance.debit(stake)?;
 
     let slot = Clock::get()?.slot;
     let mut caller_seed = [0u8; 32];

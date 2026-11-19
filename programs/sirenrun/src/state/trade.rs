@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 use super::{Arena, ArenaStatus, Balance, MarketStatus, PositionEntry, MARKETS};
+use crate::constants::COOLDOWN_TICKS;
 use crate::errors::SirenrunError;
 use crate::market::{buy, mul_bps, Fill};
 
@@ -131,12 +132,77 @@ impl Arena {
     }
 }
 
+impl MarketStatus {
+    /// The `PositionEntry::side` code that wins under this outcome, if any.
+    fn winning_side(self) -> Option<u8> {
+        match self {
+            MarketStatus::Yes => Some(ENTRY_YES),
+            MarketStatus::No => Some(ENTRY_NO),
+            MarketStatus::Open | MarketStatus::Void => None,
+        }
+    }
+}
+
+impl Arena {
+    /// Outcome and resolution tick of `market` in run `nonce`: the live markets for the
+    /// current run, the results ring for the 16 runs before it.
+    fn outcome(&self, nonce: u32, market: u8) -> Result<(MarketStatus, u32)> {
+        let index = usize::from(market);
+        require!(index < MARKETS, SirenrunError::MarketClosed);
+        if nonce == self.nonce {
+            let market = self.markets[index];
+            require!(
+                market.status != MarketStatus::Open,
+                SirenrunError::NotResolved
+            );
+            return Ok((market.status, market.resolved_tick));
+        }
+        let result = self
+            .results
+            .iter()
+            .find(|r| r.nonce == nonce)
+            .ok_or(SirenrunError::ResultExpired)?;
+        let status = MarketStatus::from_bits(result.outcomes >> (2 * index));
+        Ok((status, result.resolved_ticks[index]))
+    }
+
+    /// Settles one position and clears it. Returns the amount credited to the trader.
+    ///
+    /// Buys inside `COOLDOWN_TICKS` of the resolution, and VOID markets, get their net cost
+    /// back from the house instead: nobody profits from reacting to a result they saw first.
+    pub fn claim(&self, trader: &mut Balance, house: &mut Balance, index: u8) -> Result<u64> {
+        let slot = usize::from(index);
+        let entry = *trader.entries.get(slot).ok_or(SirenrunError::NoEntry)?;
+        require!(entry.side != ENTRY_EMPTY, SirenrunError::NoEntry);
+        require!(entry.arena_id == self.id, SirenrunError::InvalidArena);
+
+        let (outcome, resolved_tick) = self.outcome(entry.nonce, entry.market)?;
+        let refund = outcome == MarketStatus::Void
+            || resolved_tick < entry.tick.saturating_add(COOLDOWN_TICKS);
+        let paid = if refund {
+            require!(
+                house.available >= entry.cost,
+                SirenrunError::HouseInsufficient
+            );
+            house.debit(entry.cost)?;
+            entry.cost
+        } else if outcome.winning_side() == Some(entry.side) {
+            entry.shares
+        } else {
+            0
+        };
+        trader.credit(paid)?;
+        trader.entries[slot] = PositionEntry::default();
+        Ok(paid)
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::constants::{LINES, MAX_ENTRIES};
     use crate::sim::SimState;
-    use crate::state::{Market, RunResult, RESULTS};
+    use crate::state::{Market, MarketStatus, RunResult, RESULTS};
 
     const TERMS: BuyTerms = BuyTerms {
         fee_bps: 200,
@@ -304,6 +370,123 @@ mod tests {
         arena
             .buy(&mut trader, &mut house, TERMS, 2, Side::Yes, 50_000_000, 0)
             .unwrap();
+    }
+
+    fn claim_code(result: Result<u64>, expected: SirenrunError) {
+        assert_eq!(result.unwrap_err(), expected.into());
+    }
+
+    fn settle(arena: &mut Arena, t: u32, yes_up_to: usize) {
+        for (i, market) in arena.markets.iter_mut().enumerate() {
+            market.status = if i < yes_up_to {
+                MarketStatus::Yes
+            } else {
+                MarketStatus::No
+            };
+            market.resolved_tick = t;
+        }
+    }
+
+    #[test]
+    fn winners_get_shares_losers_get_nothing() {
+        let mut arena = live_arena(50_000_000, 25_000_000);
+        let (mut trader, mut house) = (balance(20_000_000), balance(10_000_000));
+        let yes = arena
+            .buy(&mut trader, &mut house, TERMS, 0, Side::Yes, 1_000_000, 0)
+            .unwrap();
+        arena
+            .buy(&mut trader, &mut house, TERMS, 1, Side::Yes, 1_000_000, 0)
+            .unwrap();
+        claim_code(
+            arena.claim(&mut trader, &mut house, 0),
+            SirenrunError::NotResolved,
+        );
+
+        settle(&mut arena, 500, 1);
+        let before = (trader.available, house.available);
+        assert_eq!(
+            arena.claim(&mut trader, &mut house, 0).unwrap(),
+            yes.fill.shares
+        );
+        assert_eq!(arena.claim(&mut trader, &mut house, 1).unwrap(), 0);
+        assert_eq!(trader.available, before.0 + yes.fill.shares);
+        assert_eq!(house.available, before.1);
+        assert!(trader.entries.iter().all(|e| e.side == ENTRY_EMPTY));
+        claim_code(
+            arena.claim(&mut trader, &mut house, 0),
+            SirenrunError::NoEntry,
+        );
+    }
+
+    #[test]
+    fn late_buys_and_void_markets_are_refunded_by_the_house() {
+        let mut arena = live_arena(50_000_000, 25_000_000);
+        let (mut trader, mut house) = (balance(20_000_000), balance(10_000_000));
+        arena.sim.t = 290;
+        let late = arena
+            .buy(&mut trader, &mut house, TERMS, 0, Side::Yes, 1_000_000, 0)
+            .unwrap();
+        arena
+            .buy(&mut trader, &mut house, TERMS, 1, Side::No, 1_000_000, 0)
+            .unwrap();
+        settle(&mut arena, 300, 1);
+        arena.markets[1].status = MarketStatus::Void;
+
+        let house_before = house.available;
+        assert_eq!(arena.claim(&mut trader, &mut house, 0).unwrap(), late.net);
+        assert_eq!(arena.claim(&mut trader, &mut house, 1).unwrap(), late.net);
+        assert_eq!(house.available, house_before - 2 * late.net);
+    }
+
+    #[test]
+    fn old_runs_are_read_from_results_until_they_expire() {
+        let mut arena = live_arena(50_000_000, 25_000_000);
+        let (mut trader, mut house) = (balance(20_000_000), balance(10_000_000));
+        let trade = arena
+            .buy(&mut trader, &mut house, TERMS, 2, Side::No, 1_000_000, 0)
+            .unwrap();
+        settle(&mut arena, 600, 2);
+        arena.results[3] = RunResult {
+            nonce: arena.nonce,
+            outcomes: arena.outcomes(),
+            resolved_ticks: [600; MARKETS],
+        };
+        arena.nonce += 1;
+        let mut other_arena = arena.clone();
+        other_arena.id = 2;
+        claim_code(
+            other_arena.claim(&mut trader, &mut house, 0),
+            SirenrunError::InvalidArena,
+        );
+
+        let mut late_trader = trader.clone();
+        assert_eq!(
+            arena.claim(&mut trader, &mut house, 0).unwrap(),
+            trade.fill.shares
+        );
+
+        arena.results[3].nonce = 0;
+        claim_code(
+            arena.claim(&mut late_trader, &mut house, 0),
+            SirenrunError::ResultExpired,
+        );
+    }
+
+    #[test]
+    fn refunds_need_house_funds() {
+        let mut arena = live_arena(50_000_000, 25_000_000);
+        let (mut trader, mut house) = (balance(20_000_000), balance(0));
+        arena.sim.t = 299;
+        arena
+            .buy(&mut trader, &mut house, TERMS, 0, Side::Yes, 1_000_000, 0)
+            .unwrap();
+        settle(&mut arena, 300, 1);
+        house.available = 0;
+        claim_code(
+            arena.claim(&mut trader, &mut house, 0),
+            SirenrunError::HouseInsufficient,
+        );
+        assert_eq!(trader.entries[0].side, ENTRY_YES);
     }
 
     #[test]

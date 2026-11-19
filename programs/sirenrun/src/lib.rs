@@ -84,4 +84,8 @@ pub mod sirenrun {
     ) -> Result<()> {
         instructions::buy(ctx, market, side, amount, min_shares)
     }
+
+    pub fn claim(ctx: Context<Claim>, entry_index: u8) -> Result<()> {
+        instructions::claim(ctx, entry_index)
+    }
 }

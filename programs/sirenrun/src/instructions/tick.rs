@@ -52,9 +52,10 @@ pub fn tick(ctx: Context<Tick>, nonce: u32) -> Result<()> {
     let was_settled = arena.status == ArenaStatus::Settled;
     let effects = arena.advance(ctx.accounts.config.entry_fee)?;
 
-    ctx.accounts.runner_balance.credit(effects.runner)?;
-    ctx.accounts.house_balance.credit(effects.house_in)?;
-    ctx.accounts.house_balance.debit(effects.house_out)?;
+    effects.apply(
+        &mut ctx.accounts.runner_balance,
+        &mut ctx.accounts.house_balance,
+    )?;
 
     let arena = &ctx.accounts.arena;
     for market in (0..MARKETS as u8).filter(|m| effects.crossed & (1 << m) != 0) {

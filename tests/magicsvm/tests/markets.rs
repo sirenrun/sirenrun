@@ -2,7 +2,7 @@ mod common;
 
 use common::{custom_code, key, Ephemeral, World, TUSDC};
 use sirenrun::errors::SirenrunError;
-use sirenrun::state::{ArenaStatus, MarketStatus, Side, ENTRY_YES};
+use sirenrun::state::{ArenaStatus, MarketStatus, Side, ENTRY_EMPTY, ENTRY_YES};
 use solana_keypair::Keypair;
 
 fn world_with_spectator() -> (World, Keypair) {
@@ -78,13 +78,37 @@ fn trades_and_resolution_conserve_every_unit() {
     assert_eq!(arena.status, ArenaStatus::Idle);
     assert!(arena.markets.iter().all(|m| m.status == MarketStatus::Yes));
 
-    let available: u64 = [runner, fan, house]
-        .iter()
-        .map(|owner| world.balance(Ephemeral, owner).available)
-        .sum();
+    let available = |world: &World| -> u64 {
+        [runner, fan, house]
+            .iter()
+            .map(|owner| world.balance(Ephemeral, owner).available)
+            .sum()
+    };
     let unclaimed_winning_shares = yes_entry.shares;
     assert_eq!(
         world.token_amount(world.vault),
-        available + unclaimed_winning_shares
+        available(&world) + unclaimed_winning_shares
     );
+
+    let stranger = world.stranger();
+    assert_eq!(
+        custom_code(world.claim(&stranger, &fan, 0, 0)),
+        u32::from(SirenrunError::Unauthorized)
+    );
+    world.claim(&spectator, &fan, 0, 0).expect("claim YES win");
+    world.claim(&spectator, &fan, 0, 1).expect("claim NO loss");
+    assert_eq!(
+        world.balance(Ephemeral, &fan).available,
+        35 * TUSDC + yes_entry.shares
+    );
+    assert!(world
+        .balance(Ephemeral, &fan)
+        .entries
+        .iter()
+        .all(|e| e.side == ENTRY_EMPTY));
+    assert_eq!(
+        custom_code(world.claim(&spectator, &fan, 0, 0)),
+        u32::from(SirenrunError::NoEntry)
+    );
+    assert_eq!(world.token_amount(world.vault), available(&world));
 }

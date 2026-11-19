@@ -38,4 +38,6 @@ pub enum SirenrunError {
     InvalidConfig,
     #[msg("Invalid arena id")]
     InvalidArena,
+    #[msg("No position in this entry")]
+    NoEntry,
 }

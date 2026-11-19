@@ -549,6 +549,27 @@ impl World {
             .collect()
     }
 
+    pub fn claim(
+        &mut self,
+        signer: &Keypair,
+        owner: &Pubkey,
+        id: u8,
+        entry_index: u8,
+    ) -> Result<(), TransactionError> {
+        let ix = ix(
+            instruction::Claim { entry_index },
+            accounts::Claim {
+                signer: key(signer),
+                session_token: None,
+                trader_balance: balance_pda(owner),
+                house_balance: balance_pda(&key(&self.admin)),
+                config: self.config,
+                arena: arena_pda(id),
+            },
+        );
+        self.send(Ephemeral, signer, ix)
+    }
+
     /// Drives arena 0 with the perfect bot until the run is back to `Idle`, one slot at a time,
     /// and returns the bot's lane inputs as `(tick, lane)` pairs.
     pub fn drive_with_bot(&mut self, runner: &Keypair) -> Vec<(u32, u8)> {
