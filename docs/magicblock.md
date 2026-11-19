@@ -196,11 +196,12 @@ npx --yes --package=@magicblock-labs/ephemeral-validator@1.1.1 mb-stack
 2.0 only. For VRF and crank tests use **MagicSVM** (`magicsvm` crate 0.3.0): base and ER
 ledgers in one process, real delegation and Magic program paths, VRF fulfilment and the
 1.1.1 crank scheduler, tests in milliseconds. It needs a newer host Rust than the program
-build. Session keys program for local runs:
-```bash
-solana program dump -u devnet KeyspM2ssCJbqUhQ4k7sveSiY4WjnYsrXkC8oDbwde5 ./session-keys.so
-```
-`scripts/local-up.sh` wraps all of this in one command.
+build.
+
+`mb-test-validator` runs the `solana-test-validator` on your `PATH` and preloads the
+delegation, Magic, VRF and session-keys programs, so nothing needs to be dumped from devnet.
+`scripts/local-up.sh` starts the stack; deploy with `anchor deploy --provider.cluster localnet`
+from a second terminal.
 
 ## 8. Client patterns (`packages/sdk`)
 
@@ -230,4 +231,4 @@ solana program dump -u devnet KeyspM2ssCJbqUhQ4k7sveSiY4WjnYsrXkC8oDbwde5 ./sess
 | U3 | Session token readable in ER; session signer lamports | MagicBlock spike |
 | U4 | VRF request + crank schedule fit in one instruction's compute | program run PR |
 | U5 | ER websocket update rate to many subscribers | app scene PR |
-| U6 | SBPF version the 1.x ER executes vs what Solana 4.1.2 builds by default | scaffold, then spike |
+| U6 | Does the ER run the SBPF v3 build Anchor 1.2.2 produces? Local 1.1.1 ER: yes (2026-11-20). Devnet: unchecked | devnet deploy PR |
