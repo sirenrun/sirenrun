@@ -1,0 +1,8 @@
+target/
+.anchor/
+.next/
+test-ledger/
+magicblock-test-storage/
+pnpm-lock.yaml
+Cargo.lock
+*.md
