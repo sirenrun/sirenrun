@@ -31,3 +31,5 @@ export const POLICE_ACCEL_NUM = 12;
 export const POLICE_ACCEL_DEN = 100;
 
 export const LINES = [300, 600, 900] as const;
+
+export const MAX_ENTRIES = 8;

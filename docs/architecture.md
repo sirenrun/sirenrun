@@ -21,7 +21,7 @@ Program-side crates were compile-tested together (see [magicblock.md](magicblock
 | Charts | a tiny custom SVG/canvas sparkline | 3 lines × ~1500 points; no chart library needed. |
 | Audio | `howler` | Simple, handles mobile unlock. |
 | Lint / format | ESLint 10 + `typescript-eslint`, `@next/eslint-plugin-next`, `eslint-plugin-react-hooks`; Prettier 3 for code (not Markdown); `rustfmt`, `clippy` | `eslint-config-next` pins plugins that stop at ESLint 9, which is end-of-life. |
-| Tests | `cargo test` (sim, market), Anchor TS tests on a local base validator + local ephemeral validator, `vitest` 5 for TS packages | |
+| Tests | `cargo test` (sim, market, account sizes), MagicSVM 0.3.0 integration tests in `tests/magicsvm/` (instructions against base + ER in one process), `vitest` 5 for TS packages | MagicSVM runs in CI with no validators; the local stack is for manual checks. |
 | CI | GitHub Actions | Build and unit tests on every PR. |
 
 **Not used in MVP:** Socket.IO / custom WebSocket server, database, indexer, BOLT ECS.
@@ -57,7 +57,7 @@ sirenrun/
 │  ├─ stores/{arena.ts, session.ts, balance.ts}
 │  └─ lib/{subscribe.ts, clip.ts, audio.ts}
 ├─ scripts/  # init-devnet.ts, create-mint.ts, seed-house.ts, keeper-tick.ts (fallback)
-└─ tests/    # sirenrun.ts (localnet + local ER)
+└─ tests/magicsvm/   # Rust integration tests: program .so on base + ER in one process
 ```
 
 ## Accounts at a glance

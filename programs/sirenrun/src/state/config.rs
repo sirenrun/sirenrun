@@ -1,0 +1,115 @@
+use anchor_lang::prelude::*;
+
+use crate::errors::SirenrunError;
+
+pub const CONFIG_SEED: &[u8] = b"config";
+pub const VAULT_SEED: &[u8] = b"vault";
+
+const BPS_DENOMINATOR: u16 = 10_000;
+
+#[account]
+#[derive(InitSpace)]
+pub struct Config {
+    pub admin: Pubkey,
+    pub mint: Pubkey,
+    pub vault: Pubkey,
+    pub house: Pubkey,
+    pub fee_bps: u16,
+    pub runner_fee_bps: u16,
+    pub entry_fee: u64,
+    pub bond: u64,
+    pub liquidity: u64,
+    pub max_buy: u64,
+    pub bump: u8,
+    pub vault_bump: u8,
+}
+
+#[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ConfigParams {
+    pub house: Pubkey,
+    pub fee_bps: u16,
+    pub runner_fee_bps: u16,
+    pub entry_fee: u64,
+    pub bond: u64,
+    pub liquidity: u64,
+    pub max_buy: u64,
+}
+
+impl ConfigParams {
+    pub fn validate(&self) -> Result<()> {
+        require!(
+            self.fee_bps <= BPS_DENOMINATOR
+                && self.runner_fee_bps <= self.fee_bps
+                && self.liquidity > 0
+                && self.max_buy > 0,
+            SirenrunError::InvalidConfig
+        );
+        Ok(())
+    }
+}
+
+impl Config {
+    pub const SPACE: usize = 8 + Self::INIT_SPACE;
+
+    pub fn apply(&mut self, params: &ConfigParams) {
+        self.house = params.house;
+        self.fee_bps = params.fee_bps;
+        self.runner_fee_bps = params.runner_fee_bps;
+        self.entry_fee = params.entry_fee;
+        self.bond = params.bond;
+        self.liquidity = params.liquidity;
+        self.max_buy = params.max_buy;
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn params() -> ConfigParams {
+        ConfigParams {
+            house: Pubkey::new_unique(),
+            fee_bps: 200,
+            runner_fee_bps: 100,
+            entry_fee: 1_000_000,
+            bond: 25_000_000,
+            liquidity: 50_000_000,
+            max_buy: 50_000_000,
+        }
+    }
+
+    #[test]
+    fn space_matches_spec() {
+        assert_eq!(Config::SPACE, 174);
+    }
+
+    #[test]
+    fn accepts_spec_example() {
+        assert!(params().validate().is_ok());
+    }
+
+    #[test]
+    fn rejects_inconsistent_params() {
+        let cases = [
+            ConfigParams {
+                fee_bps: 10_001,
+                ..params()
+            },
+            ConfigParams {
+                runner_fee_bps: 201,
+                ..params()
+            },
+            ConfigParams {
+                liquidity: 0,
+                ..params()
+            },
+            ConfigParams {
+                max_buy: 0,
+                ..params()
+            },
+        ];
+        for case in cases {
+            assert!(case.validate().is_err(), "{case:?}");
+        }
+    }
+}
