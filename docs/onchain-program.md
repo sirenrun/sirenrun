@@ -62,7 +62,7 @@ Seeds: `[b"balance", owner]`
 `PositionEntry` (27 bytes): `arena_id u8, nonce u32, market u8, side u8 (0 empty, 1 YES,
 2 NO), shares u64, cost u64 (net of fee), tick u32 (live tick when bought)`.
 
-≈ 265 bytes. Max 8 open entries: the client auto-claims, so this is plenty.
+≈ 265 bytes. Max 8 open entries (`MAX_ENTRIES`): the client auto-claims, so this is plenty.
 
 ### `Arena`: one per channel (3), delegated to the ER
 Seeds: `[b"arena", &[id]]`
@@ -114,8 +114,15 @@ Legend: **B** = base layer, **ER** = ephemeral rollup, **S** = signer may be a s
 | 15 | `claim(entry_index)` | ER | trader (S) | Pay winnings / refund voids |
 
 `deposit`/`withdraw` require the Balance to be **owned by the program** (i.e. not
-delegated). Anchor's owner check on `Account<Balance>` enforces this for free; return a
-clear error message in the client ("Balance is in the rollup, moving it back first").
+delegated). Anchor's owner check on `Account<Balance>` enforces this for free (error 3007,
+`AccountOwnedByWrongProgram`); the client shows "Balance is in the rollup, moving it back
+first". The vault is the token account PDA `[b"vault"]`, owned by the Config PDA, which
+signs withdrawals. `undelegate_balance` accepts the balance owner or a `SessionTokenV2`
+signer for that owner; anyone else gets `Unauthorized`.
+
+Tests: `tests/magicsvm/` loads `target/deploy/sirenrun.so` into MagicSVM (base and ER
+ledgers in one process) and runs the money round trip. Run `anchor build` first, then
+`cargo test` in that folder.
 
 ### `start_run` (ER)
 Accounts: `signer`, `session_token` (opt), `runner_balance` (mut), `house_balance` (mut),
@@ -260,7 +267,12 @@ Test: a randomized integration test runs many buys/claims and asserts
 
 `ArenaBusy, ArenaNotLive, MarketClosed, InsufficientBalance, HouseInsufficient,
 TooLarge, Slippage, NoInterestCapReached, RunnerCannotTrade, NoFreeEntry, NotResolved,
-ResultExpired, InvalidLane, Unauthorized, MathOverflow, TickTooSoon, SeedNotReady`.
+ResultExpired, InvalidLane, Unauthorized, MathOverflow, TickTooSoon, SeedNotReady,
+InvalidConfig`.
+
+Codes are `6000 + position`, so new variants are appended, never inserted.
+`InvalidConfig`: `init_config` / `update_config` reject `fee_bps > 10_000`,
+`runner_fee_bps > fee_bps`, `liquidity == 0` or `max_buy == 0`.
 
 ## Events (`emit!`): logs only, nothing stored
 

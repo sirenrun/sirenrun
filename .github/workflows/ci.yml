@@ -25,7 +25,8 @@ jobs:
             ~/.cargo/git
             ~/.cache/solana
             target
-          key: program-${{ runner.os }}-${{ hashFiles('Cargo.lock', 'Anchor.toml') }}
+            tests/magicsvm/target
+          key: program-${{ runner.os }}-${{ hashFiles('Cargo.lock', 'Anchor.toml', 'tests/magicsvm/Cargo.lock') }}
 
       - name: Install Solana 4.1.2
         run: |
@@ -41,6 +42,13 @@ jobs:
       - run: cargo fmt --all -- --check
       - run: cargo clippy -p sirenrun --all-targets -- -D warnings
       - run: cargo test -p sirenrun
+
+      - name: MagicSVM integration tests
+        working-directory: tests/magicsvm
+        run: |
+          cargo fmt -- --check
+          cargo clippy --all-targets -- -D warnings
+          cargo test
 
   web:
     runs-on: ubuntu-24.04
