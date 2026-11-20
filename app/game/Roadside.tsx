@@ -19,18 +19,15 @@ import {
 } from "three";
 import { frame } from "./frame";
 import { glowTexture } from "./glow";
+import { Guardrails } from "./Guardrails";
+import { LAMP_HEAD_X, LAMP_SPACING, PALM_MIN_X, POLE_X } from "./layout";
 import { FOG_FAR, FOG_NEAR, NEON } from "./palette";
 import { recycledZ } from "./recycle";
-import { ROAD_HALF, worldZ } from "./world";
+import { worldZ } from "./world";
 
-/** Streetlights repeat every 24 m on both edges; the road shader draws their light pools. */
-export const LAMP_SPACING = 24;
 const LAMPS_PER_SIDE = 17;
 const LAMP_SPAN = LAMP_SPACING * LAMPS_PER_SIDE;
-const POLE_X = ROAD_HALF + 1.4;
 const POLE_HEIGHT = 7;
-/** Lamp heads hang over the outer lanes on arms; the road mirrors them from here. */
-export const LAMP_HEAD_X = POLE_X - 2.1;
 
 const m4 = new Matrix4();
 const pos = new Vector3();
@@ -134,7 +131,7 @@ function Palms() {
         return {
           side: i % 2 === 0 ? -1 : 1,
           offset: Math.floor(i / 2) * PALM_SPACING + r(1) * 8,
-          x: ROAD_HALF + 4 + r(2) * 7,
+          x: PALM_MIN_X + r(2) * 7,
           height: 7 + r(3) * 5,
           lean: (r(4) - 0.5) * 0.35,
           spin: r(5) * Math.PI,
@@ -351,6 +348,7 @@ export function Roadside() {
       <Water />
       <Skyline />
       <Palms />
+      <Guardrails />
       <Streetlights />
     </>
   );

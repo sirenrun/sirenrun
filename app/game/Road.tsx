@@ -6,7 +6,7 @@ import { Color, ShaderMaterial, Vector4, type Mesh } from "three";
 import { frame } from "./frame";
 import { policeLights, reflections } from "./lights";
 import { FOG_FAR, FOG_NEAR, hot, NEON } from "./palette";
-import { LAMP_HEAD_X, LAMP_SPACING } from "./Roadside";
+import { LAMP_HEAD_X, LAMP_SPACING } from "./layout";
 import { LANE_W, ROAD_HALF, worldZ } from "./world";
 
 const LENGTH = 460;
