@@ -100,14 +100,12 @@ const COOL = new Color("#ff6a1a");
  */
 export function Sparks() {
   const points = useRef<Points>(null);
-  const sim = useMemo(
-    () => ({
-      p: new Float32Array(SPARKS * 3),
-      v: new Float32Array(SPARKS * 3),
-      age: new Float32Array(SPARKS).fill(SPARK_LIFE),
-    }),
-    [],
-  );
+  // Mutated every frame, so it lives in a ref rather than memoised render state.
+  const state = useRef({
+    p: new Float32Array(SPARKS * 3),
+    v: new Float32Array(SPARKS * 3),
+    age: new Float32Array(SPARKS).fill(SPARK_LIFE),
+  });
   const geometry = useMemo(() => {
     const g = new BufferGeometry();
     g.setAttribute("position", new BufferAttribute(new Float32Array(SPARKS * 3), 3));
@@ -118,6 +116,7 @@ export function Sparks() {
   const c = useMemo(() => new Color(), []);
 
   useFrame((_, rawDelta) => {
+    const sim = state.current;
     const dt = Math.min(rawDelta, 0.05);
     const carX = worldX(frame.displayX);
     const carZ = worldZ(frame.distance);
