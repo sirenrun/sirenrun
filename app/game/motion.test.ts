@@ -32,6 +32,23 @@ describe("LaneMotion", () => {
     expect(Math.abs(run(m, 600, 3 * LANE_WIDTH, 3, 100) - 3 * LANE_WIDTH)).toBeLessThan(2);
   });
 
+  it("moves once per press: no step back when the chain confirms before its car catches up", () => {
+    const m = new LaneMotion();
+    m.update(16, 2 * LANE_WIDTH, 2, 0);
+    m.press(3, 0);
+    let last = m.x ?? 0;
+    // The chain confirms the new target at 100 ms, but playback still draws its car near the
+    // old lane, then moves it across at lane speed.
+    for (let t = 0; t <= 600; t += 16) {
+      const authTarget = t >= 100 ? 3 : 2;
+      const authX = Math.min(3 * LANE_WIDTH, 2 * LANE_WIDTH + Math.max(0, t - 150) * 0.8);
+      const x = m.update(16, authX, authTarget, t);
+      expect(x).toBeGreaterThanOrEqual(last);
+      last = x;
+    }
+    expect(last).toBe(3 * LANE_WIDTH);
+  });
+
   it("gives up on a press the chain never reflects", () => {
     const m = new LaneMotion();
     m.update(16, 2 * LANE_WIDTH, 2, 0);

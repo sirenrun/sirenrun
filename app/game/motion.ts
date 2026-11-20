@@ -3,14 +3,17 @@ import { LANE_SPEED, LANE_WIDTH, LANES, TICK_MS } from "@sirenrun/sim";
 /**
  * The car's displayed x, in sim units. A lane press starts moving the car at once, at the
  * program's own lane speed, instead of waiting ~250 ms for the chain. The displayed car may
- * lead the authoritative one by at most one lane, and settles onto it once the chain shows
- * the same target lane.
+ * lead the authoritative one by at most one lane.
+ *
+ * It always heads for the target lane at lane speed and never eases back toward the chain's
+ * position: playback draws the chain about a tick late, so right after the chain confirms a
+ * press its car is still near the old lane, and following it there pulled the car back and
+ * made one press look like two moves. The program moves `car_x` toward the target lane at
+ * the same speed and nothing else, so both end on the same x.
  */
 const UNITS_PER_MS = LANE_SPEED / TICK_MS;
 /** A press the chain has not reflected within this long is dropped (e.g. failed send). */
 const PREDICTION_TIMEOUT_MS = 800;
-/** How quickly the display settles onto the chain when no press is pending. */
-const SETTLE_MS = 120;
 
 export const clampLane = (lane: number) => Math.max(0, Math.min(LANES - 1, Math.round(lane)));
 
@@ -35,14 +38,9 @@ export class LaneMotion {
     }
     if (this.x === null) this.x = authX;
     const dt = Math.max(0, Math.min(dtMs, 100));
-
-    if (this.predicted !== null) {
-      const goal = this.predicted.lane * LANE_WIDTH;
-      const step = UNITS_PER_MS * dt;
-      this.x += Math.max(-step, Math.min(step, goal - this.x));
-    } else {
-      this.x += (authX - this.x) * Math.min(1, dt / SETTLE_MS);
-    }
+    const goal = (this.predicted?.lane ?? authTarget) * LANE_WIDTH;
+    const step = UNITS_PER_MS * dt;
+    this.x += Math.max(-step, Math.min(step, goal - this.x));
     this.x = Math.max(authX - LANE_WIDTH, Math.min(authX + LANE_WIDTH, this.x));
     return this.x;
   }
