@@ -1,5 +1,6 @@
 "use client";
 
+import { PerformanceMonitor } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { INVULN_TICKS, NITRO_BOOST, NITRO_TICKS, SPEED_MAX } from "@sirenrun/sim";
 import { useEffect, useMemo, useRef, useState } from "react";
@@ -11,6 +12,8 @@ import { frame, resetFrame } from "./frame";
 import { Sparks, SpeedLines } from "./Effects";
 import { Obstacles } from "./Obstacles";
 import { PlaybackClock, sample } from "./playback";
+import { Post } from "./Post";
+import { initialQuality, QUALITY, qualityAt, stepQuality } from "./quality";
 import { FOG_FAR, FOG_NEAR, NEON } from "./palette";
 import { Road } from "./Road";
 import { Roadside } from "./Roadside";
@@ -242,20 +245,34 @@ export default function Scene({ className }: { className?: string }) {
   useEffect(() => resetFrame(), []);
   const [available] = useState(webglAvailable);
   const [lost, setLost] = useState(false);
+  const [quality, setQuality] = useState(() =>
+    initialQuality(typeof window === "undefined" ? 1 : window.devicePixelRatio),
+  );
   if (!available || lost) return <NoWebgl lost={lost} />;
+  const step = (change: "decline" | "incline") =>
+    setQuality((q) => stepQuality(q, change, window.devicePixelRatio));
+  const { dpr, post } = qualityAt(quality);
   return (
     <Canvas
       className={className}
       style={{ position: "absolute", inset: 0 }}
-      dpr={[1, 2]}
+      dpr={dpr}
+      flat
       gl={{ antialias: true, powerPreference: "high-performance" }}
       camera={{ fov: 62, near: 0.3, far: 900, position: [0, 4.3, 10.5] }}
       onCreated={({ gl }) => {
         gl.domElement.addEventListener("webglcontextlost", () => setLost(true), { once: true });
       }}
     >
+      <PerformanceMonitor
+        onDecline={() => step("decline")}
+        onIncline={() => step("incline")}
+        flipflops={4}
+        onFallback={() => setQuality(QUALITY.length - 1)}
+      />
       <FrameDriver />
       <World />
+      <Post enabled={post} />
     </Canvas>
   );
 }

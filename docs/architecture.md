@@ -12,7 +12,7 @@ Program-side crates were compile-tested together (see [magicblock.md](magicblock
 | Token | `anchor-spl` 1.2.2, one SPL mint "tUSDC" (6 decimals) we create on devnet | Real token flow without real money. |
 | Monorepo | **pnpm 11** workspaces, Node **24 LTS** | Shared `sim`, `sdk`, `test-vectors` packages between app and tests. |
 | Web app | **Next.js 16** (App Router) + **React 19.3** + **TypeScript 6.0** | TypeScript 7 is out, but `typescript-eslint` supports only `<6.1`. |
-| 3D | **three.js 0.187** via `@react-three/fiber` 9, `@react-three/drei` 10, `@react-three/postprocessing` 3 | R3F keeps scene code in React. Fiber 9 requires React `<19.4`. |
+| 3D | **three.js 0.187** via `@react-three/fiber` 9, `@react-three/drei` 10, `@react-three/postprocessing` **3.2.2** (with `postprocessing` **6.39.6**) | R3F keeps scene code in React. Fiber 9 requires React `<19.4`. `postprocessing` 6.39 supports three `<0.188`. Bloom and tone mapping run as one composer pass. |
 | App state | `zustand` 5 | Tiny; render loop can read the store without re-rendering React. |
 | Styling | Tailwind CSS 4 | Fast HUD/UI work. |
 | Solana TS | `@solana/web3.js` **1.99**, `@anchor-lang/core` **1.2.2**, `@magicblock-labs/ephemeral-rollups-sdk` **0.18.0** | The Anchor and MagicBlock TS clients both require web3.js 1.x, so the app stays on it. |

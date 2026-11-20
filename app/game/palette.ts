@@ -1,3 +1,5 @@
+import { Color } from "three";
+
 /** "Neon Key": an original coastal city at sunset. One place for every scene colour. */
 export const NEON = {
   skyTop: "#0b0420",
@@ -23,3 +25,11 @@ export const NEON = {
 /** Fog distances: rows are 25 m apart, so obstacles read about 12 rows (6 s at top speed) out. */
 export const FOG_NEAR = 70;
 export const FOG_FAR = 380;
+
+/**
+ * A light colour pushed past 1 so the bloom pass picks it up. Use it only for things that
+ * emit light (lamps, signs, tail lights); everything else stays under the bloom threshold.
+ */
+export function hot(hex: string, intensity: number): Color {
+  return new Color(hex).multiplyScalar(intensity);
+}
