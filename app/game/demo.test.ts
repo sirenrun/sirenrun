@@ -1,6 +1,6 @@
 import { INVULN_TICKS, LINES } from "@sirenrun/sim";
 import { describe, expect, it } from "vitest";
-import { DemoRun } from "./demo";
+import { DemoRun, demoOdds } from "./demo";
 
 function finish(run: DemoRun): string[] {
   const phases: string[] = [];
@@ -63,5 +63,28 @@ describe("demo run", () => {
       expect(run.arena().phaseTicks).toBeLessThanOrEqual(100);
       run.tick();
     }
+  });
+
+  it("prices later lines lower and moves them as the run goes", () => {
+    const run = new DemoRun(1, { seed: 42n, miss: 0 });
+    while (run.arena().status !== "live") run.tick();
+    const start = run.arena().markets.map((m) => Number(m.noR) / Number(m.yesR + m.noR));
+    expect(start[0]).toBeGreaterThan(start[1] ?? 1);
+    expect(start[1]).toBeGreaterThan(start[2] ?? 1);
+    expect(start[2]).toBeGreaterThan(0.05);
+    expect(start[2]).toBeLessThan(0.6);
+    for (let i = 0; i < 400; i += 1) run.tick();
+    const later = run.arena().markets;
+    expect(later[0]?.status).toBe("yes");
+    expect(later[1]?.noR).not.toBe(run.arena().markets[1]?.yesR);
+  });
+
+  it("knows a passed line is certain and a busted run has no chance", () => {
+    const run = new DemoRun(1, { seed: 1n });
+    expect(demoOdds({ ...run.sim, t: 400 }, 300)).toBe(1);
+    expect(demoOdds({ ...run.sim, busted: true }, 900)).toBe(0);
+    expect(demoOdds({ ...run.sim, policeGap: 100 }, 900)).toBeLessThan(
+      demoOdds({ ...run.sim, policeGap: 1500 }, 900),
+    );
   });
 });

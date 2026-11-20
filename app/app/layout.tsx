@@ -3,6 +3,7 @@ import { Barlow_Condensed, Inter } from "next/font/google";
 import type { ReactNode } from "react";
 import { Header } from "../components/header";
 import { Providers } from "../components/providers";
+import { Toasts } from "../components/toasts";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -25,6 +26,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <Providers>
           <Header />
           {children}
+          <Toasts />
         </Providers>
       </body>
     </html>
