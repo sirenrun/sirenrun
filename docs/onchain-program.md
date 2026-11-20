@@ -276,6 +276,9 @@ Properties to unit-test (property tests with random inputs):
 - Price moves in the direction of the buy.
 - Overflow returns an error, never panics.
 
+`programs/sirenrun/tests/fpmm.rs` writes `packages/test-vectors/fpmm.json` (fills, `mul_bps`,
+and full quotes through `Arena::buy`); the TS price helpers in `packages/sdk` must match it.
+
 ## Solvency argument (write it in a test comment)
 
 Every buy mints `net` complete sets (one YES + one NO per unit). Per market, total

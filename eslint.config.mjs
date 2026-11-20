@@ -4,7 +4,14 @@ import reactHooks from "eslint-plugin-react-hooks";
 import tseslint from "typescript-eslint";
 
 export default defineConfig([
-  globalIgnores(["**/.next/**", "**/dist/**", "**/next-env.d.ts", "target/**", ".anchor/**"]),
+  globalIgnores([
+    "**/.next/**",
+    "**/dist/**",
+    "**/next-env.d.ts",
+    "target/**",
+    ".anchor/**",
+    "packages/sdk/src/idl/**",
+  ]),
   {
     files: ["**/*.{ts,tsx}"],
     extends: [tseslint.configs.strict],

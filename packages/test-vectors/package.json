@@ -3,6 +3,8 @@
   "version": "0.0.0",
   "private": true,
   "exports": {
+    "./fpmm.json": "./fpmm.json",
+    "./sdk.json": "./sdk.json",
     "./sim.json": "./sim.json"
   }
 }

@@ -2,7 +2,13 @@ packages:
   - app
   - packages/*
 
+allowBuilds:
+  bufferutil: false
+  utf-8-validate: false
+
 catalog:
+  "@anchor-lang/core": 1.2.2
+  "@solana/web3.js": 1.99.0
   "@tailwindcss/postcss": 4.3.5
   "@types/node": 24.19.2
   "@types/react": 19.3.0
