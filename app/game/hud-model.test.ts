@@ -26,20 +26,20 @@ describe("HUD model", () => {
   });
 
   it("colours the gap like the spec", () => {
-    expect([gapLevel(4000), gapLevel(2001), gapLevel(2000), gapLevel(800), gapLevel(799)]).toEqual([
+    expect([gapLevel(1500), gapLevel(751), gapLevel(750), gapLevel(300), gapLevel(299)]).toEqual([
       "safe",
       "safe",
       "warn",
       "warn",
       "danger",
     ]);
-    expect([gapFill(4000), gapFill(2000), gapFill(-50), gapFill(9000)]).toEqual([1, 0.5, 0, 1]);
+    expect([gapFill(1500), gapFill(750), gapFill(-50), gapFill(9000)]).toEqual([1, 0.5, 0, 1]);
   });
 
   it("heats up as the police approach cruise speed", () => {
     expect(heatSegments(0)).toBe(1);
     expect(heatSegments(300)).toBeGreaterThan(heatSegments(0));
-    expect(heatSegments(875)).toBe(5);
+    expect(heatSegments(800)).toBe(5);
     expect(heatSegments(1500)).toBe(5);
     for (let t = 0; t < 1000; t += 10)
       expect(heatSegments(t + 10)).toBeGreaterThanOrEqual(heatSegments(t));

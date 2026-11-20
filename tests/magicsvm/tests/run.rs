@@ -141,7 +141,7 @@ fn crank_drives_a_full_run_that_matches_the_pure_sim() {
 
     let arena = world.arena(Ephemeral, 0);
     assert_eq!(arena.sim, RunSim::from(expected));
-    assert_eq!(arena.sim.t, 1138);
+    assert_eq!(arena.sim.t, 1055);
     assert!(arena
         .markets
         .iter()

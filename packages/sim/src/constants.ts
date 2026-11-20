@@ -16,7 +16,7 @@ export const NITRO_CHARGES = 3;
 export const NITRO_BOOST = 60;
 export const NITRO_TICKS = 20;
 
-export const CRASH_SPEED_PCT = 50;
+export const CRASH_SPEED_PCT = 40;
 export const INVULN_TICKS = 10;
 
 export const ROW_GAP = 1000;
@@ -24,10 +24,10 @@ export const EMPTY_ROWS = 3;
 export const BLOCK_BASE = 40;
 export const BLOCK_CAP = 190;
 
-export const GAP_START = 3000;
-export const GAP_MAX = 4000;
-export const POLICE_BASE = 95;
-export const POLICE_ACCEL_NUM = 12;
+export const GAP_START = 1500;
+export const GAP_MAX = 1500;
+export const POLICE_BASE = 160;
+export const POLICE_ACCEL_NUM = 5;
 export const POLICE_ACCEL_DEN = 100;
 
 export const LINES = [300, 600, 900] as const;

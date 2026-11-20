@@ -46,10 +46,10 @@ describe("perfect bot", () => {
   }
 
   it.each([1n, 2n, 3n, 42n, 1234567n])(
-    "seed %s survives 113.8 s, or 123.6 s with nitro",
+    "seed %s survives 105.5 s, or 105.7 s with nitro",
     (seed) => {
-      expect(run(seed, false)).toEqual({ t: 1138, hits: 0 });
-      expect(run(seed, true)).toEqual({ t: 1236, hits: 0 });
+      expect(run(seed, false)).toEqual({ t: 1055, hits: 0 });
+      expect(run(seed, true)).toEqual({ t: 1057, hits: 0 });
     },
   );
 });

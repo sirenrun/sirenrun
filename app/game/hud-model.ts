@@ -24,23 +24,23 @@ export function stagingSecondsLeft(phaseTicks: number): number {
 
 export type GapLevel = "safe" | "warn" | "danger";
 
-/** Cyan above 2000, amber 800 to 2000, red below 800 (visual-design.md). */
+/** Cyan above half the cap, amber down to a fifth of it, red below that. */
 export function gapLevel(gap: number): GapLevel {
-  if (gap > 2000) return "safe";
-  return gap >= 800 ? "warn" : "danger";
+  if (gap * 2 > GAP_MAX) return "safe";
+  return gap * 5 >= GAP_MAX ? "warn" : "danger";
 }
 
 /** Gap meter fill, 0..1. */
 export const gapFill = (gap: number) => Math.max(0, Math.min(1, gap / GAP_MAX));
 
 /**
- * Heat, 1..5 segments: police speed relative to the car's cruise cap. They start at about half
- * the car's top speed and match it at 87.5 s, when every segment is lit.
+ * Heat, 1..5 segments: how far the police have closed from their starting speed to the car's
+ * cruise cap. Every segment is lit once they match it (80 s), when only nitro gains ground.
  */
 export function heatSegments(tick: number): number {
   const police = POLICE_BASE + (Math.max(0, tick) * POLICE_ACCEL_NUM) / POLICE_ACCEL_DEN;
-  const ratio = police / SPEED_MAX;
-  return Math.max(1, Math.min(5, Math.ceil((ratio - 0.45) / 0.11)));
+  const closed = (police - POLICE_BASE) / (SPEED_MAX - POLICE_BASE);
+  return Math.max(1, Math.min(5, Math.ceil(closed * 5)));
 }
 
 /** Where each line sits on the run rail, 0..1 of the 90 s line plus a margin. */

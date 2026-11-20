@@ -1,3 +1,5 @@
+import { GAP_START } from "@sirenrun/sim";
+
 /**
  * Everything the scene draws this frame, computed once by `FrameDriver` and read by every
  * mesh in the same frame. A plain mutable module object (one scene per page), so the
@@ -36,7 +38,7 @@ export function createFrame(): Frame {
     displayX: 480,
     targetLane: 2,
     speed: 0,
-    policeGap: 3000,
+    policeGap: GAP_START,
     nitro: false,
     invuln: 0,
     busted: false,

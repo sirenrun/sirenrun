@@ -14,7 +14,7 @@ describe("world mapping", () => {
 
   it("brings the police into frame as the gap closes", () => {
     expect(policeDistance(GAP_MAX)).toBeGreaterThan(CAMERA_BEHIND);
-    expect(policeDistance(2000)).toBeLessThan(CAMERA_BEHIND);
+    expect(policeDistance(GAP_MAX / 2)).toBeLessThan(CAMERA_BEHIND);
     expect(policeDistance(0)).toBeCloseTo(2.6);
     expect(policeDistance(-100)).toBe(policeDistance(0));
     for (let gap = 0; gap < GAP_MAX; gap += 100) {
