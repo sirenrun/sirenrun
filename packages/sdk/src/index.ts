@@ -112,6 +112,8 @@ export {
   claimableEntries,
   expiredEntries,
   previewClaim,
+  bondAtRisk,
+  bondForfeited,
   type ClaimError,
   type ClaimPreview,
   type ClaimableEntry,

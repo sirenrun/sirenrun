@@ -106,3 +106,24 @@ export function expiredEntries(balance: Balance, arena: Arena): number[] {
     return !preview.ok && preview.error === "ResultExpired" ? [index] : [];
   });
 }
+
+const sumNoProfit = (arena: Arena, status: MarketStatus) =>
+  arena.markets.reduce((sum, m) => (m.status === status ? sum + m.noProfit : sum), 0n);
+
+/**
+ * What a bust right now would take from the driver's bond: the BUST profit owed on the lines
+ * still open, at most the bond. Zero while nobody holds BUST.
+ */
+export function bondAtRisk(arena: Arena): bigint {
+  const owed = sumNoProfit(arena, "open");
+  return owed < arena.bond ? owed : arena.bond;
+}
+
+/**
+ * What a finished run took from the driver's bond: the BUST profit on the lines the bust
+ * closed (they resolve NO only then), at most the bond. The rest of the bond went back.
+ */
+export function bondForfeited(arena: Arena): bigint {
+  const owed = sumNoProfit(arena, "no");
+  return owed < arena.bond ? owed : arena.bond;
+}
