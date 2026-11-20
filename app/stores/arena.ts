@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { fetchArena, subscribeArena, type Arena, type ArenaStatus } from "@sirenrun/sdk";
+import { TICK_MS } from "@sirenrun/sim";
 import { chain } from "../lib/chain";
+import { DemoRun, type DemoOptions } from "../game/demo";
 import { Timeline } from "../game/playback";
 
 /**
@@ -18,6 +20,8 @@ interface ArenaState {
   timeline: Timeline;
   error: string | null;
   connect: (id: number) => () => void;
+  /** Plays offline bot runs back to back instead of a chain feed. Returns a stop function. */
+  demo: (opts?: DemoOptions) => () => void;
 }
 
 export const useArena = create<ArenaState>((set, get) => {
@@ -68,6 +72,25 @@ export const useArena = create<ArenaState>((set, get) => {
         stopped = true;
         unsubscribe();
       };
+    },
+
+    demo: (opts) => {
+      set({
+        id: null,
+        status: null,
+        nonce: 0,
+        seedReady: false,
+        latest: null,
+        timeline: new Timeline(),
+        error: null,
+      });
+      let run = new DemoRun(1, opts);
+      receive(run.arena());
+      const timer = setInterval(() => {
+        if (!run.tick()) run = new DemoRun(run.nonce + 1, { miss: opts?.miss });
+        receive(run.arena());
+      }, TICK_MS);
+      return () => clearInterval(timer);
     },
   };
 });

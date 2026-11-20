@@ -20,6 +20,6 @@ export const NEON = {
   building: "#100a1e",
 } as const;
 
-/** Fog distances: obstacles must read well before they reach the car (16 rows = 160 m). */
-export const FOG_NEAR = 40;
-export const FOG_FAR = 260;
+/** Fog distances: rows are 25 m apart, so obstacles read about 12 rows (6 s at top speed) out. */
+export const FOG_NEAR = 70;
+export const FOG_FAR = 380;

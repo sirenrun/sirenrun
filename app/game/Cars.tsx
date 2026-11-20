@@ -1,13 +1,15 @@
 "use client";
 
 import { useFrame } from "@react-three/fiber";
-import { LANE_WIDTH, LANES } from "@sirenrun/sim";
+import { GAP_MAX, LANE_WIDTH, LANES, NITRO_BOOST } from "@sirenrun/sim";
 import { useEffect, useMemo, useRef } from "react";
 import {
   AdditiveBlending,
+  DoubleSide,
   MathUtils,
   Object3D,
   type Group,
+  type Mesh,
   type MeshBasicMaterial,
   type PointLight,
   type SpotLight,
@@ -15,7 +17,25 @@ import {
 import { frame } from "./frame";
 import { glowTexture } from "./glow";
 import { NEON } from "./palette";
-import { policeDistance, worldX, worldZ } from "./world";
+import { spring } from "./spring";
+import {
+  LANE_W,
+  metresPerSecond,
+  POLICE_CONTACT,
+  POLICE_FAR,
+  policeDistance,
+  worldX,
+  worldZ,
+} from "./world";
+
+const WHEEL_RADIUS = 0.34;
+/** Wheel positions (x, z) under the 1.9 x 4.1 m body; wheels sit just proud of the sides. */
+const WHEELS = [
+  [-0.92, -1.3],
+  [0.92, -1.3],
+  [-0.92, 1.3],
+  [0.92, 1.3],
+] as const;
 
 function Halo({
   position,
@@ -57,30 +77,83 @@ export function PlayerCar() {
   const left = useRef<SpotLight>(null);
   const right = useRef<SpotLight>(null);
   const targets = useMemo(() => [new Object3D(), new Object3D()], []);
-  const last = useRef<number | null>(null);
+  const flames = useRef<Group>(null);
+  const exhaust = useRef<PointLight>(null);
+  const wheels = useRef<(Mesh | null)[]>([]);
+  const dyn = useRef({
+    lastX: null as number | null,
+    lastVx: 0,
+    mps: 0,
+    accel: 0,
+    pitch: 0,
+    vpitch: 0,
+    roll: 0,
+    vroll: 0,
+    spin: 0,
+    flame: 0,
+  });
 
   useEffect(() => {
     if (left.current) left.current.target = targets[0] as Object3D;
     if (right.current) right.current.target = targets[1] as Object3D;
   }, [targets]);
 
-  useFrame((_, delta) => {
+  useFrame((_, rawDelta) => {
     const g = group.current;
     const b = body.current;
     if (g === null || b === null) return;
+    const dt = Math.min(rawDelta, 0.05);
+    const d = dyn.current;
     const x = worldX(frame.displayX);
     const z = worldZ(frame.distance);
     g.position.set(x, 0, z);
-    (targets[0] as Object3D).position.set(x - 0.6, 0, z - 22);
-    (targets[1] as Object3D).position.set(x + 0.6, 0, z - 22);
+    (targets[0] as Object3D).position.set(x - 0.6, 0, z - 26);
+    (targets[1] as Object3D).position.set(x + 0.6, 0, z - 26);
     (targets[0] as Object3D).updateMatrixWorld();
     (targets[1] as Object3D).updateMatrixWorld();
-    const vx = last.current === null || delta === 0 ? 0 : (x - last.current) / delta;
-    last.current = x;
-    const k = 1 - Math.exp(-delta * 12);
-    b.rotation.z = MathUtils.lerp(b.rotation.z, MathUtils.clamp(-vx * 0.035, -0.14, 0.14), k);
-    b.rotation.y = MathUtils.lerp(b.rotation.y, MathUtils.clamp(-vx * 0.03, -0.12, 0.12), k);
+
+    const eff = frame.speed + (frame.nitro ? NITRO_BOOST : 0);
+    const mps = metresPerSecond(eff);
+    if (dt > 0) {
+      const raw = MathUtils.clamp((mps - d.mps) / dt, -400, 400);
+      d.accel = MathUtils.lerp(d.accel, raw, 1 - Math.exp(-dt / 0.1));
+    }
+    d.mps = mps;
+    const vx = d.lastX === null || dt === 0 ? 0 : (x - d.lastX) / dt;
+    const ax = dt === 0 ? 0 : (vx - d.lastVx) / dt;
+    d.lastX = x;
+    d.lastVx = vx;
+
+    // Weight transfer: nose up under throttle and nitro, hard dive when a hit kills speed;
+    // body rolls away from the turn and settles with a little overshoot.
+    const pitchTarget = MathUtils.clamp(d.accel * 0.0028, -0.09, 0.06);
+    [d.pitch, d.vpitch] = spring(d.pitch, d.vpitch, pitchTarget, 9, 0.45, dt);
+    const rollTarget = MathUtils.clamp(-vx * 0.022 - ax * 0.0012, -0.12, 0.12);
+    [d.roll, d.vroll] = spring(d.roll, d.vroll, rollTarget, 11, 0.4, dt);
+    const buzz = Math.sin(frame.time * 57) * Math.sin(frame.time * 23) * 0.012 * (mps / 50);
+    b.rotation.x = d.pitch;
+    b.rotation.z = d.roll;
+    b.rotation.y = MathUtils.clamp(-vx * 0.028, -0.1, 0.1);
+    b.position.y = buzz - Math.abs(d.roll) * 0.25;
     b.visible = frame.invuln === 0 || Math.floor(frame.time * 12) % 2 === 0;
+
+    d.spin -= (mps / WHEEL_RADIUS) * dt;
+    for (const w of wheels.current) if (w) w.rotation.x = d.spin;
+
+    // Nitro flames: snap on, flicker, and snuff out when a hit cancels the burn.
+    d.flame = MathUtils.lerp(
+      d.flame,
+      frame.nitro ? 1 : 0,
+      1 - Math.exp(-dt * (frame.nitro ? 18 : 10)),
+    );
+    const f = flames.current;
+    if (f) {
+      f.visible = d.flame > 0.02;
+      const flicker = 0.8 + Math.sin(frame.time * 63) * 0.12 + Math.sin(frame.time * 97) * 0.08;
+      f.scale.set(d.flame, d.flame, d.flame * flicker);
+    }
+    const e = exhaust.current;
+    if (e) e.intensity = d.flame * 40 * (0.85 + Math.sin(frame.time * 50) * 0.15);
   });
 
   return (
@@ -131,6 +204,57 @@ export function PlayerCar() {
               <meshBasicMaterial color="#fff6e0" toneMapped={false} />
             </mesh>
           ))}
+          {/* Wheels: spin at the true road speed. */}
+          {WHEELS.map(([wx, wz], i) => (
+            <mesh
+              key={i}
+              ref={(m) => void (wheels.current[i] = m)}
+              position={[wx, WHEEL_RADIUS, wz]}
+              rotation-z={Math.PI / 2}
+            >
+              <cylinderGeometry args={[WHEEL_RADIUS, WHEEL_RADIUS, 0.3, 14]} />
+              <meshStandardMaterial color="#0a0910" roughness={0.6} metalness={0.3} />
+              {/* Hub bars on both faces, so the spin is visible. */}
+              {[-0.152, 0.152].map((face) => (
+                <mesh key={face} position={[0, face, 0]}>
+                  <boxGeometry args={[0.46, 0.01, 0.08]} />
+                  <meshBasicMaterial color="#8a82a3" />
+                </mesh>
+              ))}
+            </mesh>
+          ))}
+          {/* Nitro: twin exhaust flames, hot amber core fading to blue. */}
+          <group ref={flames} position={[0, 0.32, 2.08]} visible={false}>
+            {[-0.5, 0.5].map((side) => (
+              <group key={side} position={[side, 0, 0]}>
+                <mesh position={[0, 0, 0.55]} rotation-x={Math.PI / 2}>
+                  <coneGeometry args={[0.2, 1.1, 10, 1, true]} />
+                  <meshBasicMaterial
+                    color="#5a8cff"
+                    transparent
+                    opacity={0.7}
+                    blending={AdditiveBlending}
+                    depthWrite={false}
+                    toneMapped={false}
+                    side={DoubleSide}
+                  />
+                </mesh>
+                <mesh position={[0, 0, 0.32]} rotation-x={Math.PI / 2}>
+                  <coneGeometry args={[0.11, 0.62, 8, 1, true]} />
+                  <meshBasicMaterial
+                    color="#ffd27a"
+                    transparent
+                    opacity={0.95}
+                    blending={AdditiveBlending}
+                    depthWrite={false}
+                    toneMapped={false}
+                    side={DoubleSide}
+                  />
+                </mesh>
+              </group>
+            ))}
+            <Halo position={[0, 0, 0.5]} size={2.4} color={NEON.amber} opacity={0.75} />
+          </group>
           {/* Underglow */}
           <mesh position={[0, 0.03, 0]} rotation-x={-Math.PI / 2}>
             <planeGeometry args={[3.2, 5.6]} />
@@ -145,6 +269,14 @@ export function PlayerCar() {
             />
           </mesh>
         </group>
+        <pointLight
+          ref={exhaust}
+          position={[0, 0.5, 3]}
+          distance={14}
+          decay={1.6}
+          intensity={0}
+          color={NEON.amber}
+        />
         <spotLight
           ref={left}
           position={[-0.62, 0.7, -2]}
@@ -188,17 +320,22 @@ export function Police() {
   const light = useRef<PointLight>(null);
   const follow = useRef(0);
 
-  useFrame((_, delta) => {
+  useFrame((three, delta) => {
     const visible = frame.ready && frame.status !== "idle";
     const carZ = worldZ(frame.distance);
     const lead = policeDistance(frame.policeGap);
-    follow.current = MathUtils.lerp(follow.current, frame.displayX, 1 - Math.exp(-delta * 1.8));
+    const closeness = 1 - Math.min(1, Math.max(0, frame.policeGap) / GAP_MAX);
+    // They hunt your lane harder the closer they get.
+    const chase = 1.6 + closeness * closeness * 4;
+    follow.current = MathUtils.lerp(follow.current, frame.displayX, 1 - Math.exp(-delta * chase));
     const flash = Math.sin(frame.time * 14) > 0;
+    // A cruiser is drawn only while its rear bumper is in front of the camera; otherwise
+    // the camera plane slices it open.
+    const cutoff = three.camera.position.z - 0.8;
 
     CRUISERS.forEach((cruiser, i) => {
       const g = groups.current[i];
       if (g == null) return;
-      g.visible = visible;
       const x = MathUtils.clamp(
         follow.current + cruiser.lane * LANE_WIDTH,
         0,
@@ -206,8 +343,25 @@ export function Police() {
       );
       // Close in, the wing cruisers pull up beside the lead one rather than between the
       // camera and the car.
-      const spread = MathUtils.clamp((lead - 2.6) / 12, 0.15, 1);
-      g.position.set(worldX(x), 0, carZ + lead + cruiser.back * spread);
+      const spread = MathUtils.clamp(
+        (lead - POLICE_CONTACT) / (POLICE_FAR - POLICE_CONTACT),
+        0.15,
+        1,
+      );
+      if (frame.busted) {
+        // Caught: the lead cruiser pins the rear bumper and the wings pull up alongside.
+        const bx = worldX(frame.displayX) + cruiser.lane * LANE_W * 1.05;
+        const bz = carZ + (cruiser.lane === 0 ? POLICE_CONTACT : 1.2);
+        const k = 1 - Math.exp(-delta * 2.5);
+        g.position.set(MathUtils.lerp(g.position.x, bx, k), 0, MathUtils.lerp(g.position.z, bz, k));
+        g.rotation.y = MathUtils.lerp(g.rotation.y, -cruiser.lane * 0.35, k);
+        g.visible = visible;
+      } else {
+        const z = carZ + lead + cruiser.back * spread;
+        g.position.set(worldX(x), 0, z);
+        g.rotation.y = 0;
+        g.visible = visible && z + 2.1 < cutoff;
+      }
       const pair = lamps.current[i];
       if (pair?.red && pair.blue) {
         const alt = i % 2 === 0 ? flash : !flash;
@@ -218,9 +372,9 @@ export function Police() {
     const l = light.current;
     if (l !== null) {
       l.visible = visible;
-      l.position.set(worldX(follow.current), 2.4, carZ + lead - 1);
+      l.position.set(worldX(follow.current), 2.6, carZ + lead - 1.5);
       l.color.set(flash ? NEON.policeRed : NEON.policeBlue);
-      l.intensity = 25 + (1 - Math.min(1, frame.policeGap / 2500)) * 70;
+      l.intensity = 25 + closeness * 55;
     }
   });
 
@@ -263,7 +417,7 @@ export function Police() {
           <Halo position={[0.4, 1.15, -0.1]} size={2.4} color={NEON.policeBlue} opacity={0.6} />
         </group>
       ))}
-      <pointLight ref={light} distance={22} decay={1.4} visible={false} />
+      <pointLight ref={light} distance={30} decay={1.3} visible={false} />
     </>
   );
 }

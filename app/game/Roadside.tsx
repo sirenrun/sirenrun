@@ -25,7 +25,7 @@ import { ROAD_HALF, worldZ } from "./world";
 
 /** Streetlights repeat every 24 m on both edges; the road shader draws their light pools. */
 export const LAMP_SPACING = 24;
-const LAMPS_PER_SIDE = 12;
+const LAMPS_PER_SIDE = 17;
 const LAMP_SPAN = LAMP_SPACING * LAMPS_PER_SIDE;
 const POLE_X = ROAD_HALF + 1.4;
 const POLE_HEIGHT = 7;
@@ -113,7 +113,7 @@ function Streetlights() {
   );
 }
 
-const PALMS_PER_SIDE = 14;
+const PALMS_PER_SIDE = 21;
 const PALM_SPACING = 19;
 const PALM_SPAN = PALMS_PER_SIDE * PALM_SPACING;
 const LEAVES = 7;
@@ -217,7 +217,7 @@ function windowTexture(): CanvasTexture {
   return tex;
 }
 
-const TOWERS = 44;
+const TOWERS = 60;
 const TOWER_SPAN = (TOWERS / 2) * 16;
 
 /** Distant towers on both shores with lit windows, recycled along the road. */

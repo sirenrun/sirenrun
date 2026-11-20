@@ -1,13 +1,14 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { INVULN_TICKS, NITRO_TICKS, SPEED_MAX } from "@sirenrun/sim";
+import { INVULN_TICKS, NITRO_BOOST, NITRO_TICKS, SPEED_MAX } from "@sirenrun/sim";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { MathUtils, Vector3, type PerspectiveCamera } from "three";
 import { useArena } from "../stores/arena";
 import { PlayerCar, Police } from "./Cars";
 import { laneMotion, prefersReducedMotion } from "./controls";
 import { frame, resetFrame } from "./frame";
+import { Sparks, SpeedLines } from "./Effects";
 import { Obstacles } from "./Obstacles";
 import { PlaybackClock, sample } from "./playback";
 import { FOG_FAR, FOG_NEAR, NEON } from "./palette";
@@ -15,7 +16,8 @@ import { Road } from "./Road";
 import { Roadside } from "./Roadside";
 import { Sky } from "./Sky";
 import { webglAvailable } from "./webgl";
-import { worldX, worldZ } from "./world";
+import { spring } from "./spring";
+import { metresPerSecond, worldX, worldZ } from "./world";
 
 /** Runs first each frame: advances the playback clock and fills the shared `Frame`. */
 function FrameDriver() {
@@ -76,35 +78,108 @@ function FrameDriver() {
 
 const look = new Vector3();
 
-/** Chase camera: behind and above, lags on lane changes, widens on nitro, shakes on a hit. */
+/** Chase camera geometry (metres): behind and above the car, aimed down the road. */
+const CAM_BEHIND = 10.5;
+const CAM_HEIGHT = 4.3;
+const LOOK_AHEAD = 24;
+const LOOK_Y = 0.7;
+
+/**
+ * Chase camera with weight. Everything that moves it is a spring, so it reads as momentum:
+ * it falls back under acceleration and nitro and lurches toward the car when a hit kills
+ * speed, follows lane changes with a slight lag and roll, rumbles harder with speed, jolts on
+ * a hit, and swings around the car once the run is busted.
+ */
 function CameraRig() {
   const reduced = useMemo(() => prefersReducedMotion(), []);
-  const state = useRef({ x: 0, shake: 0, fov: 60 });
+  const state = useRef({
+    x: 0,
+    vx: 0,
+    lag: 0,
+    vlag: 0,
+    roll: 0,
+    fov: 62,
+    shake: 0,
+    punch: 0,
+    mps: 0,
+    accel: 0,
+    lastCarX: 0,
+    bust: 0,
+    time: 0,
+  });
 
-  useFrame((three, delta) => {
+  useFrame((three, rawDelta) => {
     const camera = three.camera as PerspectiveCamera;
     const s = state.current;
+    const dt = Math.min(rawDelta, 0.05);
+    s.time += dt;
     const carX = worldX(frame.displayX);
     const carZ = worldZ(frame.distance);
-    s.x = MathUtils.lerp(s.x, carX * 0.6, 1 - Math.exp(-delta * 5));
-    if (frame.hit && !reduced) s.shake = 1;
-    s.shake = Math.max(0, s.shake - delta / 0.15);
-    const jitter = s.shake * 0.22;
-    // Z follows exactly: any lag along the road reads as stutter at speed.
-    // Higher than a plain chase cam, so the road reads ~18 rows ahead and dodges can be
-    // planned; z follows exactly, since any lag along the road reads as stutter at speed.
-    camera.position.set(
-      s.x + (Math.random() - 0.5) * jitter,
-      5.4 + (Math.random() - 0.5) * jitter,
-      carZ + 11.5,
-    );
-    camera.lookAt(look.set(MathUtils.lerp(s.x, carX, 0.5), 0, carZ - 24));
-    // Wider with speed, and a kick on nitro: the main sense of pace.
-    const speedFov = 58 + Math.min(1, frame.speed / SPEED_MAX) * 6;
-    const targetFov = reduced ? 60 : speedFov + (frame.nitro ? 8 : 0);
-    s.fov = MathUtils.lerp(s.fov, targetFov, 1 - Math.exp(-delta * 4));
-    if (Math.abs(camera.fov - s.fov) > 0.01) {
-      camera.fov = s.fov;
+    const eff = frame.speed + (frame.nitro ? NITRO_BOOST : 0);
+    const mps = metresPerSecond(eff);
+
+    // Smoothed acceleration in m/s². A hit drops speed by 60% in one tick, which shows up
+    // here as a hard negative spike.
+    if (dt > 0) {
+      const raw = MathUtils.clamp((mps - s.mps) / dt, -400, 400);
+      s.accel = MathUtils.lerp(s.accel, raw, 1 - Math.exp(-dt / 0.12));
+    }
+    s.mps = mps;
+    const lateral = dt > 0 ? (carX - s.lastCarX) / dt : 0;
+    s.lastCarX = carX;
+
+    // Pushes in only a little on a hit: any further and the camera would pass the police.
+    const lagTarget = reduced
+      ? 0
+      : MathUtils.clamp(s.accel * 0.09, -1.3, 2.4) + (frame.nitro ? 1.6 : 0);
+    [s.lag, s.vlag] = spring(s.lag, s.vlag, lagTarget, 5.5, 0.55, dt);
+    [s.x, s.vx] = spring(s.x, s.vx, carX * 0.72, 5, 0.85, dt);
+    const rollTarget = reduced ? 0 : MathUtils.clamp(-lateral * 0.01, -0.045, 0.045);
+    s.roll = MathUtils.lerp(s.roll, rollTarget, 1 - Math.exp(-dt * 6));
+
+    if (frame.hit && !reduced) {
+      s.shake = 1;
+      s.punch = 1;
+    }
+    s.punch = Math.max(0, s.punch - dt / 0.5);
+    s.shake = Math.max(0, s.shake - dt / 0.4);
+    const speedNorm = Math.min(1, eff / (SPEED_MAX + NITRO_BOOST));
+    const rumble = reduced ? 0 : 0.012 + speedNorm * speedNorm * 0.05;
+    const hitAmp = s.shake * s.shake * 0.45;
+    const t = s.time;
+    const shakeX = (Math.sin(t * 31.7) + Math.sin(t * 17.3)) * 0.5 * (rumble + hitAmp);
+    const shakeY = (Math.sin(t * 27.1) + Math.sin(t * 41.9)) * 0.5 * (rumble * 0.7 + hitAmp);
+
+    s.bust = frame.busted && frame.status !== "idle" ? s.bust + dt : 0;
+    if (s.bust > 0) {
+      // Rise and swing a little to the side, like a helicopter shot, high enough to look down
+      // over the cruisers boxing the car in instead of cutting through them.
+      const k = 1 - Math.exp(-s.bust * 0.7);
+      const angle = k * 0.5;
+      const radius = CAM_BEHIND - k * 1.5;
+      camera.position.set(
+        carX + Math.sin(angle) * radius,
+        CAM_HEIGHT + k * 5,
+        carZ + Math.cos(angle) * radius,
+      );
+      camera.lookAt(look.set(carX, 0.9, carZ));
+    } else {
+      camera.position.set(
+        s.x + shakeX,
+        CAM_HEIGHT + shakeY - s.lag * 0.08,
+        carZ + CAM_BEHIND + s.lag,
+      );
+      camera.lookAt(look.set(MathUtils.lerp(s.x, carX, 0.55), LOOK_Y, carZ - LOOK_AHEAD));
+      camera.rotateZ(s.roll);
+    }
+
+    // Wider with speed and a hard kick on nitro: the main sense of pace.
+    const targetFov = reduced ? 62 : 60 + speedNorm * 10 + (frame.nitro ? 9 : 0);
+    s.fov = MathUtils.lerp(s.fov, targetFov, 1 - Math.exp(-dt * 3.5));
+    // A hit snaps the lens in for a moment, then lets it breathe back out.
+    const fov = s.fov - s.punch * s.punch * 7;
+    if (Math.abs(camera.fov - fov) > 0.01) {
+      camera.fov = fov;
       camera.updateProjectionMatrix();
     }
   });
@@ -128,6 +203,8 @@ function World() {
       <Obstacles />
       <PlayerCar />
       <Police />
+      <Sparks />
+      <SpeedLines />
       <CameraRig />
     </>
   );
@@ -172,7 +249,7 @@ export default function Scene({ className }: { className?: string }) {
       style={{ position: "absolute", inset: 0 }}
       dpr={[1, 2]}
       gl={{ antialias: true, powerPreference: "high-performance" }}
-      camera={{ fov: 60, near: 0.1, far: 700, position: [0, 5.4, 11.5] }}
+      camera={{ fov: 62, near: 0.3, far: 900, position: [0, 4.3, 10.5] }}
       onCreated={({ gl }) => {
         gl.domElement.addEventListener("webglcontextlost", () => setLost(true), { once: true });
       }}

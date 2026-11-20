@@ -49,6 +49,22 @@ body {
   opacity: 0.4;
 }
 
+/* Siren light bleeding in from the screen edges behind the car; the HUD sets its opacity
+   from the gap and flips the side colour with the light bar. */
+.hud-siren {
+  transition: background 60ms linear;
+}
+.hud-siren[data-side="red"] {
+  background:
+    radial-gradient(ellipse 55% 70% at 0% 100%, rgb(255 59 59 / 0.55), transparent 70%),
+    radial-gradient(ellipse 45% 60% at 100% 100%, rgb(59 107 255 / 0.25), transparent 70%);
+}
+.hud-siren[data-side="blue"] {
+  background:
+    radial-gradient(ellipse 45% 60% at 0% 100%, rgb(255 59 59 / 0.25), transparent 70%),
+    radial-gradient(ellipse 55% 70% at 100% 100%, rgb(59 107 255 / 0.55), transparent 70%);
+}
+
 /* HUD motion. Everything here is decorative and is skipped under reduced motion. */
 @media (prefers-reduced-motion: no-preference) {
   .hud-pulse {
