@@ -7,6 +7,7 @@ import {
   isSessionLive,
   minSharesFor,
   quoteBuy,
+  runCap,
   sendEr,
   sessionAuthority,
   subscribeEvents,
@@ -107,7 +108,7 @@ export const useMarkets = create<MarketsState>((set, get) => {
       const quoted = quoteBuy(
         { feeBps: config.feeBps, runnerFeeBps: config.runnerFeeBps, maxBuy: config.maxBuy },
         pool,
-        arena,
+        runCap(arena, market),
         side,
         amount,
       );

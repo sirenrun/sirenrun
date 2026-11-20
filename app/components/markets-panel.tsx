@@ -6,6 +6,7 @@ import {
   formatTokenAmount,
   isSessionLive,
   quoteBuy,
+  runCap,
   TOKEN_UNIT,
   type Arena,
   type Config,
@@ -83,7 +84,7 @@ function payout(config: Config | null, arena: Arena, view: MarketView, side: Sid
   const q = quoteBuy(
     { feeBps: config.feeBps, runnerFeeBps: config.runnerFeeBps, maxBuy: config.maxBuy },
     pool,
-    arena,
+    runCap(arena, view.index),
     side,
     amount,
   );
