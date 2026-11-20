@@ -9,6 +9,7 @@ import { rememberPositions, summarizeRun, type RunSummary } from "../lib/results
 import { useArena } from "../stores/arena";
 import { useBalance } from "../stores/balance";
 import { useUi } from "../stores/ui";
+import { SaveClip } from "./save-clip";
 
 const signed = (v: bigint) => `${v > 0n ? "+" : ""}${formatTokenAmount(v)}`;
 const toneOf = (v: bigint) =>
@@ -119,6 +120,7 @@ export function RunResults() {
         >
           Watch next
         </Link>
+        <SaveClip className="flex-1 rounded-md border border-white/25 py-2 text-center text-sm font-semibold hover:border-white/50" />
         <button type="button" className="btn-primary flex-1" onClick={() => setSummary(null)}>
           Close
         </button>
