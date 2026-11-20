@@ -5,6 +5,7 @@ import { useEffect } from "react";
 import { Hud } from "../game/Hud";
 import type { DemoOptions } from "../game/demo";
 import { useArena } from "../stores/arena";
+import { MarketsPanel } from "./markets-panel";
 
 const Scene = dynamic(() => import("../game/Scene"), {
   ssr: false,
@@ -34,13 +35,16 @@ export function DemoChannel() {
   useEffect(() => demo(optionsFromUrl()), [demo]);
 
   return (
-    <main className="relative h-[calc(100dvh-4rem)] w-full overflow-hidden">
-      <Scene className="absolute inset-0" />
-      {status !== null && status !== "idle" && <Hud channel={0} />}
-      <div className="pointer-events-none absolute left-4 top-4 flex items-center gap-2 text-sm sm:left-6">
-        <span className="rounded bg-black/50 px-2 py-1 font-semibold tracking-wide">DEMO</span>
-        <span className="rounded bg-black/50 px-2 py-1 text-muted">Bot driver, offline</span>
+    <main className="relative flex h-[calc(100dvh-4rem)] w-full overflow-hidden">
+      <div className="relative min-w-0 flex-1">
+        <Scene className="absolute inset-0" />
+        {status !== null && status !== "idle" && <Hud channel={0} />}
+        <div className="pointer-events-none absolute left-4 top-4 flex items-center gap-2 text-sm sm:left-6">
+          <span className="rounded bg-black/50 px-2 py-1 font-semibold tracking-wide">DEMO</span>
+          <span className="rounded bg-black/50 px-2 py-1 text-muted">Bot driver, offline</span>
+        </div>
       </div>
+      <MarketsPanel id={0} demo />
     </main>
   );
 }

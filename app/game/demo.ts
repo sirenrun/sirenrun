@@ -1,6 +1,14 @@
 import type { Arena, Market, MarketStatus } from "@sirenrun/sdk";
 import {
+  ACCEL,
+  GAP_MAX,
   LINES,
+  NITRO_BOOST,
+  NITRO_TICKS,
+  POLICE_ACCEL_DEN,
+  POLICE_ACCEL_NUM,
+  POLICE_BASE,
+  SPEED_MAX,
   SETTLE_TICKS,
   STAGING_TICKS,
   generateRow,
@@ -112,7 +120,18 @@ export class DemoRun {
   arena(): Arena {
     const markets: Market[] = LINES.map((line, i) => {
       const m = this.resolved[i] ?? { status: "open" as MarketStatus, tick: 0 };
-      return { line, status: m.status, yesR: RESERVE, noR: RESERVE, resolvedTick: m.tick };
+      if (m.status !== "open") {
+        return { line, status: m.status, yesR: RESERVE, noR: RESERVE, resolvedTick: m.tick };
+      }
+      // Price the open line at the demo's own odds: YES price = noR / (yesR + noR).
+      const ppm = BigInt(Math.round(demoOdds(this.sim, line) * 1_000_000));
+      return {
+        line,
+        status: m.status,
+        yesR: (2n * RESERVE * (1_000_000n - ppm)) / 1_000_000n,
+        noR: (2n * RESERVE * ppm) / 1_000_000n,
+        resolvedTick: m.tick,
+      };
     });
     return {
       id: 0,
@@ -136,4 +155,34 @@ export class DemoRun {
       resultsHead: 0,
     };
   }
+}
+
+/**
+ * Rough chance the run reaches `line`, used only to move the demo's prices so the attract loop
+ * and `/demo` look like a traded market. It plays the gap forward with no further hits (the car
+ * climbs back to cruise speed, the police keep accelerating, the gap stays under its cap),
+ * credits the nitro still in hand, squashes the lowest gap into a probability, and discounts
+ * for rows a player may still miss before the line.
+ */
+export function demoOdds(sim: SimState, line: number): number {
+  if (sim.t >= line) return 1;
+  if (sim.busted) return 0;
+  let gap = sim.policeGap;
+  let speed = sim.speed;
+  let lowest = gap;
+  for (let t = sim.t; t < line; t += 1) {
+    speed = Math.min(SPEED_MAX, speed + ACCEL);
+    gap = Math.min(
+      GAP_MAX,
+      gap + speed - (POLICE_BASE + (t * POLICE_ACCEL_NUM) / POLICE_ACCEL_DEN),
+    );
+    lowest = Math.min(lowest, gap);
+  }
+  // Unused nitro buys back ground when the police get close.
+  const reserve = sim.nitroLeft * NITRO_BOOST * NITRO_TICKS * 0.4;
+  const clean = 1 / (1 + Math.exp(-(lowest + reserve - 150) / 180));
+  // A miss costs more the later it comes (the gap is smaller then), so later lines carry more
+  // risk per remaining tick.
+  const misses = Math.exp(-((line - sim.t) / 1500) * (1 + line / 900));
+  return Math.min(0.97, Math.max(0.03, clean * misses));
 }
