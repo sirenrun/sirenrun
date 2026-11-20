@@ -9,7 +9,7 @@ import { tagged, u64, type BaseInstruction } from "./ix/instruction.ts";
 import { associatedTokenAddress } from "./pdas.ts";
 
 /**
- * The three SPL token instructions the scripts and the devnet faucet need, encoded by hand
+ * The SPL token instructions the scripts and the devnet faucet need, encoded by hand
  * instead of pulling in `@solana/spl-token`. Checked against the SPL crates' builders in
  * `packages/test-vectors/client.json`.
  */
@@ -20,6 +20,8 @@ export const MINT_SIZE = 82;
 const INITIALIZE_MINT2 = 20;
 const MINT_TO_CHECKED = 14;
 const CREATE_IDEMPOTENT = 1;
+const SET_AUTHORITY = 6;
+const AUTHORITY_MINT_TOKENS = 0;
 
 /** `InitializeMint2` with no freeze authority. The mint account must already exist (82 bytes, owned by the token program). */
 export function initializeMintIx(a: {
@@ -105,6 +107,30 @@ export function mintToIx(a: {
         { pubkey: a.authority, isSigner: true, isWritable: false },
       ],
       data,
+    }),
+  );
+}
+
+/** Hands the mint authority to `next` (e.g. a dedicated faucet key), signed by `current`. */
+export function setMintAuthorityIx(a: {
+  mint: PublicKey;
+  current: PublicKey;
+  next: PublicKey;
+}): BaseInstruction {
+  const data = new Uint8Array(35);
+  data[0] = SET_AUTHORITY;
+  data[1] = AUTHORITY_MINT_TOKENS;
+  data[2] = 1;
+  data.set(a.next.toBytes(), 3);
+  return tagged(
+    "base",
+    new TransactionInstruction({
+      programId: TOKEN_PROGRAM_ID,
+      keys: [
+        { pubkey: a.mint, isSigner: false, isWritable: true },
+        { pubkey: a.current, isSigner: true, isWritable: false },
+      ],
+      data: Buffer.from(data),
     }),
   );
 }

@@ -20,6 +20,12 @@ export function adminKeypair(): Keypair {
   return loadKeypair(path);
 }
 
+/** Holds the tUSDC mint authority: the faucet key once `set-faucet` ran, else the admin. */
+export function mintAuthority(): Keypair {
+  const path = process.env.SIRENRUN_FAUCET_KEYPAIR;
+  return path === undefined ? adminKeypair() : loadKeypair(path);
+}
+
 export function connections(): Connections {
   const cluster = process.env.SIRENRUN_CLUSTER === "local" ? "local" : "devnet";
   const region = process.env.NEXT_PUBLIC_ER_REGION ?? "as";

@@ -4,6 +4,9 @@
   --color-bg: #07060f;
   --color-text: #edeaf7;
   --color-muted: #8c86a6;
+  --color-neon-pink: #ff2e88;
+  --color-neon-cyan: #22e1ff;
+  --color-amber: #ffb020;
   --color-police-red: #ff3b3b;
   --color-police-blue: #3b6bff;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
@@ -16,4 +19,17 @@ html {
 body {
   background-color: var(--color-bg);
   color: var(--color-text);
+}
+
+/* Wallet adapter button in the SIRENRUN palette. */
+.wallet-adapter-button-trigger {
+  background-color: var(--color-neon-pink);
+  height: 2.25rem;
+  padding: 0 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.875rem;
+}
+
+.wallet-adapter-button-trigger:not([disabled]):hover {
+  background-color: #e0267a;
 }

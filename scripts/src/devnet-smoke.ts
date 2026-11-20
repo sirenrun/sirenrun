@@ -42,7 +42,7 @@ import {
   type Side,
 } from "@sirenrun/sdk";
 import { generateRow } from "@sirenrun/sim";
-import { adminKeypair, connections, log, mintFromEnv, sleep } from "./env.ts";
+import { adminKeypair, connections, log, mintAuthority, mintFromEnv, sleep } from "./env.ts";
 
 process.on("unhandledRejection", (e) => {
   if (e instanceof TransactionFailed) console.error("FAILED", e.errorName ?? e.message, e.logs);
@@ -56,6 +56,7 @@ const FUNDS = 100n * TOKEN_UNIT;
 const SOL_PER_BOT = 0.03 * LAMPORTS_PER_SOL;
 
 const admin = adminKeypair();
+const minter = mintAuthority();
 const mint = mintFromEnv();
 const { base, er, endpoints } = connections();
 const tusdc = (v: bigint) => `${formatTokenAmount(v)} tUSDC`;
@@ -86,15 +87,20 @@ async function bot(name: string): Promise<{ wallet: Keypair; session: Session }>
   const signature = await base.sendRawTransaction(fund.serialize());
   await base.confirmTransaction({ signature, blockhash, lastValidBlockHeight }, "confirmed");
 
-  await sendBase(base, admin, [
-    createAtaIx({ payer: admin.publicKey, owner: wallet.publicKey, mint }),
-    mintToIx({
-      mint,
-      destination: associatedTokenAddress(wallet.publicKey, mint),
-      authority: admin.publicKey,
-      amount: FUNDS,
-    }),
-  ]);
+  await sendBase(
+    base,
+    admin,
+    [
+      createAtaIx({ payer: admin.publicKey, owner: wallet.publicKey, mint }),
+      mintToIx({
+        mint,
+        destination: associatedTokenAddress(wallet.publicKey, mint),
+        authority: minter.publicKey,
+        amount: FUNDS,
+      }),
+    ],
+    { extraSigners: [minter] },
+  );
   await sendBase(base, wallet, [
     initBalanceIx({ owner: wallet.publicKey }),
     depositIx({ owner: wallet.publicKey, mint, amount: FUNDS }),
