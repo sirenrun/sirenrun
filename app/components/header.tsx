@@ -22,6 +22,7 @@ function useWalletSync() {
   const watch = useBalance((s) => s.watch);
   const reset = useBalance((s) => s.reset);
   const clearSession = useSession((s) => s.clear);
+  const restoreSession = useSession((s) => s.restore);
   const key = publicKey?.toBase58();
   useEffect(() => {
     if (publicKey === null) {
@@ -29,10 +30,11 @@ function useWalletSync() {
       clearSession();
       return;
     }
+    restoreSession(publicKey);
     return watch(publicKey);
     // `key` identifies the wallet; the PublicKey object can change identity between renders.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [key, watch, reset, clearSession]);
+  }, [key, watch, reset, clearSession, restoreSession]);
 }
 
 /**
@@ -108,6 +110,7 @@ export function Header() {
             width={140}
             height={40}
             unoptimized
+            priority
             className="h-8 w-auto"
           />
         </Link>

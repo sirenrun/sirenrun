@@ -47,7 +47,7 @@ export function Onboarding() {
   const { walletTokens, location, game, loaded } = useBalance();
   const { session, pending, error: sessionError, start } = useSession();
   const funds = useFunds();
-  const { onboardingDismissed, dismissOnboarding } = useUi();
+  const { onboardingDismissed, dismissOnboarding, drawerOpen } = useUi();
   const now = useNow(15_000) / 1000;
 
   const input = {
@@ -63,8 +63,17 @@ export function Onboarding() {
   // Only guide a connected wallet: spectators can watch without one, and the header's wallet
   // button covers connecting. Never in server HTML, and only once balances are known.
   const reconnecting = connecting || (!connected && wallet !== null);
+  // Also stay closed while the wallet drawer is open or money is moving: a deposit briefly
+  // moves the balance back to Solana, which would otherwise re-open the deposit step.
   const open =
-    mounted && connected && !onboardingDismissed && next !== null && !reconnecting && loaded;
+    mounted &&
+    connected &&
+    !onboardingDismissed &&
+    next !== null &&
+    !reconnecting &&
+    loaded &&
+    !drawerOpen &&
+    !funds.busy;
   if (!open) return null;
 
   const action = (step: OnboardingStep) => {

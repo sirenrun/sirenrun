@@ -159,8 +159,10 @@ sequenceDiagram
 - Wallets come from Wallet Standard through `@solana/wallet-adapter-react`; no adapter
   list is bundled. Transactions go through the SDK (`sendBase` / `sendEr`), with the
   adapter's `signTransaction` as the payer.
-- `stores/session.ts` (zustand) keeps the session keypair in memory only; a reload asks
-  for one new signature.
+- `stores/session.ts` (zustand) keeps the session keypair for the browser tab
+  (`sessionStorage`), so a reload or typed URL does not cost another signature; a closed tab
+  forgets it. The key can only sign game actions (drive, trade, claim, start a run,
+  undelegate) for its wallet, never withdrawals, and expires after an hour.
 - `stores/balance.ts` follows the wallet's tUSDC and its game balance, reading the Balance
   from the base layer or the ER depending on who owns the PDA on the base layer.
 - `app/api/faucet` is the only server route (devnet test tokens, see [devnet.md](devnet.md)).

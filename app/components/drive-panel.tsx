@@ -28,6 +28,9 @@ export function useIsDriver(): boolean {
 export function DriverControls() {
   const isDriver = useIsDriver();
   const { steer, nitro } = useDrive();
+  // The key hint shows during the countdown and the first seconds of the run, then gets out
+  // of the way of the road.
+  const showHint = useArena((s) => s.status === "staging" || (s.latest?.sim.t ?? 0) < 60);
 
   useEffect(() => {
     if (!isDriver) return;
@@ -70,7 +73,9 @@ export function DriverControls() {
       >
         NITRO
       </button>
-      <p className="pointer-events-none absolute bottom-24 left-1/2 hidden -translate-x-1/2 rounded bg-black/50 px-3 py-1 text-sm text-muted [@media(pointer:fine)]:block">
+      <p
+        className={`pointer-events-none absolute bottom-24 left-1/2 hidden -translate-x-1/2 rounded bg-black/50 px-3 py-1 text-sm text-muted transition-opacity duration-300 [@media(pointer:fine)]:block ${showHint ? "opacity-100" : "opacity-0"}`}
+      >
         ← → to change lanes · Space for nitro
       </p>
     </>
