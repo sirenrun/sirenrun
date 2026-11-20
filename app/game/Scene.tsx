@@ -7,6 +7,7 @@ import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { MathUtils, NeutralToneMapping, Vector3, type PerspectiveCamera } from "three";
 import { useArena } from "../stores/arena";
 import { PlayerCar, Police } from "./Cars";
+import { ClipCapture } from "./ClipCapture";
 import { laneMotion, prefersReducedMotion } from "./controls";
 import { frame, resetFrame } from "./frame";
 import { Sparks, SpeedLines } from "./Effects";
@@ -247,13 +248,18 @@ function NoWebgl({ lost }: { lost: boolean }) {
   );
 }
 
-/** `paused` keeps the scene mounted but stops rendering, e.g. while it is scrolled away. */
+/**
+ * `paused` keeps the scene mounted but stops rendering, e.g. while it is scrolled away.
+ * `record` keeps the last seconds of each run ready to save as a clip.
+ */
 export default function Scene({
   className,
   paused = false,
+  record = false,
 }: {
   className?: string;
   paused?: boolean;
+  record?: boolean;
 }) {
   useEffect(() => resetFrame(), []);
   const [available] = useState(webglAvailable);
@@ -287,6 +293,7 @@ export default function Scene({
       />
       <FrameDriver />
       <World />
+      {record && <ClipCapture />}
       {post && <Post />}
     </Canvas>
   );
