@@ -31,7 +31,7 @@ function overlay(): ClipOverlay | null {
 
 /**
  * Records the run while one is on screen (live and the few settled seconds after), and keeps
- * the final 10 to 20 seconds as a clip when the channel goes idle. Mounted inside the canvas so
+ * the final 10 to 20 seconds as a clip when the run ends. Mounted inside the canvas so
  * the frame can be copied right after it renders.
  */
 export function ClipCapture() {
@@ -41,6 +41,9 @@ export function ClipCapture() {
     if (!ClipRecorder.supported()) return;
     let recorder: ClipRecorder | null = null;
     let stopDrawing: (() => void) | null = null;
+    // The run's last clock reading, for the file name: by the time the clip is kept the next
+    // run may have reset the frame.
+    let finalTick = 0;
 
     const begin = () => {
       if (recorder !== null) return;
@@ -49,7 +52,9 @@ export function ClipCapture() {
       useClip.getState().setRecorder(r);
       stopDrawing = addAfterEffect(() => {
         const o = overlay();
-        if (o !== null) r.draw(o, performance.now());
+        if (o === null) return;
+        finalTick = o.tick;
+        r.draw(o, performance.now());
       });
     };
 
@@ -60,7 +65,7 @@ export function ClipCapture() {
       recorder = null;
       useClip.getState().setRecorder(null);
       if (r === null) return;
-      const name = clipFileName(frame.tick, TICK_MS);
+      const name = clipFileName(finalTick, TICK_MS);
       const pending = keep ? r.take() : null;
       if (pending === null) {
         r.dispose();
@@ -71,8 +76,9 @@ export function ClipCapture() {
 
     const onStatus = (status: string | null) => {
       if (status === "live" || status === "settled") begin();
-      else if (status === "idle") end(true);
-      else if (status === "staging") end(false);
+      // Leaving a run keeps its clip: the chain goes to idle, the offline demo straight to the
+      // next staging.
+      else if (status === "idle" || status === "staging") end(true);
     };
     onStatus(useArena.getState().status);
     const unsubscribe = useArena.subscribe((s, prev) => {
