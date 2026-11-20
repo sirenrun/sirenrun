@@ -76,9 +76,12 @@ export function clipFileName(tick: number, tickMs: number): string {
   return `sirenrun-${m}m${s}s.webm`;
 }
 
-/** The first WebM type this browser can record, VP9 preferred. */
+/**
+ * The first WebM type this browser can record, VP8 preferred: VP9 software encoding costs
+ * several times the CPU, and two encoders run during every run.
+ */
 export function pickMimeType(supported: (type: string) => boolean): string | null {
-  for (const type of ["video/webm;codecs=vp9", "video/webm;codecs=vp8", "video/webm"]) {
+  for (const type of ["video/webm;codecs=vp8", "video/webm;codecs=vp9", "video/webm"]) {
     if (supported(type)) return type;
   }
   return null;

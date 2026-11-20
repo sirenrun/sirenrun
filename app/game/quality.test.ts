@@ -2,10 +2,11 @@ import { describe, expect, it } from "vitest";
 import { initialQuality, QUALITY, stepQuality } from "./quality";
 
 describe("render quality", () => {
-  it("starts no sharper than the screen", () => {
-    expect(QUALITY[initialQuality(3)]?.dpr).toBe(2);
-    expect(QUALITY[initialQuality(2)]?.dpr).toBe(2);
+  it("starts no sharper than the screen, and never above 1.5", () => {
+    expect(QUALITY[initialQuality(3)]?.dpr).toBe(1.5);
+    expect(QUALITY[initialQuality(2)]?.dpr).toBe(1.5);
     expect(QUALITY[initialQuality(1.5)]?.dpr).toBe(1.5);
+    expect(QUALITY[initialQuality(1.25)]?.dpr).toBe(1.25);
     expect(QUALITY[initialQuality(1)]?.dpr).toBe(1);
     expect(QUALITY[initialQuality(0.5)]?.dpr).toBe(1);
   });
@@ -24,6 +25,11 @@ describe("render quality", () => {
   it("never climbs above the screen's pixel ratio", () => {
     const start = initialQuality(1);
     expect(stepQuality(start, "incline", 1)).toBe(start);
-    expect(stepQuality(QUALITY.length - 1, "incline", 1)).toBe(start);
+  });
+
+  it("keeps post off once it has been dropped", () => {
+    const lowest = QUALITY.length - 1;
+    expect(stepQuality(lowest, "incline", 2)).toBe(lowest);
+    expect(stepQuality(lowest - 1, "incline", 2)).toBe(lowest - 2);
   });
 });

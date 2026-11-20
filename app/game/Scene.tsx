@@ -20,6 +20,7 @@ import { FOG_FAR, FOG_NEAR, NEON } from "./palette";
 import { Road } from "./Road";
 import { Roadside } from "./Roadside";
 import { Sky } from "./Sky";
+import "./three-console";
 import { webglAvailable } from "./webgl";
 import { spring } from "./spring";
 import { metresPerSecond, worldX, worldZ } from "./world";
@@ -293,7 +294,8 @@ export default function Scene({
       />
       <FrameDriver />
       <World />
-      {record && <ClipCapture />}
+      {/* A device that had to drop post cannot spare the CPU for two video encoders. */}
+      {record && post && <ClipCapture />}
       {post && <Post />}
     </Canvas>
   );

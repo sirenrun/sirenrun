@@ -82,8 +82,8 @@ describe("clip files", () => {
   });
 
   it("prefers VP9, falls back, or gives up", () => {
-    expect(pickMimeType(() => true)).toBe("video/webm;codecs=vp9");
-    expect(pickMimeType((t) => t.includes("vp8"))).toBe("video/webm;codecs=vp8");
+    expect(pickMimeType(() => true)).toBe("video/webm;codecs=vp8");
+    expect(pickMimeType((t) => t.includes("vp9"))).toBe("video/webm;codecs=vp9");
     expect(pickMimeType(() => false)).toBeNull();
   });
 });

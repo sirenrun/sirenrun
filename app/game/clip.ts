@@ -13,9 +13,12 @@ export interface ClipOverlay {
   lines: string[];
 }
 
-const MAX_WIDTH = 1280;
-const FPS = 30;
-const BITRATE = 5_000_000;
+// Two encoders run at once (see ClipSchedule), on the CPU in most browsers, next to the game.
+// 960 px at 24 fps and 2.5 Mbps keeps that cheap enough for a normal laptop and still reads
+// fine as a shared clip.
+const MAX_WIDTH = 960;
+const FPS = 24;
+const BITRATE = 2_500_000;
 
 function record(stream: MediaStream, mime: string, now: number): Recording {
   const recorder = new MediaRecorder(stream, { mimeType: mime, videoBitsPerSecond: BITRATE });
