@@ -35,6 +35,23 @@ SIRENRUN_MINT=<mint> pnpm --filter @sirenrun/scripts init-devnet
 SIRENRUN_MINT=<mint> pnpm --filter @sirenrun/scripts smoke
 ```
 
+### Faucet key
+
+The app's `/api/faucet` route mints test USDC, so it holds a key on the server. That key is
+a dedicated faucet key, never the admin key: after `set-faucet` it is the tUSDC mint
+authority and holds about 1 SOL, and nothing else.
+
+```bash
+solana-keygen new -o ~/.config/solana/sirenrun-faucet.json
+SIRENRUN_MINT=<mint> SIRENRUN_FAUCET_KEYPAIR=~/.config/solana/sirenrun-faucet.json \
+  pnpm --filter @sirenrun/scripts set-faucet
+```
+
+Then set `FAUCET_SECRET_KEY` on the app server (`app/.env.local` locally, the Vercel env
+in production) to the contents of that file. Scripts that mint (`init-devnet`, `smoke`)
+need `SIRENRUN_FAUCET_KEYPAIR` from then on. Each claim gives 100 tUSDC, plus 0.02 SOL when
+the wallet holds less than 0.01 SOL, once per wallet per hour (in memory).
+
 `init-devnet` is idempotent: it creates Config, funds the house balance with 10,000 tUSDC
 and delegates it, and creates and delegates arenas 0 to 2, skipping whatever exists.
 

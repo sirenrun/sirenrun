@@ -152,4 +152,5 @@ export {
   fetchTokenBalance,
   initializeMintIx,
   mintToIx,
+  setMintAuthorityIx,
 } from "./token.ts";

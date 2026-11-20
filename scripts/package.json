@@ -7,7 +7,8 @@
     "typecheck": "tsc --noEmit",
     "create-mint": "node src/create-mint.ts",
     "init-devnet": "node src/init-devnet.ts",
-    "smoke": "node src/devnet-smoke.ts"
+    "smoke": "node src/devnet-smoke.ts",
+    "set-faucet": "node src/set-faucet.ts"
   },
   "dependencies": {
     "@sirenrun/sdk": "workspace:*",

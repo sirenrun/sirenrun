@@ -10,6 +10,9 @@ allowBuilds:
 catalog:
   "@anchor-lang/core": 1.2.2
   "@magicblock-labs/gum-sdk": 3.0.10
+  "@solana/wallet-adapter-base": 0.9.28
+  "@solana/wallet-adapter-react": 0.15.40
+  "@solana/wallet-adapter-react-ui": 0.9.40
   "@solana/web3.js": 1.99.0
   "@tailwindcss/postcss": 4.3.5
   "@types/node": 24.19.2
@@ -26,3 +29,4 @@ catalog:
   typescript: 6.0.3
   typescript-eslint: 8.73.0
   vitest: 5.1.1
+  zustand: 5.0.16

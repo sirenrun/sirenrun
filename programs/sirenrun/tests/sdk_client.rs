@@ -701,7 +701,9 @@ fn arena_bytes(arena: &Arena) -> Vec<u8> {
 /// SPL token and ATA instructions the scripts and faucet use, built by the SPL crates.
 fn token_instructions() -> Vec<Value> {
     use anchor_spl::associated_token::spl_associated_token_account::instruction::create_associated_token_account_idempotent;
-    use anchor_spl::token::spl_token::instruction::{initialize_mint2, mint_to_checked};
+    use anchor_spl::token::spl_token::instruction::{
+        initialize_mint2, mint_to_checked, set_authority, AuthorityType,
+    };
 
     let (admin, user, mint) = (key(ADMIN), key(USER), key(MINT));
     let token_case =
@@ -741,6 +743,19 @@ fn token_instructions() -> Vec<Value> {
                 "decimals": 6,
             }),
             mint_to_checked(&token::ID, &mint, &ata, &admin, &[], 100_000_000, 6).expect("mint_to"),
+        ),
+        token_case(
+            "setMintAuthority",
+            json!({ "mint": mint.to_string(), "current": admin.to_string(), "next": key(SESSION_SIGNER).to_string() }),
+            set_authority(
+                &token::ID,
+                &mint,
+                Some(&key(SESSION_SIGNER)),
+                AuthorityType::MintTokens,
+                &admin,
+                &[],
+            )
+            .expect("set_authority"),
         ),
     ]
 }

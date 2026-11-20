@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export default function Home() {
   return (
-    <main className="flex min-h-dvh flex-col items-center justify-center gap-10 px-6 text-center">
+    <main className="flex min-h-[calc(100dvh-4rem)] flex-col items-center justify-center gap-10 px-6 text-center">
       <Image
         src="/logo.svg"
         alt="SIRENRUN, ride or bust"

@@ -22,12 +22,13 @@ import {
   type BaseInstruction,
 } from "@sirenrun/sdk";
 import { ARENAS } from "@sirenrun/sim";
-import { adminKeypair, connections, log, mintFromEnv } from "./env.ts";
+import { adminKeypair, connections, log, mintAuthority, mintFromEnv } from "./env.ts";
 
 /** Starting house funds: covers the 3 × 50 tUSDC pools of many concurrent runs. */
 const HOUSE_DEPOSIT = 10_000n * TOKEN_UNIT;
 
 const admin = adminKeypair();
+const minter = mintAuthority();
 const mint = mintFromEnv();
 const { base, er, endpoints } = connections();
 log("cluster", endpoints.cluster, "ER", endpoints.erRpc, "validator", endpoints.validator);
@@ -71,14 +72,14 @@ if (!(await isDelegated(base, house))) {
       mintToIx({
         mint,
         destination: associatedTokenAddress(admin.publicKey, mint),
-        authority: admin.publicKey,
+        authority: minter.publicKey,
         amount,
       }),
       depositIx({ owner: admin.publicKey, mint, amount }),
     );
   }
   steps.push(delegateBalanceIx({ owner: admin.publicKey, validator: endpoints.validator }));
-  await sendBase(base, admin, steps);
+  await sendBase(base, admin, steps, { extraSigners: [minter] });
   await waitForDelegation(base, er, house, { timeoutMs: 60_000 });
   log("house balance funded and delegated");
 } else {

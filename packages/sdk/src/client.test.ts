@@ -9,6 +9,7 @@ import {
   createSessionIx,
   initializeMintIx,
   mintToIx,
+  setMintAuthorityIx,
   decodeArena,
   decodeSessionToken,
   delegateArenaIx,
@@ -137,6 +138,8 @@ const builders: Record<string, (a: Args) => LayerInstruction<"base" | "er">> = {
       amount: big(a.amount),
       decimals: num(a.decimals),
     }),
+  setMintAuthority: (a) =>
+    setMintAuthorityIx({ mint: key(a.mint), current: key(a.current), next: key(a.next) }),
   revokeSession: (a) =>
     revokeSessionIx({ authority: key(a.authority), sessionSigner: key(a.sessionSigner) }),
 };

@@ -1410,6 +1410,29 @@
       "layer": "base",
       "name": "mintTo",
       "programId": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+    },
+    {
+      "args": {
+        "current": "4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi",
+        "mint": "US517G5965aydkZ46HS38QLi7UQiSojurfbQfKCELFx",
+        "next": "LbUiWL3xVV8hTFYBVdbTNrpDo41NKS6o3LHHuDzjfcY"
+      },
+      "data": "0600010505050505050505050505050505050505050505050505050505050505050505",
+      "keys": [
+        {
+          "isSigner": false,
+          "isWritable": true,
+          "pubkey": "US517G5965aydkZ46HS38QLi7UQiSojurfbQfKCELFx"
+        },
+        {
+          "isSigner": true,
+          "isWritable": false,
+          "pubkey": "4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"
+        }
+      ],
+      "layer": "base",
+      "name": "setMintAuthority",
+      "programId": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
     }
   ],
   "sessionToken": {
