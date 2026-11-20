@@ -4,6 +4,7 @@ import { GAP_MAX, INVULN_TICKS, LINES, NITRO_BOOST, NITRO_CHARGES } from "@siren
 import { useEffect, useRef, useState } from "react";
 import type { Market } from "@sirenrun/sdk";
 import { shortAddress } from "../lib/results";
+import { prefersReducedMotion } from "./controls";
 import { useArena } from "../stores/arena";
 import { frame } from "./frame";
 import {
@@ -58,6 +59,7 @@ export function Hud({ channel }: { channel: number }) {
     let lastNonce = -1;
     let stamped = false;
     let lastLevel = "";
+    const reduced = prefersReducedMotion();
 
     const loop = () => {
       raf = requestAnimationFrame(loop);
@@ -99,12 +101,13 @@ export function Hud({ channel }: { channel: number }) {
       const running = latest.status === "live" && !latest.sim.busted;
       if (sirenRef.current) {
         const close = running || latest.sim.busted ? 1 - Math.max(0, gap) / GAP_MAX : 0;
-        const red = Math.sin((performance.now() / 1000) * 14) > 0;
+        // Under reduced motion the glow stays on one colour instead of strobing.
+        const red = reduced || Math.sin((performance.now() / 1000) * 14) > 0;
         sirenRef.current.style.opacity = String(Math.min(1, close * close * 1.1));
         sirenRef.current.dataset.side = red ? "red" : "blue";
       }
       if (hitRef.current) {
-        const k = running ? Math.max(0, frame.invuln - (INVULN_TICKS - 4)) / 4 : 0;
+        const k = running && !reduced ? Math.max(0, frame.invuln - (INVULN_TICKS - 4)) / 4 : 0;
         hitRef.current.style.opacity = String(k * k * 0.45);
       }
 
@@ -268,7 +271,7 @@ export function Hud({ channel }: { channel: number }) {
       {/* Bottom right: speed */}
       <div
         ref={speedBoxRef}
-        className="group absolute bottom-12 right-4 text-right sm:right-6"
+        className="group absolute bottom-28 right-4 text-right sm:bottom-12 sm:right-6"
         aria-hidden
       >
         <span
