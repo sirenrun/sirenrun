@@ -21,6 +21,10 @@ export interface Config {
   bond: bigint;
   liquidity: bigint;
   maxBuy: bigint;
+  /** Charged to the driver each time a nitro charge fires. */
+  nitroFee: bigint;
+  /** Opening RIDE price per line, in bps. */
+  openBps: number[];
   bump: number;
   vaultBump: number;
 }
@@ -66,6 +70,15 @@ export interface Market {
   yesR: bigint;
   noR: bigint;
   resolvedTick: number;
+  /** Tokens the house kept out of the pool at an uneven opening. */
+  houseYes: bigint;
+  houseNo: bigint;
+  /** What BUST holders would win here on a bust; shares the cap with the other open lines. */
+  noProfit: bigint;
+  /** Total net cost of RIDE buys, which share a forfeited bond on a bust. */
+  rideCost: bigint;
+  /** Share of a losing RIDE position's cost refunded from the bond, set on bust. */
+  rideBackBps: number;
 }
 
 export interface RunResult {
@@ -73,6 +86,7 @@ export interface RunResult {
   /** Unpacked from the 2-bits-per-market byte onchain. */
   outcomes: MarketStatus[];
   resolvedTicks: number[];
+  rideBackBps: number[];
 }
 
 export interface Arena {
@@ -86,7 +100,6 @@ export interface Arena {
   seed: bigint;
   sim: RunSim;
   bond: bigint;
-  noProfitOi: bigint;
   runnerFees: bigint;
   markets: Market[];
   results: RunResult[];
@@ -110,6 +123,8 @@ interface RawConfig {
   bond: Big;
   liquidity: Big;
   max_buy: Big;
+  nitro_fee: Big;
+  open_bps: number[];
   bump: number;
   vault_bump: number;
 }
@@ -153,12 +168,18 @@ interface RawMarket {
   yes_r: Big;
   no_r: Big;
   resolved_tick: number;
+  house_yes: Big;
+  house_no: Big;
+  no_profit: Big;
+  ride_cost: Big;
+  ride_back_bps: number;
 }
 
 interface RawResult {
   nonce: number;
   outcomes: number;
   resolved_ticks: number[];
+  ride_back_bps: number[];
 }
 
 interface RawArena {
@@ -172,7 +193,6 @@ interface RawArena {
   seed: Big;
   sim: RawSim;
   bond: Big;
-  no_profit_oi: Big;
   runner_fees: Big;
   markets: RawMarket[];
   results: RawResult[];
@@ -228,6 +248,8 @@ export function decodeConfig(data: Buffer): Config {
     bond: big(raw.bond),
     liquidity: big(raw.liquidity),
     maxBuy: big(raw.max_buy),
+    nitroFee: big(raw.nitro_fee),
+    openBps: [...raw.open_bps],
     bump: raw.bump,
     vaultBump: raw.vault_bump,
   };
@@ -279,7 +301,6 @@ export function decodeArena(data: Buffer): Arena {
       nitroPressed: s.nitro_pressed,
     },
     bond: big(raw.bond),
-    noProfitOi: big(raw.no_profit_oi),
     runnerFees: big(raw.runner_fees),
     markets: raw.markets.map((m) => ({
       line: m.line,
@@ -287,11 +308,17 @@ export function decodeArena(data: Buffer): Arena {
       yesR: big(m.yes_r),
       noR: big(m.no_r),
       resolvedTick: m.resolved_tick,
+      houseYes: big(m.house_yes),
+      houseNo: big(m.house_no),
+      noProfit: big(m.no_profit),
+      rideCost: big(m.ride_cost),
+      rideBackBps: m.ride_back_bps,
     })),
     results: raw.results.map((r) => ({
       nonce: r.nonce,
       outcomes: raw.markets.map((_, i) => outcomeAt(r.outcomes, i)),
       resolvedTicks: [...r.resolved_ticks],
+      rideBackBps: [...r.ride_back_bps],
     })),
     resultsHead: raw.results_head,
   };

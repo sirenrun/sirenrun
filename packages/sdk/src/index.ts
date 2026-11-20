@@ -74,6 +74,7 @@ export {
   priceOf,
   priceYes,
   quoteBuy,
+  runCap,
   type BuyTerms,
   type Fill,
   type Pool,

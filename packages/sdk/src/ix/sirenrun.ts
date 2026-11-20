@@ -31,6 +31,10 @@ export interface ConfigParams {
   bond: bigint;
   liquidity: bigint;
   maxBuy: bigint;
+  /** Charged to the driver each time a nitro charge fires. */
+  nitroFee: bigint;
+  /** Opening RIDE price per line, in bps, each strictly between 0 and 10_000. */
+  openBps: [number, number, number];
 }
 
 function configArgs(p: ConfigParams) {
@@ -43,6 +47,8 @@ function configArgs(p: ConfigParams) {
       bond: u64(p.bond),
       liquidity: u64(p.liquidity),
       max_buy: u64(p.maxBuy),
+      nitro_fee: u64(p.nitroFee),
+      open_bps: [...p.openBps],
     },
   };
 }

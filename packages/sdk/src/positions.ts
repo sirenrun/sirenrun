@@ -9,29 +9,39 @@ export type ClaimError =
   | "ResultExpired"
   | "HouseInsufficient";
 
+/**
+ * `rideBack`: a losing RIDE position on a line a bust closed, refunded part of its cost out
+ * of the driver's forfeited bond.
+ */
 export type ClaimPreview =
-  { ok: true; paid: bigint; kind: "win" | "loss" | "refund" } | { ok: false; error: ClaimError };
+  | { ok: true; paid: bigint; kind: "win" | "loss" | "refund" | "rideBack" }
+  | { ok: false; error: ClaimError };
 
-/** Outcome and resolution tick of `market` in run `nonce`, as `Arena::outcome` finds it. */
+/** Outcome, resolution tick and RIDE refund share, as `Arena::outcome` finds them. */
 function outcome(
   arena: Arena,
   nonce: number,
   market: number,
-): { status: MarketStatus; tick: number } | ClaimError {
+): { status: MarketStatus; tick: number; rideBackBps: number } | ClaimError {
   if (market >= arena.markets.length) return "MarketClosed";
   if (nonce === arena.nonce) {
     const m = arena.markets[market];
     if (m === undefined || m.status === "open") return "NotResolved";
-    return { status: m.status, tick: m.resolvedTick };
+    return { status: m.status, tick: m.resolvedTick, rideBackBps: m.rideBackBps };
   }
   const result = arena.results.find((r) => r.nonce === nonce);
   if (result === undefined) return "ResultExpired";
-  return { status: result.outcomes[market] ?? "open", tick: result.resolvedTicks[market] ?? 0 };
+  return {
+    status: result.outcomes[market] ?? "open",
+    tick: result.resolvedTicks[market] ?? 0,
+    rideBackBps: result.rideBackBps[market] ?? 0,
+  };
 }
 
 /**
  * What `claim` would pay for `entry`, using the same rules as `Arena::claim`: VOID markets
- * and buys inside `COOLDOWN_TICKS` of the resolution are refunded at cost by the house.
+ * and buys inside `COOLDOWN_TICKS` of the resolution are refunded at cost by the house, and
+ * a losing RIDE position on a line a bust closed gets `rideBackBps` of its cost back.
  * Pass `houseAvailable` to predict `HouseInsufficient` for refunds.
  */
 export function previewClaim(
@@ -50,9 +60,15 @@ export function previewClaim(
     }
     return { ok: true, paid: entry.cost, kind: "refund" };
   }
-  return found.status === entry.side
-    ? { ok: true, paid: entry.shares, kind: "win" }
-    : { ok: true, paid: 0n, kind: "loss" };
+  if (found.status === entry.side) return { ok: true, paid: entry.shares, kind: "win" };
+  if (entry.side === "yes" && found.rideBackBps > 0) {
+    const back = (entry.cost * BigInt(found.rideBackBps)) / 10_000n;
+    if (houseAvailable !== undefined && houseAvailable < back) {
+      return { ok: false, error: "HouseInsufficient" };
+    }
+    return { ok: true, paid: back, kind: "rideBack" };
+  }
+  return { ok: true, paid: 0n, kind: "loss" };
 }
 
 export interface ClaimableEntry {

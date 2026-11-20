@@ -25,6 +25,7 @@ import {
   minSharesFor,
   mintToIx,
   quoteBuy,
+  runCap,
   revokeSessionIx,
   sendBase,
   sendEr,
@@ -189,7 +190,7 @@ if (!arena.seedReady) throw new Error("seed never arrived; the run aborted");
 async function trade(market: number, side: Side, amount: bigint) {
   const pool = arena.markets[market];
   if (pool === undefined) throw new Error(`no market ${market}`);
-  const quote = quoteBuy(buyTerms, pool, arena, side, amount);
+  const quote = quoteBuy(buyTerms, pool, runCap(arena, market), side, amount);
   if (!quote.ok) throw new Error(`quote failed: ${quote.error}`);
   await sendEr(er, trader.session.keypair, [
     buyIx({
