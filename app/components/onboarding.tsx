@@ -60,11 +60,11 @@ export function Onboarding() {
   const done = onboardingDone(input);
   const next = nextOnboardingStep(input);
 
-  // Show after mount (never in server HTML), not while a remembered wallet auto-connects,
-  // and only once the connected wallet's balances are known.
+  // Only guide a connected wallet: spectators can watch without one, and the header's wallet
+  // button covers connecting. Never in server HTML, and only once balances are known.
   const reconnecting = connecting || (!connected && wallet !== null);
   const open =
-    mounted && !onboardingDismissed && next !== null && !reconnecting && (!connected || loaded);
+    mounted && connected && !onboardingDismissed && next !== null && !reconnecting && loaded;
   if (!open) return null;
 
   const action = (step: OnboardingStep) => {
