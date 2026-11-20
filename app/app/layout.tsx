@@ -1,11 +1,17 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Barlow_Condensed, Inter } from "next/font/google";
 import type { ReactNode } from "react";
 import { Header } from "../components/header";
 import { Providers } from "../components/providers";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const display = Barlow_Condensed({
+  subsets: ["latin"],
+  weight: ["600", "800"],
+  style: ["normal", "italic"],
+  variable: "--font-barlow",
+});
 
 export const metadata: Metadata = {
   title: "SIRENRUN",
@@ -14,7 +20,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={inter.variable}>
+    <html lang="en" className={`${inter.variable} ${display.variable}`}>
       <body className="font-sans antialiased">
         <Providers>
           <Header />

@@ -1,0 +1,163 @@
+"use client";
+
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useWalletModal } from "@solana/wallet-adapter-react-ui";
+import { formatTokenAmount, isSessionLive } from "@sirenrun/sdk";
+import { useEffect } from "react";
+import { useNow } from "../lib/use-now";
+import { useWalletSigner } from "../lib/use-wallet-signer";
+import { useArena } from "../stores/arena";
+import { useBalance } from "../stores/balance";
+import { useDrive } from "../stores/drive";
+import { useSession } from "../stores/session";
+import { useUi } from "../stores/ui";
+
+/** True when the connected wallet drives the current, unfinished run. */
+export function useIsDriver(): boolean {
+  const { publicKey } = useWallet();
+  const runner = useArena((s) => (s.latest?.nonce ? s.latest.runner.toBase58() : null));
+  const status = useArena((s) => s.status);
+  return (
+    publicKey !== null &&
+    runner === publicKey.toBase58() &&
+    (status === "staging" || status === "live")
+  );
+}
+
+/** Keyboard and touch steering for the driver: ← → / A D change lanes, Space fires nitro. */
+export function DriverControls() {
+  const isDriver = useIsDriver();
+  const { steer, nitro } = useDrive();
+
+  useEffect(() => {
+    if (!isDriver) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.repeat || e.metaKey || e.ctrlKey || e.altKey) return;
+      const target = e.target as HTMLElement | null;
+      if (target?.closest("input, textarea, [contenteditable=true]")) return;
+      if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") steer(-1);
+      else if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") steer(1);
+      else if (e.key === " ") nitro();
+      else return;
+      e.preventDefault();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [isDriver, steer, nitro]);
+
+  if (!isDriver) return null;
+  return (
+    <>
+      {/* Touch: two half-screen zones and a nitro button. Pointer events fire on press, not release. */}
+      <div className="absolute inset-0 flex [@media(pointer:fine)]:hidden">
+        <button
+          type="button"
+          aria-label="Steer left"
+          onPointerDown={() => steer(-1)}
+          className="h-full flex-1"
+        />
+        <button
+          type="button"
+          aria-label="Steer right"
+          onPointerDown={() => steer(1)}
+          className="h-full flex-1"
+        />
+      </div>
+      <button
+        type="button"
+        onPointerDown={nitro}
+        className="absolute bottom-24 left-1/2 h-16 w-16 -translate-x-1/2 rounded-full border-2 border-amber bg-amber/20 font-display text-sm font-extrabold italic text-amber [@media(pointer:fine)]:hidden"
+      >
+        NITRO
+      </button>
+      <p className="pointer-events-none absolute bottom-24 left-1/2 hidden -translate-x-1/2 rounded bg-black/50 px-3 py-1 text-sm text-muted [@media(pointer:fine)]:block">
+        ← → to change lanes · Space for nitro
+      </p>
+    </>
+  );
+}
+
+/** Shown while the channel is idle: everything needed to start a run, in order. */
+export function DrivePanel() {
+  const status = useArena((s) => s.status);
+  const { publicKey } = useWallet();
+  const { setVisible } = useWalletModal();
+  const signer = useWalletSigner();
+  const { session, pending, start: startSession } = useSession();
+  const { config, game, location } = useBalance();
+  const { start, starting, error } = useDrive();
+  const setDrawer = useUi((s) => s.setDrawer);
+  const now = useNow(15_000);
+
+  if (status !== "idle") return null;
+  const stake = config === null ? null : config.entryFee + config.bond;
+  const available = game?.available ?? 0n;
+  const sessionLive = session !== null && isSessionLive(session, now / 1000);
+
+  let action: React.ReactNode;
+  if (publicKey === null) {
+    action = (
+      <button type="button" className="btn-primary w-full" onClick={() => setVisible(true)}>
+        Connect wallet to drive
+      </button>
+    );
+  } else if (stake === null) {
+    action = <p className="text-sm text-muted">Loading…</p>;
+  } else if (location !== "er" || available < stake) {
+    action = (
+      <button type="button" className="btn-primary w-full" onClick={() => setDrawer(true)}>
+        Deposit {formatTokenAmount(stake)} tUSDC to drive
+      </button>
+    );
+  } else if (!sessionLive) {
+    action = (
+      <button
+        type="button"
+        className="btn-primary w-full"
+        disabled={pending || signer === null}
+        onClick={() => signer !== null && void startSession(signer)}
+      >
+        {pending ? "Waiting for your wallet…" : "Start session to drive"}
+      </button>
+    );
+  } else {
+    action = (
+      <button
+        type="button"
+        className="btn-primary w-full text-base"
+        disabled={starting}
+        onClick={() => void start()}
+      >
+        {starting ? "Starting…" : "Drive"}
+      </button>
+    );
+  }
+
+  return (
+    <div className="absolute inset-x-4 bottom-28 mx-auto max-w-sm rounded-xl border border-white/10 bg-bg/85 p-5 backdrop-blur sm:bottom-auto sm:top-1/3">
+      <h2 className="font-display text-3xl font-extrabold italic">Take the wheel</h2>
+      <p className="mt-1 text-sm text-muted">
+        Outrun the police for as long as you can. Spectators trade on whether you pass 30, 60 and 90
+        seconds.
+      </p>
+      {config !== null && (
+        <dl className="mt-3 grid grid-cols-2 gap-y-1 text-sm">
+          <dt className="text-muted">Entry fee</dt>
+          <dd className="text-right tabular-nums">{formatTokenAmount(config.entryFee)} tUSDC</dd>
+          <dt className="text-muted">Bond</dt>
+          <dd className="text-right tabular-nums">{formatTokenAmount(config.bond)} tUSDC</dd>
+          <dt className="col-span-2 text-xs text-muted">
+            The bond comes back if you pass 90 s. You also earn {config.runnerFeeBps / 100}% of
+            every trade on your run.
+          </dt>
+        </dl>
+      )}
+      <div className="mt-4">{action}</div>
+      {error !== null && (
+        <p className="mt-2 text-sm text-amber" role="alert">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}

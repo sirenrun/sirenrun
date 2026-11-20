@@ -2,7 +2,9 @@
 
 import dynamic from "next/dynamic";
 import { useEffect } from "react";
+import { Hud } from "../game/Hud";
 import { useArena } from "../stores/arena";
+import { DrivePanel, DriverControls } from "./drive-panel";
 
 const Scene = dynamic(() => import("../game/Scene"), {
   ssr: false,
@@ -26,7 +28,10 @@ export function Channel({ arena }: { arena: number }) {
   return (
     <main className="relative h-[calc(100dvh-4rem)] w-full overflow-hidden">
       <Scene className="absolute inset-0" />
-      <div className="pointer-events-none absolute left-4 top-4 flex items-center gap-2 text-sm">
+      {status !== null && status !== "idle" && <Hud channel={arena} />}
+      <DriverControls />
+      <DrivePanel />
+      <div className="pointer-events-none absolute left-4 top-4 flex items-center gap-2 text-sm sm:left-6">
         <span className="rounded bg-black/50 px-2 py-1 font-semibold tracking-wide">
           CH-{arena + 1}
         </span>
