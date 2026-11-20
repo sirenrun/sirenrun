@@ -39,6 +39,10 @@ jobs:
           sudo install -m 755 anchor /usr/local/bin/anchor
 
       - run: anchor build
+      - name: SDK IDL copy matches the build
+        run: |
+          diff -u target/idl/sirenrun.json packages/sdk/src/idl/sirenrun.json
+          diff -u target/types/sirenrun.ts packages/sdk/src/idl/sirenrun.ts
       - run: cargo fmt --all -- --check
       - run: cargo clippy -p sirenrun --all-targets -- -D warnings
       - run: cargo test -p sirenrun

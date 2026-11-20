@@ -8,9 +8,15 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "vitest run"
+    "test": "vitest run",
+    "sync-idl": "cp ../../target/idl/sirenrun.json ../../target/types/sirenrun.ts src/idl/"
+  },
+  "dependencies": {
+    "@anchor-lang/core": "catalog:",
+    "@solana/web3.js": "catalog:"
   },
   "devDependencies": {
+    "@sirenrun/test-vectors": "workspace:*",
     "@types/node": "catalog:",
     "typescript": "catalog:",
     "vitest": "catalog:"
