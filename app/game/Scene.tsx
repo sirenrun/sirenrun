@@ -3,13 +3,14 @@
 import { PerformanceMonitor } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { INVULN_TICKS, NITRO_BOOST, NITRO_TICKS, SPEED_MAX } from "@sirenrun/sim";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { MathUtils, Vector3, type PerspectiveCamera } from "three";
 import { useArena } from "../stores/arena";
 import { PlayerCar, Police } from "./Cars";
 import { laneMotion, prefersReducedMotion } from "./controls";
 import { frame, resetFrame } from "./frame";
 import { Sparks, SpeedLines } from "./Effects";
+import { preloadCars } from "./models";
 import { Obstacles } from "./Obstacles";
 import { PlaybackClock, sample } from "./playback";
 import { Post } from "./Post";
@@ -21,6 +22,8 @@ import { Sky } from "./Sky";
 import { webglAvailable } from "./webgl";
 import { spring } from "./spring";
 import { metresPerSecond, worldX, worldZ } from "./world";
+
+preloadCars();
 
 /** Runs first each frame: advances the playback clock and fills the shared `Frame`. */
 function FrameDriver() {
@@ -203,9 +206,12 @@ function World() {
       <Sky />
       <Roadside />
       <Road />
-      <Obstacles />
-      <PlayerCar />
-      <Police />
+      {/* The road and city draw at once; the cars join when their models arrive. */}
+      <Suspense fallback={null}>
+        <Obstacles />
+        <PlayerCar />
+        <Police />
+      </Suspense>
       <Sparks />
       <SpeedLines />
       <CameraRig />
@@ -257,7 +263,7 @@ export default function Scene({ className }: { className?: string }) {
       className={className}
       style={{ position: "absolute", inset: 0 }}
       dpr={dpr}
-      flat
+      flat={post}
       gl={{ antialias: true, powerPreference: "high-performance" }}
       camera={{ fov: 62, near: 0.3, far: 900, position: [0, 4.3, 10.5] }}
       onCreated={({ gl }) => {
@@ -272,7 +278,7 @@ export default function Scene({ className }: { className?: string }) {
       />
       <FrameDriver />
       <World />
-      <Post enabled={post} />
+      {post && <Post />}
     </Canvas>
   );
 }

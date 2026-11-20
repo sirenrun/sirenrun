@@ -14,9 +14,11 @@ import {
   type PointLight,
   type SpotLight,
 } from "three";
+import { policeLamp } from "./car-fit";
 import { frame } from "./frame";
 import { glowTexture } from "./glow";
-import { NEON } from "./palette";
+import { useCarKit } from "./models";
+import { hot, NEON } from "./palette";
 import { spring } from "./spring";
 import {
   LANE_W,
@@ -28,14 +30,8 @@ import {
   worldZ,
 } from "./world";
 
-const WHEEL_RADIUS = 0.34;
-/** Wheel positions (x, z) under the 1.9 x 4.1 m body; wheels sit just proud of the sides. */
-const WHEELS = [
-  [-0.92, -1.3],
-  [0.92, -1.3],
-  [-0.92, 1.3],
-  [0.92, 1.3],
-] as const;
+/** The kit's wheels are 0.6 units across before fitting. */
+const KIT_WHEEL_RADIUS = 0.3;
 
 function Halo({
   position,
@@ -67,11 +63,13 @@ function Halo({
 }
 
 /**
- * The player's car: hot pink body with white trim (no traffic uses either), real headlights that light the road and
- * the traffic ahead, and a strong underglow, so it never reads as one of the obstacles.
- * Leans into lane changes and blinks while invulnerable after a hit.
+ * The player's car: the kit's sports sedan in hot pink (no traffic is pink), real headlights
+ * that light the road and the traffic ahead, and a strong underglow, so it never reads as one
+ * of the obstacles. Leans into lane changes and blinks while invulnerable after a hit.
  */
 export function PlayerCar() {
+  const kit = useCarKit();
+  const wheelRadius = KIT_WHEEL_RADIUS * kit.player.fit.wheel;
   const group = useRef<Group>(null);
   const body = useRef<Group>(null);
   const left = useRef<SpotLight>(null);
@@ -137,7 +135,7 @@ export function PlayerCar() {
     b.position.y = buzz - Math.abs(d.roll) * 0.25;
     b.visible = frame.invuln === 0 || Math.floor(frame.time * 12) % 2 === 0;
 
-    d.spin -= (mps / WHEEL_RADIUS) * dt;
+    d.spin -= (mps / wheelRadius) * dt;
     for (const w of wheels.current) if (w) w.rotation.x = d.spin;
 
     // Nitro flames: snap on, flicker, and snuff out when a hit cancels the burn.
@@ -160,68 +158,16 @@ export function PlayerCar() {
     <>
       <group ref={group}>
         <group ref={body}>
-          {/* Body: low wedge with a raised rear deck */}
-          <mesh position={[0, 0.42, 0]}>
-            <boxGeometry args={[1.9, 0.5, 4.1]} />
-            <meshStandardMaterial
-              color="#ff2e88"
-              emissive="#ff2e88"
-              emissiveIntensity={0.35}
-              roughness={0.25}
-              metalness={0.4}
-            />
-          </mesh>
-          <mesh position={[0, 0.82, 0.35]}>
-            <boxGeometry args={[1.5, 0.38, 1.8]} />
-            <meshStandardMaterial color="#120d1f" roughness={0.1} metalness={0.9} />
-          </mesh>
-          <mesh position={[0, 0.72, 1.85]}>
-            <boxGeometry args={[1.9, 0.12, 0.5]} />
-            <meshStandardMaterial color="#ffffff" roughness={0.3} metalness={0.3} />
-          </mesh>
-          {/* White racing stripes and side trims */}
-          {[-0.28, 0.28].map((side) => (
-            <mesh key={side} position={[side, 0.68, -1.1]}>
-              <boxGeometry args={[0.22, 0.02, 1.8]} />
-              <meshBasicMaterial color="#ffffff" toneMapped={false} />
-            </mesh>
-          ))}
-          {[-0.96, 0.96].map((side) => (
-            <mesh key={side} position={[side, 0.3, 0]}>
-              <boxGeometry args={[0.05, 0.08, 3.9]} />
-              <meshBasicMaterial color={NEON.cyan} toneMapped={false} />
-            </mesh>
-          ))}
-          <mesh position={[0, 0.55, 2.06]}>
-            <boxGeometry args={[1.6, 0.1, 0.04]} />
-            <meshBasicMaterial color={NEON.red} toneMapped={false} />
-          </mesh>
-          <Halo position={[0, 0.55, 2.12]} size={2.6} color={NEON.red} opacity={0.7} />
-          {/* Headlights */}
-          {[-0.62, 0.62].map((side) => (
-            <mesh key={side} position={[side, 0.5, -2.06]}>
-              <boxGeometry args={[0.4, 0.12, 0.04]} />
-              <meshBasicMaterial color="#fff6e0" toneMapped={false} />
-            </mesh>
-          ))}
+          <mesh geometry={kit.player.body} material={kit.playerMaterial} />
           {/* Wheels: spin at the true road speed. */}
-          {WHEELS.map(([wx, wz], i) => (
+          {kit.player.wheels.map((w, i) => (
             <mesh
               key={i}
               ref={(m) => void (wheels.current[i] = m)}
-              position={[wx, WHEEL_RADIUS, wz]}
-              rotation-z={Math.PI / 2}
-            >
-              <cylinderGeometry args={[WHEEL_RADIUS, WHEEL_RADIUS, 0.3, 14]} />
-              <meshStandardMaterial color="#0a0910" roughness={0.6} metalness={0.3} />
-              {/* Hub bars on both faces, so the spin is visible. */}
-              {[-0.152, 0.152].map((face) => (
-                <mesh key={face} position={[0, face, 0]}>
-                  <boxGeometry args={[0.46, 0.01, 0.08]} />
-                  <meshBasicMaterial color="#8a82a3" />
-                </mesh>
-              ))}
-            </mesh>
+              position={w.position}
+              geometry={w.geometry}
+              material={kit.playerMaterial}
+            />
           ))}
           {/* Nitro: twin exhaust flames, hot amber core fading to blue. */}
           <group ref={flames} position={[0, 0.32, 2.08]} visible={false}>
@@ -304,6 +250,10 @@ export function PlayerCar() {
   );
 }
 
+/** Light bar colours: well past the bloom threshold when lit, a dull glass when not. */
+const LAMP_ON = { red: hot(NEON.policeRed, 6), blue: hot(NEON.policeBlue, 7) };
+const LAMP_OFF = { red: hot(NEON.policeRed, 0.18), blue: hot(NEON.policeBlue, 0.18) };
+
 const CRUISERS = [
   { lane: 0, back: 0 },
   { lane: -1, back: 4.5 },
@@ -315,12 +265,21 @@ const CRUISERS = [
  * one sits behind the car at a distance mapped from the gap and follows its lane with a lag.
  */
 export function Police() {
+  const kit = useCarKit();
   const groups = useRef<(Group | null)[]>([]);
   const lamps = useRef<{ red: MeshBasicMaterial | null; blue: MeshBasicMaterial | null }[]>([]);
+  const wheels = useRef<(Mesh | null)[]>([]);
   const light = useRef<PointLight>(null);
   const follow = useRef(0);
+  const spin = useRef(0);
+  const red = policeLamp(kit.police.fit, "red");
+  const blue = policeLamp(kit.police.fit, "blue");
 
   useFrame((three, delta) => {
+    // The cruisers keep pace with the car, so their wheels turn at its speed.
+    const mps = metresPerSecond(frame.speed + (frame.nitro ? NITRO_BOOST : 0));
+    spin.current -= (mps / (KIT_WHEEL_RADIUS * kit.police.fit.wheel)) * Math.min(delta, 0.05);
+    for (const w of wheels.current) if (w) w.rotation.x = frame.busted ? 0 : spin.current;
     const visible = frame.ready && frame.status !== "idle";
     const carZ = worldZ(frame.distance);
     const lead = policeDistance(frame.policeGap);
@@ -365,8 +324,8 @@ export function Police() {
       const pair = lamps.current[i];
       if (pair?.red && pair.blue) {
         const alt = i % 2 === 0 ? flash : !flash;
-        pair.red.opacity = alt ? 1 : 0.12;
-        pair.blue.opacity = alt ? 0.12 : 1;
+        pair.red.color.copy(alt ? LAMP_ON.red : LAMP_OFF.red);
+        pair.blue.color.copy(alt ? LAMP_OFF.blue : LAMP_ON.blue);
       }
     });
     const l = light.current;
@@ -374,7 +333,7 @@ export function Police() {
       l.visible = visible;
       l.position.set(worldX(follow.current), 2.6, carZ + lead - 1.5);
       l.color.set(flash ? NEON.policeRed : NEON.policeBlue);
-      l.intensity = 25 + closeness * 55;
+      l.intensity = 12 + closeness * 28;
     }
   });
 
@@ -382,39 +341,45 @@ export function Police() {
     <>
       {CRUISERS.map((cruiser, i) => (
         <group key={cruiser.lane} ref={(g) => void (groups.current[i] = g)} visible={false}>
-          <mesh position={[0, 0.42, 0]}>
-            <boxGeometry args={[1.85, 0.55, 4.1]} />
-            <meshStandardMaterial color="#0d0c12" roughness={0.35} metalness={0.5} />
-          </mesh>
-          {/* White doors */}
-          <mesh position={[0, 0.42, 0.1]}>
-            <boxGeometry args={[1.87, 0.4, 1.7]} />
-            <meshStandardMaterial color="#f4f2fa" roughness={0.4} />
-          </mesh>
-          <mesh position={[0, 0.84, 0.2]}>
-            <boxGeometry args={[1.45, 0.38, 1.9]} />
-            <meshStandardMaterial color="#0c0b14" roughness={0.15} metalness={0.8} />
-          </mesh>
-          <mesh position={[-0.4, 1.1, 0.2]}>
-            <boxGeometry args={[0.62, 0.16, 0.34]} />
+          <mesh geometry={kit.police.body} material={kit.policeMaterial} />
+          {kit.police.wheels.map((w, k) => (
+            <mesh
+              key={k}
+              ref={(m) => void (wheels.current[i * 4 + k] = m)}
+              position={w.position}
+              geometry={w.geometry}
+              material={kit.policeMaterial}
+            />
+          ))}
+          {/* Flashing lamps over the model's own light bar. */}
+          <mesh position={red.centre}>
+            <boxGeometry args={red.size} />
             <meshBasicMaterial
               ref={(m) => void ((lamps.current[i] ??= { red: null, blue: null }).red = m)}
-              color={NEON.policeRed}
-              transparent
+              color={LAMP_ON.red}
               toneMapped={false}
             />
           </mesh>
-          <mesh position={[0.4, 1.1, 0.2]}>
-            <boxGeometry args={[0.62, 0.16, 0.34]} />
+          <mesh position={blue.centre}>
+            <boxGeometry args={blue.size} />
             <meshBasicMaterial
               ref={(m) => void ((lamps.current[i] ??= { red: null, blue: null }).blue = m)}
-              color={NEON.policeBlue}
-              transparent
+              color={LAMP_ON.blue}
               toneMapped={false}
             />
           </mesh>
-          <Halo position={[-0.4, 1.15, -0.1]} size={2.4} color={NEON.policeRed} opacity={0.6} />
-          <Halo position={[0.4, 1.15, -0.1]} size={2.4} color={NEON.policeBlue} opacity={0.6} />
+          <Halo
+            position={[red.centre[0], red.centre[1] + 0.05, red.centre[2] + 0.3]}
+            size={2.4}
+            color={NEON.policeRed}
+            opacity={0.45}
+          />
+          <Halo
+            position={[blue.centre[0], blue.centre[1] + 0.05, blue.centre[2] + 0.3]}
+            size={2.4}
+            color={NEON.policeBlue}
+            opacity={0.45}
+          />
         </group>
       ))}
       <pointLight ref={light} distance={30} decay={1.3} visible={false} />
