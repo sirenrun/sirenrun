@@ -8,7 +8,7 @@ import { FOG_FAR, FOG_NEAR, NEON } from "./palette";
 import { LAMP_SPACING } from "./Roadside";
 import { LANE_W, ROAD_HALF, worldZ } from "./world";
 
-const LENGTH = 320;
+const LENGTH = 460;
 const SHOULDER = 2.2;
 
 /**

@@ -1,6 +1,6 @@
 "use client";
 
-import { GAP_MAX, LINES, NITRO_CHARGES } from "@sirenrun/sim";
+import { GAP_MAX, INVULN_TICKS, LINES, NITRO_BOOST, NITRO_CHARGES } from "@sirenrun/sim";
 import { useEffect, useRef, useState } from "react";
 import type { Market } from "@sirenrun/sdk";
 import { useArena } from "../stores/arena";
@@ -16,6 +16,7 @@ import {
   railPosition,
   stagingSecondsLeft,
 } from "./hud-model";
+import { kmh } from "./world";
 
 const GAP_COLOURS = {
   safe: "var(--color-neon-cyan)",
@@ -45,6 +46,10 @@ export function Hud({ channel }: { channel: number }) {
   const bannerRef = useRef<HTMLDivElement>(null);
   const stampRef = useRef<HTMLDivElement>(null);
   const linesRef = useRef<HTMLDivElement>(null);
+  const speedRef = useRef<HTMLSpanElement>(null);
+  const speedBoxRef = useRef<HTMLDivElement>(null);
+  const sirenRef = useRef<HTMLDivElement>(null);
+  const hitRef = useRef<HTMLDivElement>(null);
   const [announcement, setAnnouncement] = useState("");
 
   useEffect(() => {
@@ -84,6 +89,24 @@ export function Hud({ channel }: { channel: number }) {
           level === "danger" && latest.status === "live",
         );
         lastLevel = level;
+      }
+
+      // Speed, siren glow at the screen edges as the police close, and a flash on a hit.
+      const eff = frame.speed + (frame.nitro ? NITRO_BOOST : 0);
+      const moving = live && !latest.sim.busted;
+      if (speedRef.current)
+        speedRef.current.textContent = String(Math.round(moving ? kmh(eff) : 0));
+      speedBoxRef.current?.toggleAttribute("data-nitro", frame.nitro);
+      const running = latest.status === "live" && !latest.sim.busted;
+      if (sirenRef.current) {
+        const close = running || latest.sim.busted ? 1 - Math.max(0, gap) / GAP_MAX : 0;
+        const red = Math.sin((performance.now() / 1000) * 14) > 0;
+        sirenRef.current.style.opacity = String(Math.min(1, close * close * 1.1));
+        sirenRef.current.dataset.side = red ? "red" : "blue";
+      }
+      if (hitRef.current) {
+        const k = running ? Math.max(0, frame.invuln - (INVULN_TICKS - 4)) / 4 : 0;
+        hitRef.current.style.opacity = String(k * k * 0.45);
       }
 
       const heat = heatSegments(tick);
@@ -152,6 +175,20 @@ export function Hud({ channel }: { channel: number }) {
   const playing = status === "live" || status === "settled";
   return (
     <div className="pointer-events-none absolute inset-0 select-none font-display">
+      {/* Edge light: police sirens closing in, and a red flash on a hit. */}
+      <div
+        ref={sirenRef}
+        data-side="red"
+        className="hud-siren absolute inset-0"
+        style={{ opacity: 0 }}
+        aria-hidden
+      />
+      <div
+        ref={hitRef}
+        className="absolute inset-0 bg-police-red mix-blend-screen"
+        style={{ opacity: 0 }}
+        aria-hidden
+      />
       {/* Top left: clock and line rail */}
       <div className="absolute left-4 top-14 sm:left-6 sm:top-16">
         <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Time</div>
@@ -227,6 +264,23 @@ export function Hud({ channel }: { channel: number }) {
             ))}
           </div>
         </div>
+      </div>
+
+      {/* Bottom right: speed */}
+      <div
+        ref={speedBoxRef}
+        className="group absolute bottom-12 right-4 text-right sm:right-6"
+        aria-hidden
+      >
+        <span
+          ref={speedRef}
+          className="block text-5xl font-extrabold italic leading-none tabular-nums transition-colors duration-150 group-data-[nitro]:text-amber sm:text-6xl"
+        >
+          0
+        </span>
+        <span className="text-xs font-semibold uppercase tracking-[0.2em] text-muted group-data-[nitro]:text-amber">
+          km/h
+        </span>
       </div>
 
       {/* Bottom right: channel and driver */}
