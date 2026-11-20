@@ -3,6 +3,7 @@ mod common;
 use common::{custom_code, key, Base, Ephemeral, World, HOUSE_FUNDS, TUSDC};
 use sirenrun::constants::LINES;
 use sirenrun::errors::SirenrunError;
+use sirenrun::market::open_pool;
 use sirenrun::sim::{step, SimState};
 use sirenrun::state::{ArenaStatus, MarketStatus, RunSim};
 
@@ -47,11 +48,16 @@ fn start_run_stakes_the_runner_and_seeds_the_course() {
         world.balance(Ephemeral, &house).available,
         HOUSE_FUNDS - 150 * TUSDC + TUSDC
     );
-    assert!(world
-        .arena(Ephemeral, 0)
-        .markets
-        .iter()
-        .all(|m| m.status == MarketStatus::Open && m.yes_r == 50 * TUSDC && m.no_r == 50 * TUSDC));
+    // Each line opens at its configured RIDE price, not a free 50/50.
+    let open_bps = world.params().open_bps;
+    for (m, bps) in world.arena(Ephemeral, 0).markets.iter().zip(open_bps) {
+        let o = open_pool(50 * TUSDC, bps).expect("opening");
+        assert_eq!(m.status, MarketStatus::Open);
+        assert_eq!(
+            (m.yes_r, m.no_r, m.house_yes, m.house_no),
+            (o.yes_r, o.no_r, o.house_yes, o.house_no)
+        );
+    }
 
     let arena = world.arena(Ephemeral, 0);
     assert_eq!(arena.status, ArenaStatus::Staging);
@@ -207,4 +213,36 @@ fn start_run_and_tick_fit_the_compute_budget() {
     println!("start_run {start_run} CU, tick max {tick_max} CU");
     assert!(start_run < 100_000, "start_run used {start_run} CU");
     assert!(tick_max < 50_000, "tick used {tick_max} CU");
+}
+
+#[test]
+fn nitro_charges_the_driver_once_per_charge_fired() {
+    let mut world = World::ready();
+    world.ready_for_runs(40 * TUSDC);
+    let user = world.user.insecure_clone();
+    let (runner, house) = (key(&user), key(&world.admin));
+    let mut randomness = [0u8; 32];
+    randomness[..8].copy_from_slice(&42u64.to_le_bytes());
+    world.svm.set_vrf_randomness(Some(randomness));
+    world.start_run(&user, &runner, 0).expect("start_run");
+    while world.arena(Ephemeral, 0).status != ArenaStatus::Live {
+        world.advance_slot();
+    }
+    let staked = world.balance(Ephemeral, &runner).available;
+    let house_before = world.balance(Ephemeral, &house).available;
+
+    world.set_input(&user, 0, 2, true).expect("nitro");
+    // A second press while the charge burns does not fire, so it is free.
+    world.advance_slot();
+    world.set_input(&user, 0, 2, true).expect("nitro again");
+    world.advance_slot();
+
+    let arena = world.arena(Ephemeral, 0);
+    assert_eq!(arena.sim.nitro_left, 2);
+    let fee = world.params().nitro_fee;
+    assert_eq!(world.balance(Ephemeral, &runner).available, staked - fee);
+    assert_eq!(
+        world.balance(Ephemeral, &house).available,
+        house_before + fee
+    );
 }

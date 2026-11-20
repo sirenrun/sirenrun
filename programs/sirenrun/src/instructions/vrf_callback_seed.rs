@@ -20,7 +20,7 @@ pub struct VrfCallbackSeed<'info> {
     #[account(address = VRF_IDENTITY)]
     pub vrf_program_identity: Signer<'info>,
     #[account(mut)]
-    pub arena: Account<'info, Arena>,
+    pub arena: Box<Account<'info, Arena>>,
 }
 
 /// Late or repeated fulfilments for an older run are ignored rather than rejected, so the

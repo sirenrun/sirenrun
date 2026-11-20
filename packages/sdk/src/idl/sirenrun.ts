@@ -1839,10 +1839,6 @@ export type Sirenrun = {
             "type": "u64"
           },
           {
-            "name": "noProfitOi",
-            "type": "u64"
-          },
-          {
             "name": "runnerFees",
             "type": "u64"
           },
@@ -2006,6 +2002,25 @@ export type Sirenrun = {
             "type": "u64"
           },
           {
+            "name": "nitroFee",
+            "docs": [
+              "Charged to the driver each time a nitro charge fires; unused charges cost nothing."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "openBps",
+            "docs": [
+              "Opening RIDE (YES) price per line in bps, so no market opens at a free 50/50."
+            ],
+            "type": {
+              "array": [
+                "u16",
+                3
+              ]
+            }
+          },
+          {
             "name": "bump",
             "type": "u8"
           },
@@ -2048,6 +2063,19 @@ export type Sirenrun = {
           {
             "name": "maxBuy",
             "type": "u64"
+          },
+          {
+            "name": "nitroFee",
+            "type": "u64"
+          },
+          {
+            "name": "openBps",
+            "type": {
+              "array": [
+                "u16",
+                3
+              ]
+            }
           }
         ]
       }
@@ -2104,6 +2132,38 @@ export type Sirenrun = {
           {
             "name": "resolvedTick",
             "type": "u32"
+          },
+          {
+            "name": "houseYes",
+            "docs": [
+              "Tokens the house minted at the opening but kept out of the pool (see `open_pool`)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "houseNo",
+            "type": "u64"
+          },
+          {
+            "name": "noProfit",
+            "docs": [
+              "What BUST holders would win here on a bust: sum of `shares - net` over NO buys."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "rideCost",
+            "docs": [
+              "Sum of `net` over RIDE buys, to share a forfeited bond between them."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "rideBackBps",
+            "docs": [
+              "Share of a losing RIDE position's cost refunded from the driver's bond, set on bust."
+            ],
+            "type": "u16"
           }
         ]
       }
@@ -2182,6 +2242,15 @@ export type Sirenrun = {
             "type": {
               "array": [
                 "u32",
+                3
+              ]
+            }
+          },
+          {
+            "name": "rideBackBps",
+            "type": {
+              "array": [
+                "u16",
                 3
               ]
             }

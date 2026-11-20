@@ -4,7 +4,7 @@ use sirenrun::errors::SirenrunError;
 use sirenrun::sim::{splitmix64, SimState};
 use sirenrun::state::{
     Arena, ArenaStatus, Balance, BuyTerms, Market, PositionEntry, RunResult, RunTerms, Side,
-    ENTRY_EMPTY, MARKETS, RESULTS,
+    TickTerms, ENTRY_EMPTY, MARKETS, RESULTS,
 };
 
 const TUSDC: u64 = 1_000_000;
@@ -18,7 +18,9 @@ const RUN_TERMS: RunTerms = RunTerms {
     entry_fee: TUSDC,
     bond: 25 * TUSDC,
     liquidity: 50 * TUSDC,
+    open_bps: [8_500, 4_500, 1_500],
 };
+const NITRO_FEE: u64 = TUSDC / 2;
 
 struct Rng(u64);
 
@@ -45,6 +47,8 @@ struct Coverage {
     expired: u32,
     aborted_runs: u32,
     cap_hits: u32,
+    ride_backs: u32,
+    nitro_paid: u32,
 }
 
 fn balance(available: u64) -> Balance {
@@ -72,7 +76,6 @@ fn idle_arena() -> Arena {
         seed: 0,
         sim: SimState::start().into(),
         bond: 0,
-        no_profit_oi: 0,
         runner_fees: 0,
         markets,
         results: [RunResult::default(); RESULTS],
@@ -109,6 +112,7 @@ fn claim_entries(
             let cost = entry.cost;
             match arena.claim(player, house, index) {
                 Ok(paid) if paid == cost && paid != entry.shares => seen.refunds += 1,
+                Ok(paid) if paid > 0 && paid < cost => seen.ride_backs += 1,
                 Ok(paid) if paid > 0 => seen.wins += 1,
                 Ok(_) => {}
                 Err(e) if is(&e, SirenrunError::ResultExpired) => {
@@ -124,8 +128,10 @@ fn claim_entries(
 
 /// Solvency argument (docs/onchain-program.md): every buy mints `net` complete sets, so
 /// per market the winning-side tokens equal `liquidity + Σ net`, the collateral taken in.
-/// The pool's share is credited to the house and winners claim theirs. VOID and cooldown
-/// refunds come out of the house's own balance, and unpaid shares are simply never paid.
+/// The pool's share, plus the tokens the house kept at an uneven opening, is credited to the
+/// house and winners claim theirs. VOID and cooldown refunds come out of the house's own
+/// balance (a refunded winner's shares go to the house), a busted driver's forfeit goes to
+/// the house before it refunds RIDE holders out of it, and unpaid shares are never paid.
 /// So no mix of runs, trades and claims can make the balances add up to more than was
 /// deposited. This drives many random runs through the same pure logic the instructions
 /// call and checks that after every run.
@@ -192,7 +198,14 @@ fn balances_never_exceed_deposits() {
                 }
             }
 
-            let effects = arena.advance(RUN_TERMS.entry_fee).expect("advance");
+            let effects = arena
+                .advance(TickTerms {
+                    entry_fee: RUN_TERMS.entry_fee,
+                    nitro_fee: NITRO_FEE,
+                    runner_available: players[runner].available,
+                })
+                .expect("advance");
+            seen.nitro_paid += u32::from(effects.runner_out > 0);
             effects
                 .apply(&mut players[runner], &mut house)
                 .expect("apply");
@@ -248,4 +261,5 @@ fn balances_never_exceed_deposits() {
         "{seen:?}"
     );
     assert!(seen.cap_hits > 0, "{seen:?}");
+    assert!(seen.ride_backs > 0 && seen.nitro_paid > 0, "{seen:?}");
 }

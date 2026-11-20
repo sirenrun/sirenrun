@@ -227,6 +227,8 @@ impl World {
             bond: 25 * TUSDC,
             liquidity: 50 * TUSDC,
             max_buy: 50 * TUSDC,
+            nitro_fee: TUSDC / 2,
+            open_bps: [8_500, 4_500, 1_500],
         }
     }
 

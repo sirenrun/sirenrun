@@ -12,7 +12,7 @@ pub struct SetInput<'info> {
     #[session(signer = signer, authority = arena.runner.key())]
     pub session_token: Option<Account<'info, SessionTokenV2>>,
     #[account(mut, seeds = [ARENA_SEED, &[arena.id]], bump = arena.bump)]
-    pub arena: Account<'info, Arena>,
+    pub arena: Box<Account<'info, Arena>>,
 }
 
 pub fn set_input(ctx: Context<SetInput>, target_lane: u8, nitro: bool) -> Result<()> {

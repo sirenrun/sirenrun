@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use crate::state::{
-    Arena, ArenaStatus, Balance, Config, ARENA_SEED, BALANCE_SEED, CONFIG_SEED, MARKETS,
+    Arena, ArenaStatus, Balance, Config, TickTerms, ARENA_SEED, BALANCE_SEED, CONFIG_SEED, MARKETS,
 };
 
 pub const CRANK_PROGRAM_ID: Pubkey = pubkey!("Crank11111111111111111111111111111111111111");
@@ -31,7 +31,7 @@ pub struct RunSettled {
 #[derive(Accounts)]
 pub struct Tick<'info> {
     #[account(mut, seeds = [ARENA_SEED, &[arena.id]], bump = arena.bump)]
-    pub arena: Account<'info, Arena>,
+    pub arena: Box<Account<'info, Arena>>,
     #[account(mut, seeds = [BALANCE_SEED, arena.runner.as_ref()], bump = runner_balance.bump)]
     pub runner_balance: Account<'info, Balance>,
     #[account(mut, seeds = [BALANCE_SEED, config.house.as_ref()], bump = house_balance.bump)]
@@ -50,7 +50,12 @@ pub fn tick(ctx: Context<Tick>, nonce: u32) -> Result<()> {
         return Ok(());
     }
     let was_settled = arena.status == ArenaStatus::Settled;
-    let effects = arena.advance(ctx.accounts.config.entry_fee)?;
+    let config = &ctx.accounts.config;
+    let effects = arena.advance(TickTerms {
+        entry_fee: config.entry_fee,
+        nitro_fee: config.nitro_fee,
+        runner_available: ctx.accounts.runner_balance.available,
+    })?;
 
     effects.apply(
         &mut ctx.accounts.runner_balance,

@@ -28,7 +28,7 @@ pub struct Buy<'info> {
     #[account(seeds = [CONFIG_SEED], bump = config.bump)]
     pub config: Account<'info, Config>,
     #[account(mut, seeds = [ARENA_SEED, &[arena.id]], bump = arena.bump)]
-    pub arena: Account<'info, Arena>,
+    pub arena: Box<Account<'info, Arena>>,
 }
 
 pub fn buy(ctx: Context<Buy>, market: u8, side: Side, amount: u64, min_shares: u64) -> Result<()> {

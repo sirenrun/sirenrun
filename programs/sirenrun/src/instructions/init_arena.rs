@@ -12,7 +12,7 @@ pub struct InitArena<'info> {
     #[account(seeds = [CONFIG_SEED], bump = config.bump, has_one = admin @ SirenrunError::Unauthorized)]
     pub config: Account<'info, Config>,
     #[account(init, payer = admin, space = Arena::SPACE, seeds = [ARENA_SEED, &[id]], bump)]
-    pub arena: Account<'info, Arena>,
+    pub arena: Box<Account<'info, Arena>>,
     pub system_program: Program<'info, System>,
 }
 

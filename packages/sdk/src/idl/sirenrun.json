@@ -1833,10 +1833,6 @@
             "type": "u64"
           },
           {
-            "name": "no_profit_oi",
-            "type": "u64"
-          },
-          {
             "name": "runner_fees",
             "type": "u64"
           },
@@ -2000,6 +1996,25 @@
             "type": "u64"
           },
           {
+            "name": "nitro_fee",
+            "docs": [
+              "Charged to the driver each time a nitro charge fires; unused charges cost nothing."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "open_bps",
+            "docs": [
+              "Opening RIDE (YES) price per line in bps, so no market opens at a free 50/50."
+            ],
+            "type": {
+              "array": [
+                "u16",
+                3
+              ]
+            }
+          },
+          {
             "name": "bump",
             "type": "u8"
           },
@@ -2042,6 +2057,19 @@
           {
             "name": "max_buy",
             "type": "u64"
+          },
+          {
+            "name": "nitro_fee",
+            "type": "u64"
+          },
+          {
+            "name": "open_bps",
+            "type": {
+              "array": [
+                "u16",
+                3
+              ]
+            }
           }
         ]
       }
@@ -2098,6 +2126,38 @@
           {
             "name": "resolved_tick",
             "type": "u32"
+          },
+          {
+            "name": "house_yes",
+            "docs": [
+              "Tokens the house minted at the opening but kept out of the pool (see `open_pool`)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "house_no",
+            "type": "u64"
+          },
+          {
+            "name": "no_profit",
+            "docs": [
+              "What BUST holders would win here on a bust: sum of `shares - net` over NO buys."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "ride_cost",
+            "docs": [
+              "Sum of `net` over RIDE buys, to share a forfeited bond between them."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "ride_back_bps",
+            "docs": [
+              "Share of a losing RIDE position's cost refunded from the driver's bond, set on bust."
+            ],
+            "type": "u16"
           }
         ]
       }
@@ -2176,6 +2236,15 @@
             "type": {
               "array": [
                 "u32",
+                3
+              ]
+            }
+          },
+          {
+            "name": "ride_back_bps",
+            "type": {
+              "array": [
+                "u16",
                 3
               ]
             }
