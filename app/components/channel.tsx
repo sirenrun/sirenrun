@@ -6,6 +6,7 @@ import { Hud } from "../game/Hud";
 import { useArena } from "../stores/arena";
 import { DrivePanel, DriverControls } from "./drive-panel";
 import { MarketsPanel } from "./markets-panel";
+import { RunResults } from "./run-results";
 
 const Scene = dynamic(() => import("../game/Scene"), {
   ssr: false,
@@ -33,6 +34,7 @@ export function Channel({ arena }: { arena: number }) {
         {status !== null && status !== "idle" && <Hud channel={arena} />}
         <DriverControls />
         <DrivePanel />
+        <RunResults />
         <div className="pointer-events-none absolute left-4 top-4 flex items-center gap-2 text-sm sm:left-6">
           <span className="rounded bg-black/50 px-2 py-1 font-semibold tracking-wide">
             CH-{arena + 1}

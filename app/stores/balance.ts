@@ -25,6 +25,8 @@ interface BalanceState {
   /** Last refresh error; cleared by the next success. Refreshes retry with backoff. */
   error: string | null;
   refresh: () => Promise<void>;
+  /** Loads the program config without a wallet, for spectators (fees, entry, bond). */
+  ensureConfig: () => Promise<void>;
   /** Starts following `owner`; returns a function that stops. */
   watch: (owner: PublicKey) => () => void;
   reset: () => void;
@@ -151,5 +153,15 @@ export const useBalance = create<BalanceState>((set, get) => {
     },
 
     reset: () => set({ ...empty }),
+
+    ensureConfig: async () => {
+      if (get().config !== null) return;
+      try {
+        const config = await fetchConfig(chain().base);
+        if (get().config === null) set({ config });
+      } catch {
+        // A later wallet refresh or remount tries again; callers render without fee details.
+      }
+    },
   };
 });

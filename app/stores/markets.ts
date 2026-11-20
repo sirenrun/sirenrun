@@ -3,8 +3,6 @@ import {
   TransactionFailed,
   arenaPda,
   buyIx,
-  claimIx,
-  claimableEntries,
   formatTokenAmount,
   isSessionLive,
   minSharesFor,
@@ -28,6 +26,7 @@ import {
 } from "../lib/markets";
 import { useArena } from "./arena";
 import { useBalance } from "./balance";
+import { claimSettled } from "./claims";
 import { useSession } from "./session";
 import { useToasts } from "./toast";
 
@@ -58,51 +57,6 @@ function liveSession() {
 }
 
 export const useMarkets = create<MarketsState>((set, get) => {
-  /** Entries being claimed, keyed by slot and position, so a slot is claimed once. */
-  const claiming = new Set<string>();
-
-  /**
-   * Claims every settled position on this arena with the session key: wins pay out, losses
-   * free their slot, refunds come back. No popups, so it runs whenever state changes.
-   */
-  function autoClaim(arena: Arena) {
-    const session = liveSession();
-    const { game, location, config } = useBalance.getState();
-    if (session === null || game === null || location !== "er" || config === null) return;
-    if (!game.owner.equals(session.authority)) return;
-    for (const { index, entry, preview } of claimableEntries(game, arena)) {
-      const key = `${index}:${entry.arenaId}:${entry.nonce}:${entry.market}:${entry.side}`;
-      if (claiming.has(key)) continue;
-      claiming.add(key);
-      sendEr(chain().er, session.keypair, [
-        claimIx({
-          auth: sessionAuthority(session),
-          owner: session.authority,
-          house: config.house,
-          id: arena.id,
-          entryIndex: index,
-        }),
-      ])
-        .then(() => {
-          const line = arena.markets[entry.market];
-          const label = `${SIDE_LABEL[entry.side === "yes" ? "yes" : "no"]} ${line === undefined ? "" : `${lineSeconds(line.line)}s`}`;
-          if (preview.kind === "win") {
-            useToasts
-              .getState()
-              .push(`${label} paid ${formatTokenAmount(preview.paid)} tUSDC`, "good");
-          } else if (preview.kind === "refund") {
-            useToasts.getState().push(`${label} refunded ${formatTokenAmount(preview.paid)} tUSDC`);
-          }
-          void useBalance.getState().refresh();
-        })
-        .catch((e: unknown) => {
-          // Let a later state change try again.
-          claiming.delete(key);
-          set({ error: describe(e) });
-        });
-    }
-  }
-
   return {
     history: { nonce: -1, points: [] },
     ticker: [],
@@ -115,7 +69,7 @@ export const useMarkets = create<MarketsState>((set, get) => {
         if (arena === null || (id !== null && arena.id !== id)) return;
         const history = appendHistory(get().history, arena);
         if (history !== get().history) set({ history });
-        if (id !== null) autoClaim(arena);
+        if (id !== null) claimSettled(arena, (error) => set({ error }));
       };
       onArena(useArena.getState().latest);
       const stopArena = useArena.subscribe((s, prev) => {
