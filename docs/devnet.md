@@ -13,6 +13,10 @@
 
 The app reads the mint, house and fees from Config, so only the program id is hardcoded.
 
+The default base RPC is `https://rpc.magicblock.app/devnet`: `api.devnet.solana.com`
+rate-limits a browser that subscribes and polls (HTTP 429). Set `NEXT_PUBLIC_BASE_RPC` to
+use another, e.g. a keyed provider for a public demo.
+
 ## Smoke run (2026-11-20)
 
 Arena 0, run 1: the VRF seed landed about 0.2 s after `start_run`, staging took 10 s, the

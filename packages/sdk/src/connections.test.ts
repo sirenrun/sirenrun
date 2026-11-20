@@ -18,6 +18,8 @@ describe("endpoints", () => {
     expect(e.erWs).toBe("wss://devnet-as.magicblock.app");
     expect(e.validator.toBase58()).toBe("MAS1Dt9qreoRMQ14YQuhg8UTZMMzDdKhmkZMECCzk57");
     expect(e.oracleQueue.equals(VRF_EPHEMERAL_QUEUE)).toBe(true);
+    expect(e.baseRpc).toBe("https://rpc.magicblock.app/devnet");
+    expect(e.baseWs).toBe("wss://rpc.magicblock.app/devnet");
   });
 
   it("pair each region with its validator identity", () => {
@@ -38,8 +40,8 @@ describe("endpoints", () => {
   });
 
   it("derive the base websocket from an overridden RPC", () => {
-    const e = endpoints({ cluster: "devnet", baseRpc: "https://rpc.magicblock.app/devnet" });
-    expect(e.baseWs).toBe("wss://rpc.magicblock.app/devnet");
+    const e = endpoints({ cluster: "devnet", baseRpc: "https://api.devnet.solana.com" });
+    expect(e.baseWs).toBe("wss://api.devnet.solana.com");
   });
 
   it("reject the 2.0 region and unknown regions", () => {

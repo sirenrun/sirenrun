@@ -63,7 +63,9 @@ export function endpoints(options: EndpointOptions): Endpoints {
       `unsupported ER region "${String(region)}", use one of ${ER_REGIONS.join(", ")}`,
     );
   }
-  const baseRpc = options.baseRpc ?? "https://api.devnet.solana.com";
+  // MagicBlock's devnet RPC proxies Solana devnet with far looser rate limits than
+  // api.devnet.solana.com, which throttles a browser that subscribes and polls.
+  const baseRpc = options.baseRpc ?? "https://rpc.magicblock.app/devnet";
   return {
     cluster: "devnet",
     region,
