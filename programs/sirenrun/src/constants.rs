@@ -13,7 +13,7 @@ pub const SPEED_MAX: u16 = 200;
 pub const ACCEL: u16 = 2;
 
 pub const NITRO_CHARGES: u8 = 3;
-pub const NITRO_BOOST: u16 = 60;
+pub const NITRO_BOOST: u16 = 40;
 pub const NITRO_TICKS: u8 = 20;
 
 pub const CRASH_SPEED_PCT: u16 = 40;
@@ -27,7 +27,7 @@ pub const BLOCK_CAP: u32 = 190;
 pub const GAP_START: i32 = 1500;
 pub const GAP_MAX: i32 = 1500;
 pub const POLICE_BASE: u32 = 160;
-pub const POLICE_ACCEL_NUM: u32 = 5;
+pub const POLICE_ACCEL_NUM: u32 = 6;
 pub const POLICE_ACCEL_DEN: u32 = 100;
 
 pub const LINES: [u32; 3] = [300, 600, 900];

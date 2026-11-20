@@ -39,7 +39,7 @@ describe("HUD model", () => {
   it("heats up as the police approach cruise speed", () => {
     expect(heatSegments(0)).toBe(1);
     expect(heatSegments(300)).toBeGreaterThan(heatSegments(0));
-    expect(heatSegments(800)).toBe(5);
+    expect(heatSegments(667)).toBe(5);
     expect(heatSegments(1500)).toBe(5);
     for (let t = 0; t < 1000; t += 10)
       expect(heatSegments(t + 10)).toBeGreaterThanOrEqual(heatSegments(t));

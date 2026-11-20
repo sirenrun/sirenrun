@@ -35,7 +35,7 @@ export const gapFill = (gap: number) => Math.max(0, Math.min(1, gap / GAP_MAX));
 
 /**
  * Heat, 1..5 segments: how far the police have closed from their starting speed to the car's
- * cruise cap. Every segment is lit once they match it (80 s), when only nitro gains ground.
+ * cruise cap. Every segment is lit once they match it (66.7 s), when only nitro gains ground.
  */
 export function heatSegments(tick: number): number {
   const police = POLICE_BASE + (Math.max(0, tick) * POLICE_ACCEL_NUM) / POLICE_ACCEL_DEN;

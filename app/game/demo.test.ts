@@ -48,8 +48,8 @@ describe("demo run", () => {
       let hits = 0;
       while (run.tick()) if (run.sim.invuln === INVULN_TICKS) hits += 1;
       expect(hits).toBe(0);
-      // The perfect bot without nitro is caught at 1055; nitro saved for a close gap buys more.
-      expect(run.sim.t).toBeGreaterThan(1055);
+      // The perfect bot without nitro is caught at 900; nitro saved for a close gap buys more.
+      expect(run.sim.t).toBeGreaterThan(900);
       expect(run.sim.t).toBeLessThan(1500);
     }
   });
