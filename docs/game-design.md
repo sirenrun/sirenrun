@@ -37,28 +37,43 @@ and keep the math integer-only.
 | `NITRO_CHARGES` | 3 | Per run |
 | `NITRO_BOOST` | 60 | Extra speed while active |
 | `NITRO_TICKS` | 20 | 2 s per charge |
-| `CRASH_SPEED_PCT` | 50 | Speed after a hit = speed × 50 / 100 |
+| `CRASH_SPEED_PCT` | 40 | Speed after a hit = speed × 40 / 100 |
 | `INVULN_TICKS` | 10 | No new hits for 1 s after a hit |
 | `ROW_GAP` | 1000 | Units between obstacle rows |
 | `EMPTY_ROWS` | 3 | First 3 rows are always clear |
-| `GAP_START` | 3000 | Police start 3000 units behind |
-| `GAP_MAX` | 4000 | You can't get further ahead than this |
-| `POLICE_BASE` | 95 | Police speed at live tick 0 |
-| `POLICE_ACCEL_NUM / DEN` | 12 / 100 | Police speed += 0.12 per tick |
+| `GAP_START` | 1500 | Police start 1500 units behind |
+| `GAP_MAX` | 1500 | You can't get further ahead than this |
+| `POLICE_BASE` | 160 | Police speed at live tick 0 |
+| `POLICE_ACCEL_NUM / DEN` | 5 / 100 | Police speed += 0.05 per tick |
 | `BLOCK_BASE` | 40 | Base block threshold (out of 256) |
 | `BLOCK_CAP` | 190 | Max block threshold |
 | `LINES` | [300, 600, 900] | Market lines in live ticks (30 s, 60 s, 90 s) |
 
-Sanity check of the curve: police reach the car's cruise speed (200) at tick 875 (87.5 s).
-After that the gap shrinks by an ever-growing amount; with perfect play and no nitro the
-car is caught around tick ~1138 (~114 s). Nitro adds ~10 s, but only if used once the
-gap is below its cap; nitro fired while the gap is already 4000 is wasted. So every run
-ends by ~125 s, and the 90 s line is hard but reachable. Tune with playtests.
+Sanity check of the curve: police start at 160, faster than the car's launch speed, so
+the gap drops from 1500 to about 620 in the first 3 s before the car pulls back to the cap
+around 10 s. Police reach the car's cruise speed (200) at tick 800 (80 s); after that the
+gap shrinks by an ever-growing amount. The cap is small on purpose: the car is never far
+ahead, so a hit (speed × 40 / 100, then +2 per tick) costs real ground at any point in the
+run. With perfect play the car is caught at tick 1055 (105.5 s). Nitro adds almost nothing
+to a clean run, since the lead is already at the cap; it is the way back after a hit.
 
 Checked with a prototype of these exact rules: a perfect bot that always steers to the
-next row's safe lane takes zero hits on every seed tried, and is caught at 113.8 s
-without nitro and 123.6 s with nitro fired when the gap drops below 1500. The sim tests
+next row's safe lane takes zero hits on every seed tried, and is caught at 105.5 s
+without nitro and 105.7 s with nitro fired when the gap drops below 1500. The sim tests
 use these two numbers as expectations.
+
+Balance targets, from 1000 seeds of simulated players who steer like the perfect bot but
+miss a row (hold their lane instead of reacting) with the given chance, nitro on:
+
+| Player | Misses | Mean | Passes 30 s | 60 s | 90 s |
+|---|---|---|---|---|---|
+| Perfect | 0% | 105.7 s | 100% | 100% | 100% |
+| Good | 5% | 82.4 s | 98% | 81% | 46% |
+| Average | 12% | 61.7 s | 91% | 52% | 12% |
+
+Real players react late and miss in clusters, so expect live numbers somewhat below these.
+Every line stays uncertain for most players, which is what keeps all three markets
+tradable. Tune with playtests.
 
 ## State the sim needs (per run)
 
@@ -152,7 +167,7 @@ Markets react to the new state after the sim step (see [onchain-program.md](onch
 - First 10 s: easy, learn the controls, a few cars.
 - 20–40 s: two blocked lanes common, first real dodges.
 - 60 s+: three blocked lanes common, police lights in the mirror, one hit hurts.
-- 85 s+: police faster than you; nitro decides whether you make 90 s.
+- 80 s+: police faster than you; nitro decides whether you make 90 s.
 - A run should rarely end in under 15 s for a careful player.
 
 ## Parity tests

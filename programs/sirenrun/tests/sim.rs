@@ -163,7 +163,7 @@ fn perfect_bot_survives_expected_time_without_hits() {
         let (_, plain, plain_hits) = run_bot(seed, false);
         assert_eq!(
             (plain.t, plain_hits),
-            (1138, 0),
+            (1055, 0),
             "seed {seed} without nitro"
         );
         assert!(plain.police_gap <= 0);
@@ -171,7 +171,7 @@ fn perfect_bot_survives_expected_time_without_hits() {
         let (_, boosted, boosted_hits) = run_bot(seed, true);
         assert_eq!(
             (boosted.t, boosted_hits),
-            (1236, 0),
+            (1057, 0),
             "seed {seed} with nitro"
         );
         assert!(boosted.police_gap <= 0);

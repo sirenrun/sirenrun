@@ -1492,7 +1492,7 @@
           "distance": 0,
           "row": 0,
           "safeLane": 2,
-          "policeGap": 3000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -1507,202 +1507,22 @@
           "distance": 7550,
           "row": 7,
           "safeLane": 3,
-          "policeGap": 4000,
+          "policeGap": 1010,
           "busted": false,
           "nitroPressed": false
         },
         {
-          "t": 100,
-          "carX": 480,
-          "targetLane": 2,
-          "speed": 98,
+          "t": 80,
+          "carX": 960,
+          "targetLane": 4,
+          "speed": 124,
           "nitroLeft": 3,
           "nitroTicks": 0,
-          "invuln": 4,
-          "distance": 14640,
-          "row": 14,
+          "invuln": 0,
+          "distance": 11416,
+          "row": 11,
           "safeLane": 0,
-          "policeGap": 3922,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 150,
-          "carX": 960,
-          "targetLane": 4,
-          "speed": 198,
-          "nitroLeft": 1,
-          "nitroTicks": 13,
-          "invuln": 0,
-          "distance": 23710,
-          "row": 23,
-          "safeLane": 2,
-          "policeGap": 4000,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 200,
-          "carX": 720,
-          "targetLane": 3,
-          "speed": 123,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 30904,
-          "row": 30,
-          "safeLane": 4,
-          "policeGap": 3993,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 250,
-          "carX": 320,
-          "targetLane": 3,
-          "speed": 128,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 37989,
-          "row": 37,
-          "safeLane": 3,
-          "policeGap": 3806,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 300,
-          "carX": 640,
-          "targetLane": 1,
-          "speed": 149,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 44174,
-          "row": 44,
-          "safeLane": 4,
-          "policeGap": 3533,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 350,
-          "carX": 400,
-          "targetLane": 0,
-          "speed": 144,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 51855,
-          "row": 51,
-          "safeLane": 2,
-          "policeGap": 3734,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 400,
-          "carX": 560,
-          "targetLane": 1,
-          "speed": 147,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 59180,
-          "row": 59,
-          "safeLane": 3,
-          "policeGap": 3551,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 450,
-          "carX": 320,
-          "targetLane": 1,
-          "speed": 150,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 66461,
-          "row": 66,
-          "safeLane": 0,
-          "policeGap": 3384,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 500,
-          "carX": 480,
-          "targetLane": 2,
-          "speed": 154,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 73727,
-          "row": 73,
-          "safeLane": 3,
-          "policeGap": 3077,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 550,
-          "carX": 960,
-          "targetLane": 4,
-          "speed": 152,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 81323,
-          "row": 81,
-          "safeLane": 4,
-          "policeGap": 2800,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 600,
-          "carX": 800,
-          "targetLane": 3,
-          "speed": 126,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 89653,
-          "row": 89,
-          "safeLane": 3,
-          "policeGap": 2957,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 650,
-          "carX": 480,
-          "targetLane": 2,
-          "speed": 140,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 96181,
-          "row": 96,
-          "safeLane": 3,
-          "policeGap": 1012,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 666,
-          "carX": 800,
-          "targetLane": 4,
-          "speed": 96,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 97933,
-          "row": 97,
-          "safeLane": 3,
-          "policeGap": -11,
+          "policeGap": -4,
           "busted": true,
           "nitroPressed": false
         }
@@ -3415,7 +3235,7 @@
           "distance": 0,
           "row": 0,
           "safeLane": 2,
-          "policeGap": 3000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -3430,7 +3250,7 @@
           "distance": 7550,
           "row": 7,
           "safeLane": 4,
-          "policeGap": 4000,
+          "policeGap": 1010,
           "busted": false,
           "nitroPressed": false
         },
@@ -3438,134 +3258,29 @@
           "t": 100,
           "carX": 960,
           "targetLane": 4,
-          "speed": 88,
+          "speed": 59,
           "nitroLeft": 1,
           "nitroTicks": 0,
-          "invuln": 5,
-          "distance": 16482,
+          "invuln": 9,
+          "distance": 16125,
           "row": 16,
           "safeLane": 2,
-          "policeGap": 3890,
+          "policeGap": 976,
           "busted": false,
           "nitroPressed": false
         },
         {
-          "t": 150,
-          "carX": 960,
-          "targetLane": 4,
-          "speed": 58,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 9,
-          "distance": 22082,
-          "row": 22,
-          "safeLane": 2,
-          "policeGap": 3604,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 200,
-          "carX": 800,
-          "targetLane": 4,
-          "speed": 96,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 26478,
-          "row": 26,
-          "safeLane": 3,
-          "policeGap": 2227,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 250,
-          "carX": 240,
+          "t": 111,
+          "carX": 640,
           "targetLane": 1,
-          "speed": 196,
-          "nitroLeft": 0,
+          "speed": 81,
+          "nitroLeft": 1,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 33828,
-          "row": 33,
+          "distance": 16906,
+          "row": 16,
           "safeLane": 2,
-          "policeGap": 3504,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 300,
-          "carX": 240,
-          "targetLane": 1,
-          "speed": 118,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 1,
-          "distance": 43016,
-          "row": 43,
-          "safeLane": 2,
-          "policeGap": 3821,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 350,
-          "carX": 480,
-          "targetLane": 2,
-          "speed": 200,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 51376,
-          "row": 51,
-          "safeLane": 1,
-          "policeGap": 4000,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 400,
-          "carX": 320,
-          "targetLane": 1,
-          "speed": 112,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 4,
-          "distance": 60818,
-          "row": 60,
-          "safeLane": 1,
-          "policeGap": 3790,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 450,
-          "carX": 960,
-          "targetLane": 4,
-          "speed": 146,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 66328,
-          "row": 66,
-          "safeLane": 3,
-          "policeGap": 2027,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 495,
-          "carX": 800,
-          "targetLane": 2,
-          "speed": 45,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 10,
-          "distance": 71044,
-          "row": 71,
-          "safeLane": 0,
-          "policeGap": -60,
+          "policeGap": -58,
           "busted": true,
           "nitroPressed": false
         }
@@ -5158,7 +4873,7 @@
           "distance": 0,
           "row": 0,
           "safeLane": 2,
-          "policeGap": 3000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -5173,7 +4888,7 @@
           "distance": 7550,
           "row": 7,
           "safeLane": 2,
-          "policeGap": 4000,
+          "policeGap": 1010,
           "busted": false,
           "nitroPressed": false
         },
@@ -5181,14 +4896,14 @@
           "t": 100,
           "carX": 960,
           "targetLane": 4,
-          "speed": 184,
+          "speed": 164,
           "nitroLeft": 2,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 16356,
-          "row": 16,
-          "safeLane": 1,
-          "policeGap": 4000,
+          "distance": 15516,
+          "row": 15,
+          "safeLane": 2,
+          "policeGap": 816,
           "busted": false,
           "nitroPressed": false
         },
@@ -5196,89 +4911,29 @@
           "t": 150,
           "carX": 960,
           "targetLane": 4,
-          "speed": 132,
+          "speed": 102,
           "nitroLeft": 2,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 24972,
+          "distance": 24022,
           "row": 24,
           "safeLane": 0,
-          "policeGap": 4000,
+          "policeGap": 676,
           "busted": false,
           "nitroPressed": false
         },
         {
-          "t": 200,
-          "carX": 960,
-          "targetLane": 4,
-          "speed": 80,
-          "nitroLeft": 1,
-          "nitroTicks": 0,
-          "invuln": 9,
-          "distance": 32136,
-          "row": 32,
-          "safeLane": 0,
-          "policeGap": 3962,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 250,
+          "t": 164,
           "carX": 960,
           "targetLane": 4,
           "speed": 130,
-          "nitroLeft": 0,
+          "nitroLeft": 2,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 37886,
-          "row": 37,
-          "safeLane": 1,
-          "policeGap": 3639,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 300,
-          "carX": 720,
-          "targetLane": 3,
-          "speed": 99,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 42912,
-          "row": 42,
-          "safeLane": 2,
-          "policeGap": 2292,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 350,
-          "carX": 960,
-          "targetLane": 4,
-          "speed": 66,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 9,
-          "distance": 48171,
-          "row": 48,
-          "safeLane": 1,
-          "policeGap": 878,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 367,
-          "carX": 960,
-          "targetLane": 4,
-          "speed": 100,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 49599,
-          "row": 49,
-          "safeLane": 1,
-          "policeGap": -31,
+          "distance": 25660,
+          "row": 25,
+          "safeLane": 0,
+          "policeGap": -28,
           "busted": true,
           "nitroPressed": false
         }
@@ -6816,7 +6471,7 @@
           "distance": 0,
           "row": 0,
           "safeLane": 2,
-          "policeGap": 3000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -6831,7 +6486,7 @@
           "distance": 7550,
           "row": 7,
           "safeLane": 0,
-          "policeGap": 4000,
+          "policeGap": 1010,
           "busted": false,
           "nitroPressed": false
         },
@@ -6846,142 +6501,22 @@
           "distance": 17550,
           "row": 17,
           "safeLane": 0,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
         {
-          "t": 150,
-          "carX": 560,
+          "t": 134,
+          "carX": 640,
           "targetLane": 4,
-          "speed": 98,
-          "nitroLeft": 3,
-          "nitroTicks": 0,
-          "invuln": 4,
-          "distance": 24640,
-          "row": 24,
-          "safeLane": 2,
-          "policeGap": 3886,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 200,
-          "carX": 960,
-          "targetLane": 4,
-          "speed": 198,
+          "speed": 132,
           "nitroLeft": 3,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 32090,
-          "row": 32,
-          "safeLane": 2,
-          "policeGap": 4000,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 250,
-          "carX": 880,
-          "targetLane": 3,
-          "speed": 120,
-          "nitroLeft": 3,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 41200,
-          "row": 41,
+          "distance": 21932,
+          "row": 21,
           "safeLane": 0,
-          "policeGap": 3872,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 300,
-          "carX": 720,
-          "targetLane": 3,
-          "speed": 107,
-          "nitroLeft": 3,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 45443,
-          "row": 45,
-          "safeLane": 0,
-          "policeGap": 1742,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 350,
-          "carX": 320,
-          "targetLane": 4,
-          "speed": 114,
-          "nitroLeft": 2,
-          "nitroTicks": 11,
-          "invuln": 0,
-          "distance": 52860,
-          "row": 52,
-          "safeLane": 0,
-          "policeGap": 2486,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 400,
-          "carX": 480,
-          "targetLane": 2,
-          "speed": 126,
-          "nitroLeft": 2,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 60098,
-          "row": 60,
-          "safeLane": 2,
-          "policeGap": 2751,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 450,
-          "carX": 560,
-          "targetLane": 4,
-          "speed": 127,
-          "nitroLeft": 1,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 68762,
-          "row": 68,
-          "safeLane": 0,
-          "policeGap": 3530,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 500,
-          "carX": 720,
-          "targetLane": 1,
-          "speed": 87,
-          "nitroLeft": 1,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 73976,
-          "row": 73,
-          "safeLane": 0,
-          "policeGap": 1171,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 513,
-          "carX": 960,
-          "targetLane": 4,
-          "speed": 68,
-          "nitroLeft": 1,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 74749,
-          "row": 74,
-          "safeLane": 0,
-          "policeGap": -75,
+          "policeGap": -22,
           "busted": true,
           "nitroPressed": false
         }
@@ -8454,217 +7989,22 @@
           "distance": 0,
           "row": 0,
           "safeLane": 2,
-          "policeGap": 3000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
         {
-          "t": 50,
+          "t": 38,
           "carX": 960,
           "targetLane": 4,
-          "speed": 59,
+          "speed": 78,
           "nitroLeft": 3,
           "nitroTicks": 0,
-          "invuln": 10,
-          "distance": 6011,
-          "row": 6,
-          "safeLane": 1,
-          "policeGap": 4000,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 100,
-          "carX": 480,
-          "targetLane": 2,
-          "speed": 96,
-          "nitroLeft": 2,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 11460,
-          "row": 11,
-          "safeLane": 0,
-          "policeGap": 3568,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 150,
-          "carX": 720,
-          "targetLane": 3,
-          "speed": 102,
-          "nitroLeft": 2,
-          "nitroTicks": 0,
-          "invuln": 6,
-          "distance": 18434,
-          "row": 18,
-          "safeLane": 0,
-          "policeGap": 3948,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 200,
-          "carX": 560,
-          "targetLane": 4,
-          "speed": 107,
-          "nitroLeft": 1,
-          "nitroTicks": 0,
-          "invuln": 4,
-          "distance": 26654,
-          "row": 26,
-          "safeLane": 3,
-          "policeGap": 3904,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 250,
-          "carX": 480,
-          "targetLane": 2,
-          "speed": 127,
-          "nitroLeft": 1,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 32634,
-          "row": 32,
-          "safeLane": 2,
-          "policeGap": 3544,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 300,
-          "carX": 960,
-          "targetLane": 4,
-          "speed": 122,
-          "nitroLeft": 1,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 40370,
-          "row": 40,
-          "safeLane": 2,
-          "policeGap": 3805,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 350,
-          "carX": 960,
-          "targetLane": 4,
-          "speed": 132,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 47490,
-          "row": 47,
-          "safeLane": 3,
-          "policeGap": 3514,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 400,
-          "carX": 720,
-          "targetLane": 3,
-          "speed": 143,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 54237,
-          "row": 54,
-          "safeLane": 0,
-          "policeGap": 3288,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 450,
-          "carX": 0,
-          "targetLane": 0,
-          "speed": 114,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
           "invuln": 3,
-          "distance": 62809,
-          "row": 62,
-          "safeLane": 1,
-          "policeGap": 3720,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 500,
-          "carX": 480,
-          "targetLane": 1,
-          "speed": 200,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 71003,
-          "row": 71,
+          "distance": 4596,
+          "row": 4,
           "safeLane": 2,
-          "policeGap": 4000,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 550,
-          "carX": 800,
-          "targetLane": 2,
-          "speed": 200,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 81003,
-          "row": 81,
-          "safeLane": 3,
-          "policeGap": 4000,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 600,
-          "carX": 960,
-          "targetLane": 4,
-          "speed": 190,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 88573,
-          "row": 88,
-          "safeLane": 2,
-          "policeGap": 3202,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 650,
-          "carX": 320,
-          "targetLane": 1,
-          "speed": 62,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 2,
-          "distance": 94505,
-          "row": 94,
-          "safeLane": 1,
-          "policeGap": 661,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 657,
-          "carX": 240,
-          "targetLane": 1,
-          "speed": 76,
-          "nitroLeft": 0,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 94995,
-          "row": 94,
-          "safeLane": 1,
-          "policeGap": -60,
+          "policeGap": -2,
           "busted": true,
           "nitroPressed": false
         }
@@ -9108,61 +8448,6 @@
           "tick": 1053,
           "targetLane": 3,
           "nitro": false
-        },
-        {
-          "tick": 1058,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 1063,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 1073,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 1083,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 1088,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 1093,
-          "targetLane": 1,
-          "nitro": false
-        },
-        {
-          "tick": 1103,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 1108,
-          "targetLane": 1,
-          "nitro": false
-        },
-        {
-          "tick": 1113,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 1118,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 1123,
-          "targetLane": 4,
-          "nitro": false
         }
       ],
       "checkpoints": [
@@ -9177,7 +8462,7 @@
           "distance": 0,
           "row": 0,
           "safeLane": 2,
-          "policeGap": 3000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -9192,7 +8477,7 @@
           "distance": 7550,
           "row": 7,
           "safeLane": 3,
-          "policeGap": 4000,
+          "policeGap": 1010,
           "busted": false,
           "nitroPressed": false
         },
@@ -9207,7 +8492,7 @@
           "distance": 17550,
           "row": 17,
           "safeLane": 4,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -9222,7 +8507,7 @@
           "distance": 27550,
           "row": 27,
           "safeLane": 0,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -9237,7 +8522,7 @@
           "distance": 37550,
           "row": 37,
           "safeLane": 1,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -9252,7 +8537,7 @@
           "distance": 47550,
           "row": 47,
           "safeLane": 2,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -9267,7 +8552,7 @@
           "distance": 57550,
           "row": 57,
           "safeLane": 3,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -9282,7 +8567,7 @@
           "distance": 67550,
           "row": 67,
           "safeLane": 4,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -9297,7 +8582,7 @@
           "distance": 77550,
           "row": 77,
           "safeLane": 4,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -9312,7 +8597,7 @@
           "distance": 87550,
           "row": 87,
           "safeLane": 3,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -9327,7 +8612,7 @@
           "distance": 97550,
           "row": 97,
           "safeLane": 2,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -9342,7 +8627,7 @@
           "distance": 107550,
           "row": 107,
           "safeLane": 0,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -9357,7 +8642,7 @@
           "distance": 117550,
           "row": 117,
           "safeLane": 2,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -9372,7 +8657,7 @@
           "distance": 127550,
           "row": 127,
           "safeLane": 0,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -9387,7 +8672,7 @@
           "distance": 137550,
           "row": 137,
           "safeLane": 3,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -9402,7 +8687,7 @@
           "distance": 147550,
           "row": 147,
           "safeLane": 3,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -9417,7 +8702,7 @@
           "distance": 157550,
           "row": 157,
           "safeLane": 3,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -9432,7 +8717,7 @@
           "distance": 167550,
           "row": 167,
           "safeLane": 1,
-          "policeGap": 4000,
+          "policeGap": 1460,
           "busted": false,
           "nitroPressed": false
         },
@@ -9447,7 +8732,7 @@
           "distance": 177550,
           "row": 177,
           "safeLane": 2,
-          "policeGap": 3976,
+          "policeGap": 1300,
           "busted": false,
           "nitroPressed": false
         },
@@ -9462,7 +8747,7 @@
           "distance": 187550,
           "row": 187,
           "safeLane": 0,
-          "policeGap": 3703,
+          "policeGap": 1010,
           "busted": false,
           "nitroPressed": false
         },
@@ -9477,7 +8762,7 @@
           "distance": 197550,
           "row": 197,
           "safeLane": 0,
-          "policeGap": 3130,
+          "policeGap": 600,
           "busted": false,
           "nitroPressed": false
         },
@@ -9492,37 +8777,22 @@
           "distance": 207550,
           "row": 207,
           "safeLane": 2,
-          "policeGap": 2257,
+          "policeGap": 60,
           "busted": false,
           "nitroPressed": false
         },
         {
-          "t": 1100,
-          "carX": 240,
-          "targetLane": 1,
+          "t": 1055,
+          "carX": 640,
+          "targetLane": 3,
           "speed": 200,
           "nitroLeft": 3,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 217550,
-          "row": 217,
-          "safeLane": 1,
-          "policeGap": 1084,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 1138,
-          "carX": 960,
-          "targetLane": 4,
-          "speed": 200,
-          "nitroLeft": 3,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 225150,
-          "row": 225,
-          "safeLane": 4,
-          "policeGap": -9,
+          "distance": 208550,
+          "row": 208,
+          "safeLane": 2,
+          "policeGap": 0,
           "busted": true,
           "nitroPressed": false
         }
@@ -9533,558 +8803,503 @@
       "seed": "81985529216486895",
       "inputs": [
         {
-          "tick": 17,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 24,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 37,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 42,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 53,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 73,
+          "tick": 1,
           "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 83,
-          "targetLane": 1,
-          "nitro": false
-        },
-        {
-          "tick": 88,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 93,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 108,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 113,
-          "targetLane": 1,
-          "nitro": false
-        },
-        {
-          "tick": 123,
-          "targetLane": 0,
-          "nitro": false
-        },
-        {
-          "tick": 173,
-          "targetLane": 1,
-          "nitro": false
-        },
-        {
-          "tick": 183,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 188,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 193,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 203,
-          "targetLane": 1,
-          "nitro": false
-        },
-        {
-          "tick": 208,
-          "targetLane": 0,
-          "nitro": false
-        },
-        {
-          "tick": 213,
-          "targetLane": 1,
-          "nitro": false
-        },
-        {
-          "tick": 218,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 223,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 228,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 233,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 238,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 258,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 273,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 278,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 308,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 313,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 318,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 368,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 373,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 383,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 388,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 398,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 403,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 413,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 418,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 423,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 428,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 453,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 483,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 498,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 533,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 543,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 548,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 558,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 568,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 583,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 593,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 598,
-          "targetLane": 1,
-          "nitro": false
-        },
-        {
-          "tick": 603,
-          "targetLane": 0,
-          "nitro": false
-        },
-        {
-          "tick": 618,
-          "targetLane": 1,
-          "nitro": false
-        },
-        {
-          "tick": 623,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 628,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 633,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 648,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 668,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 673,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 678,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 688,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 693,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 698,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 703,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 733,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 758,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 763,
-          "targetLane": 1,
-          "nitro": false
-        },
-        {
-          "tick": 768,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 773,
-          "targetLane": 1,
-          "nitro": false
-        },
-        {
-          "tick": 778,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 783,
-          "targetLane": 1,
-          "nitro": false
-        },
-        {
-          "tick": 788,
-          "targetLane": 0,
-          "nitro": false
-        },
-        {
-          "tick": 798,
-          "targetLane": 1,
-          "nitro": false
-        },
-        {
-          "tick": 803,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 813,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 828,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 838,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 848,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 858,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 863,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 908,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 913,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 918,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 923,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 933,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 953,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 958,
-          "targetLane": 1,
-          "nitro": false
-        },
-        {
-          "tick": 978,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 983,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 1013,
-          "targetLane": 4,
-          "nitro": false
-        },
-        {
-          "tick": 1018,
-          "targetLane": 3,
-          "nitro": false
-        },
-        {
-          "tick": 1023,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 1038,
-          "targetLane": 1,
-          "nitro": false
-        },
-        {
-          "tick": 1043,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 1053,
-          "targetLane": 1,
-          "nitro": false
-        },
-        {
-          "tick": 1058,
-          "targetLane": 0,
-          "nitro": false
-        },
-        {
-          "tick": 1063,
-          "targetLane": 1,
-          "nitro": false
-        },
-        {
-          "tick": 1084,
-          "targetLane": 1,
           "nitro": true
         },
         {
-          "tick": 1095,
-          "targetLane": 0,
-          "nitro": false
-        },
-        {
-          "tick": 1102,
-          "targetLane": 1,
-          "nitro": false
-        },
-        {
-          "tick": 1107,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 1112,
+          "tick": 12,
           "targetLane": 3,
           "nitro": false
         },
         {
-          "tick": 1122,
+          "tick": 18,
           "targetLane": 4,
           "nitro": false
         },
         {
-          "tick": 1128,
+          "tick": 22,
           "targetLane": 4,
           "nitro": true
         },
         {
-          "tick": 1143,
+          "tick": 28,
           "targetLane": 3,
           "nitro": false
         },
         {
-          "tick": 1146,
+          "tick": 32,
+          "targetLane": 4,
+          "nitro": false
+        },
+        {
+          "tick": 41,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 61,
           "targetLane": 2,
           "nitro": false
         },
         {
-          "tick": 1151,
+          "tick": 71,
           "targetLane": 1,
           "nitro": false
         },
         {
-          "tick": 1166,
+          "tick": 76,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 81,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 96,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 101,
           "targetLane": 1,
+          "nitro": false
+        },
+        {
+          "tick": 111,
+          "targetLane": 0,
+          "nitro": false
+        },
+        {
+          "tick": 161,
+          "targetLane": 1,
+          "nitro": false
+        },
+        {
+          "tick": 171,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 176,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 181,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 191,
+          "targetLane": 1,
+          "nitro": false
+        },
+        {
+          "tick": 196,
+          "targetLane": 0,
+          "nitro": false
+        },
+        {
+          "tick": 201,
+          "targetLane": 1,
+          "nitro": false
+        },
+        {
+          "tick": 206,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 211,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 216,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 221,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 226,
+          "targetLane": 4,
+          "nitro": false
+        },
+        {
+          "tick": 246,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 261,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 266,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 296,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 301,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 306,
+          "targetLane": 4,
+          "nitro": false
+        },
+        {
+          "tick": 356,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 361,
+          "targetLane": 4,
+          "nitro": false
+        },
+        {
+          "tick": 371,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 376,
+          "targetLane": 4,
+          "nitro": false
+        },
+        {
+          "tick": 386,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 391,
+          "targetLane": 4,
+          "nitro": false
+        },
+        {
+          "tick": 401,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 406,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 411,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 416,
+          "targetLane": 4,
+          "nitro": false
+        },
+        {
+          "tick": 441,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 471,
+          "targetLane": 4,
+          "nitro": false
+        },
+        {
+          "tick": 486,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 521,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 531,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 536,
+          "targetLane": 4,
+          "nitro": false
+        },
+        {
+          "tick": 546,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 556,
+          "targetLane": 4,
+          "nitro": false
+        },
+        {
+          "tick": 571,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 581,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 586,
+          "targetLane": 1,
+          "nitro": false
+        },
+        {
+          "tick": 591,
+          "targetLane": 0,
+          "nitro": false
+        },
+        {
+          "tick": 606,
+          "targetLane": 1,
+          "nitro": false
+        },
+        {
+          "tick": 611,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 616,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 621,
+          "targetLane": 4,
+          "nitro": false
+        },
+        {
+          "tick": 636,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 656,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 661,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 666,
+          "targetLane": 4,
+          "nitro": false
+        },
+        {
+          "tick": 676,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 681,
+          "targetLane": 4,
+          "nitro": false
+        },
+        {
+          "tick": 686,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 691,
+          "targetLane": 4,
+          "nitro": false
+        },
+        {
+          "tick": 721,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 746,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 751,
+          "targetLane": 1,
+          "nitro": false
+        },
+        {
+          "tick": 756,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 761,
+          "targetLane": 1,
+          "nitro": false
+        },
+        {
+          "tick": 766,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 771,
+          "targetLane": 1,
+          "nitro": false
+        },
+        {
+          "tick": 776,
+          "targetLane": 0,
+          "nitro": false
+        },
+        {
+          "tick": 786,
+          "targetLane": 1,
+          "nitro": false
+        },
+        {
+          "tick": 791,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 801,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 816,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 821,
+          "targetLane": 2,
           "nitro": true
         },
         {
-          "tick": 1170,
-          "targetLane": 2,
-          "nitro": false
-        },
-        {
-          "tick": 1181,
+          "tick": 825,
           "targetLane": 3,
           "nitro": false
         },
         {
-          "tick": 1195,
+          "tick": 832,
           "targetLane": 4,
+          "nitro": false
+        },
+        {
+          "tick": 840,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 845,
+          "targetLane": 4,
+          "nitro": false
+        },
+        {
+          "tick": 890,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 895,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 900,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 905,
+          "targetLane": 4,
+          "nitro": false
+        },
+        {
+          "tick": 915,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 935,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 940,
+          "targetLane": 1,
+          "nitro": false
+        },
+        {
+          "tick": 960,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 965,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 995,
+          "targetLane": 4,
+          "nitro": false
+        },
+        {
+          "tick": 1000,
+          "targetLane": 3,
+          "nitro": false
+        },
+        {
+          "tick": 1005,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 1020,
+          "targetLane": 1,
+          "nitro": false
+        },
+        {
+          "tick": 1025,
+          "targetLane": 2,
+          "nitro": false
+        },
+        {
+          "tick": 1035,
+          "targetLane": 1,
+          "nitro": false
+        },
+        {
+          "tick": 1040,
+          "targetLane": 0,
+          "nitro": false
+        },
+        {
+          "tick": 1045,
+          "targetLane": 1,
           "nitro": false
         }
       ],
@@ -10100,37 +9315,37 @@
           "distance": 0,
           "row": 0,
           "safeLane": 2,
-          "policeGap": 3000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
         {
           "t": 50,
-          "carX": 960,
-          "targetLane": 4,
+          "carX": 720,
+          "targetLane": 3,
           "speed": 200,
-          "nitroLeft": 3,
+          "nitroLeft": 1,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 7550,
-          "row": 7,
-          "safeLane": 4,
-          "policeGap": 4000,
+          "distance": 9950,
+          "row": 9,
+          "safeLane": 3,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
         {
           "t": 100,
-          "carX": 720,
-          "targetLane": 3,
+          "carX": 480,
+          "targetLane": 2,
           "speed": 200,
-          "nitroLeft": 3,
+          "nitroLeft": 1,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 17550,
-          "row": 17,
+          "distance": 19950,
+          "row": 19,
           "safeLane": 3,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -10139,58 +9354,58 @@
           "carX": 0,
           "targetLane": 0,
           "speed": 200,
-          "nitroLeft": 3,
+          "nitroLeft": 1,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 27550,
-          "row": 27,
+          "distance": 29950,
+          "row": 29,
           "safeLane": 0,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
         {
           "t": 200,
-          "carX": 480,
-          "targetLane": 2,
+          "carX": 0,
+          "targetLane": 0,
           "speed": 200,
-          "nitroLeft": 3,
+          "nitroLeft": 1,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 37550,
-          "row": 37,
-          "safeLane": 2,
-          "policeGap": 4000,
+          "distance": 39950,
+          "row": 39,
+          "safeLane": 1,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
         {
           "t": 250,
-          "carX": 960,
-          "targetLane": 4,
+          "carX": 720,
+          "targetLane": 3,
           "speed": 200,
-          "nitroLeft": 3,
+          "nitroLeft": 1,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 47550,
-          "row": 47,
+          "distance": 49950,
+          "row": 49,
           "safeLane": 4,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
         {
           "t": 300,
-          "carX": 720,
-          "targetLane": 3,
+          "carX": 480,
+          "targetLane": 2,
           "speed": 200,
-          "nitroLeft": 3,
+          "nitroLeft": 1,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 57550,
-          "row": 57,
+          "distance": 59950,
+          "row": 59,
           "safeLane": 3,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
@@ -10199,283 +9414,238 @@
           "carX": 960,
           "targetLane": 4,
           "speed": 200,
-          "nitroLeft": 3,
+          "nitroLeft": 1,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 67550,
-          "row": 67,
+          "distance": 69950,
+          "row": 69,
           "safeLane": 4,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
         {
           "t": 400,
-          "carX": 800,
-          "targetLane": 3,
+          "carX": 960,
+          "targetLane": 4,
           "speed": 200,
-          "nitroLeft": 3,
+          "nitroLeft": 1,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 77550,
-          "row": 77,
+          "distance": 79950,
+          "row": 79,
           "safeLane": 4,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
         {
           "t": 450,
-          "carX": 960,
-          "targetLane": 4,
+          "carX": 720,
+          "targetLane": 3,
           "speed": 200,
-          "nitroLeft": 3,
+          "nitroLeft": 1,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 87550,
-          "row": 87,
-          "safeLane": 4,
-          "policeGap": 4000,
+          "distance": 89950,
+          "row": 89,
+          "safeLane": 3,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
         {
           "t": 500,
-          "carX": 800,
+          "carX": 720,
           "targetLane": 3,
           "speed": 200,
-          "nitroLeft": 3,
+          "nitroLeft": 1,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 97550,
-          "row": 97,
-          "safeLane": 4,
-          "policeGap": 4000,
+          "distance": 99950,
+          "row": 99,
+          "safeLane": 3,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
         {
           "t": 550,
-          "carX": 880,
-          "targetLane": 4,
+          "carX": 720,
+          "targetLane": 3,
           "speed": 200,
-          "nitroLeft": 3,
+          "nitroLeft": 1,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 107550,
-          "row": 107,
-          "safeLane": 3,
-          "policeGap": 4000,
+          "distance": 109950,
+          "row": 109,
+          "safeLane": 4,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
         {
           "t": 600,
-          "carX": 320,
-          "targetLane": 1,
+          "carX": 0,
+          "targetLane": 0,
           "speed": 200,
-          "nitroLeft": 3,
+          "nitroLeft": 1,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 117550,
-          "row": 117,
-          "safeLane": 2,
-          "policeGap": 4000,
+          "distance": 119950,
+          "row": 119,
+          "safeLane": 0,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
         {
           "t": 650,
-          "carX": 800,
+          "carX": 720,
           "targetLane": 3,
           "speed": 200,
-          "nitroLeft": 3,
+          "nitroLeft": 1,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 127550,
-          "row": 127,
-          "safeLane": 4,
-          "policeGap": 4000,
+          "distance": 129950,
+          "row": 129,
+          "safeLane": 3,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
         {
           "t": 700,
-          "carX": 800,
-          "targetLane": 3,
+          "carX": 960,
+          "targetLane": 4,
           "speed": 200,
-          "nitroLeft": 3,
+          "nitroLeft": 1,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 137550,
-          "row": 137,
+          "distance": 139950,
+          "row": 139,
           "safeLane": 4,
-          "policeGap": 4000,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
         {
           "t": 750,
-          "carX": 720,
-          "targetLane": 3,
-          "speed": 200,
-          "nitroLeft": 3,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 147550,
-          "row": 147,
-          "safeLane": 3,
-          "policeGap": 4000,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 800,
-          "carX": 160,
-          "targetLane": 1,
-          "speed": 200,
-          "nitroLeft": 3,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 157550,
-          "row": 157,
-          "safeLane": 0,
-          "policeGap": 4000,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 850,
-          "carX": 880,
-          "targetLane": 4,
-          "speed": 200,
-          "nitroLeft": 3,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 167550,
-          "row": 167,
-          "safeLane": 3,
-          "policeGap": 4000,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 900,
-          "carX": 960,
-          "targetLane": 4,
-          "speed": 200,
-          "nitroLeft": 3,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 177550,
-          "row": 177,
-          "safeLane": 4,
-          "policeGap": 3976,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 950,
-          "carX": 720,
-          "targetLane": 3,
-          "speed": 200,
-          "nitroLeft": 3,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 187550,
-          "row": 187,
-          "safeLane": 3,
-          "policeGap": 3703,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 1000,
-          "carX": 720,
-          "targetLane": 3,
-          "speed": 200,
-          "nitroLeft": 3,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 197550,
-          "row": 197,
-          "safeLane": 3,
-          "policeGap": 3130,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 1050,
-          "carX": 480,
-          "targetLane": 2,
-          "speed": 200,
-          "nitroLeft": 3,
-          "nitroTicks": 0,
-          "invuln": 0,
-          "distance": 207550,
-          "row": 207,
-          "safeLane": 2,
-          "policeGap": 2257,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 1100,
-          "carX": 0,
-          "targetLane": 0,
-          "speed": 200,
-          "nitroLeft": 2,
-          "nitroTicks": 4,
-          "invuln": 0,
-          "distance": 218510,
-          "row": 218,
-          "safeLane": 0,
-          "policeGap": 2044,
-          "busted": false,
-          "nitroPressed": false
-        },
-        {
-          "t": 1150,
           "carX": 480,
           "targetLane": 2,
           "speed": 200,
           "nitroLeft": 1,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 229950,
-          "row": 229,
+          "distance": 149950,
+          "row": 149,
           "safeLane": 3,
-          "policeGap": 2011,
+          "policeGap": 1500,
           "busted": false,
           "nitroPressed": false
         },
         {
-          "t": 1200,
+          "t": 800,
+          "carX": 480,
+          "targetLane": 2,
+          "speed": 200,
+          "nitroLeft": 1,
+          "nitroTicks": 0,
+          "invuln": 0,
+          "distance": 159950,
+          "row": 159,
+          "safeLane": 2,
+          "policeGap": 1500,
+          "busted": false,
+          "nitroPressed": false
+        },
+        {
+          "t": 850,
           "carX": 960,
           "targetLane": 4,
           "speed": 200,
           "nitroLeft": 0,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 241150,
-          "row": 241,
+          "distance": 171150,
+          "row": 171,
           "safeLane": 4,
-          "policeGap": 1438,
+          "policeGap": 1482,
           "busted": false,
           "nitroPressed": false
         },
         {
-          "t": 1236,
+          "t": 900,
+          "carX": 480,
+          "targetLane": 2,
+          "speed": 200,
+          "nitroLeft": 0,
+          "nitroTicks": 0,
+          "invuln": 0,
+          "distance": 181150,
+          "row": 181,
+          "safeLane": 2,
+          "policeGap": 1322,
+          "busted": false,
+          "nitroPressed": false
+        },
+        {
+          "t": 950,
+          "carX": 240,
+          "targetLane": 1,
+          "speed": 200,
+          "nitroLeft": 0,
+          "nitroTicks": 0,
+          "invuln": 0,
+          "distance": 191150,
+          "row": 191,
+          "safeLane": 1,
+          "policeGap": 1032,
+          "busted": false,
+          "nitroPressed": false
+        },
+        {
+          "t": 1000,
           "carX": 960,
           "targetLane": 4,
           "speed": 200,
           "nitroLeft": 0,
           "nitroTicks": 0,
           "invuln": 0,
-          "distance": 248350,
-          "row": 248,
+          "distance": 201150,
+          "row": 201,
           "safeLane": 4,
-          "policeGap": -25,
+          "policeGap": 622,
+          "busted": false,
+          "nitroPressed": false
+        },
+        {
+          "t": 1050,
+          "carX": 240,
+          "targetLane": 1,
+          "speed": 200,
+          "nitroLeft": 0,
+          "nitroTicks": 0,
+          "invuln": 0,
+          "distance": 211150,
+          "row": 211,
+          "safeLane": 1,
+          "policeGap": 82,
+          "busted": false,
+          "nitroPressed": false
+        },
+        {
+          "t": 1057,
+          "carX": 240,
+          "targetLane": 1,
+          "speed": 200,
+          "nitroLeft": 0,
+          "nitroTicks": 0,
+          "invuln": 0,
+          "distance": 212550,
+          "row": 212,
+          "safeLane": 1,
+          "policeGap": -2,
           "busted": true,
           "nitroPressed": false
         }

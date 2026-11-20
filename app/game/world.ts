@@ -16,9 +16,9 @@ export const laneX = (lane: number) => worldX(lane * LANE_WIDTH);
 
 /**
  * How far behind the car the lead cruiser is drawn. The gap is a number, not a position, so
- * this is a display mapping tuned to the chase camera (10.5 m behind the car): at the 4000
+ * this is a display mapping tuned to the chase camera (10.5 m behind the car): at the gap
  * cap the police sit just behind the camera and only their lights reach the road; around
- * 2700 they enter the bottom of the frame; at 0 they touch the bumper.
+ * two thirds of the cap they enter the bottom of the frame; at 0 they touch the bumper.
  */
 export function policeDistance(gap: number): number {
   const g = Math.max(0, Math.min(GAP_MAX, gap)) / GAP_MAX;
