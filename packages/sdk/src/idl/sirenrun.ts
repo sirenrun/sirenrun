@@ -5,7 +5,7 @@
  * IDL can be found at `target/idl/sirenrun.json`.
  */
 export type Sirenrun = {
-  address: "8NnGx94QrpwcUW6LL7NBzbgrTPUfVyaLsd8iHnfserHj";
+  address: "6D65tPwcsoSoPK2qcXD87jcUQpMxwCjfX7tX7tKARiZ4";
   metadata: {
     name: "sirenrun";
     version: "0.1.0";
@@ -203,38 +203,38 @@ export type Sirenrun = {
             program: {
               kind: "const";
               value: [
-                109,
-                150,
+                77,
+                99,
+                39,
                 50,
-                182,
-                71,
-                25,
-                15,
-                197,
-                109,
-                165,
-                98,
-                80,
-                157,
-                138,
-                193,
-                9,
-                159,
+                110,
+                33,
+                243,
                 183,
-                115,
-                84,
-                54,
-                15,
-                192,
+                78,
+                74,
+                43,
+                118,
+                213,
+                236,
+                209,
+                31,
+                96,
+                111,
+                77,
+                111,
                 173,
-                83,
-                41,
-                22,
-                47,
-                6,
-                135,
+                20,
+                14,
                 162,
-                150,
+                55,
+                69,
+                198,
+                31,
+                30,
+                114,
+                34,
+                87,
               ];
             };
           };
@@ -305,7 +305,7 @@ export type Sirenrun = {
         },
         {
           name: "ownerProgram";
-          address: "8NnGx94QrpwcUW6LL7NBzbgrTPUfVyaLsd8iHnfserHj";
+          address: "6D65tPwcsoSoPK2qcXD87jcUQpMxwCjfX7tX7tKARiZ4";
         },
         {
           name: "delegationProgram";
@@ -348,38 +348,38 @@ export type Sirenrun = {
             program: {
               kind: "const";
               value: [
-                109,
-                150,
+                77,
+                99,
+                39,
                 50,
-                182,
-                71,
-                25,
-                15,
-                197,
-                109,
-                165,
-                98,
-                80,
-                157,
-                138,
-                193,
-                9,
-                159,
+                110,
+                33,
+                243,
                 183,
-                115,
-                84,
-                54,
-                15,
-                192,
+                78,
+                74,
+                43,
+                118,
+                213,
+                236,
+                209,
+                31,
+                96,
+                111,
+                77,
+                111,
                 173,
-                83,
-                41,
-                22,
-                47,
-                6,
-                135,
+                20,
+                14,
                 162,
-                150,
+                55,
+                69,
+                198,
+                31,
+                30,
+                114,
+                34,
+                87,
               ];
             };
           };
@@ -462,7 +462,7 @@ export type Sirenrun = {
         },
         {
           name: "ownerProgram";
-          address: "8NnGx94QrpwcUW6LL7NBzbgrTPUfVyaLsd8iHnfserHj";
+          address: "6D65tPwcsoSoPK2qcXD87jcUQpMxwCjfX7tX7tKARiZ4";
         },
         {
           name: "delegationProgram";
@@ -876,7 +876,7 @@ export type Sirenrun = {
         },
         {
           name: "programIdentity";
-          address: "37HL9DPN7nLNtK24UDFfwTXKjbsL5XwbjfDXhdtSX3CT";
+          address: "7TQzwcQLXQBZxWjBvSk4EqPnJAh5wjwbReehxUNC5QcM";
         },
         {
           name: "oracleQueue";
@@ -1068,7 +1068,7 @@ export type Sirenrun = {
         {
           name: "vrfProgramIdentity";
           signer: true;
-          address: "Ao4WRmrvcfdZUqnTtar5DnLHJH8Bn9kEfQkwbTbezF76";
+          address: "AdKf7vmQmyHiuqea4YzNP3Nxm7ZgVF2CCmWWkvPiDFaC";
         },
         {
           name: "arena";

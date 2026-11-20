@@ -7,11 +7,11 @@ package_manager = "pnpm"
 resolution = true
 skip-lint = false
 
-[programs.localnet]
-sirenrun = "8NnGx94QrpwcUW6LL7NBzbgrTPUfVyaLsd8iHnfserHj"
-
 [programs.devnet]
-sirenrun = "8NnGx94QrpwcUW6LL7NBzbgrTPUfVyaLsd8iHnfserHj"
+sirenrun = "6D65tPwcsoSoPK2qcXD87jcUQpMxwCjfX7tX7tKARiZ4"
+
+[programs.localnet]
+sirenrun = "6D65tPwcsoSoPK2qcXD87jcUQpMxwCjfX7tX7tKARiZ4"
 
 [provider]
 cluster = "localnet"
