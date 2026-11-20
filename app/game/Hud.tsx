@@ -3,6 +3,7 @@
 import { GAP_MAX, INVULN_TICKS, LINES, NITRO_BOOST, NITRO_CHARGES } from "@sirenrun/sim";
 import { useEffect, useRef, useState } from "react";
 import type { Market } from "@sirenrun/sdk";
+import { shortAddress } from "../lib/results";
 import { useArena } from "../stores/arena";
 import { frame } from "./frame";
 import {
@@ -23,8 +24,6 @@ const GAP_COLOURS = {
   warn: "var(--color-amber)",
   danger: "var(--color-police-red)",
 } as const;
-
-const shortKey = (key: string) => `${key.slice(0, 4)}…${key.slice(-4)}`;
 
 /**
  * Run HUD. React lays it out once; a requestAnimationFrame loop then writes the numbers and
@@ -286,7 +285,7 @@ export function Hud({ channel }: { channel: number }) {
       {/* Bottom right: channel and driver */}
       <div className="absolute bottom-5 right-6 hidden text-sm font-semibold text-muted sm:block">
         CH-{channel + 1}
-        {runner !== null && <> · {shortKey(runner)}</>}
+        {runner !== null && <> · {shortAddress(runner)}</>}
       </div>
 
       {/* Centre: staging countdown */}

@@ -115,6 +115,12 @@ export function Header() {
           />
         </Link>
         <div className="flex flex-wrap items-center justify-end gap-3">
+          <Link
+            href="/lobby"
+            className="text-sm font-semibold text-muted transition-colors hover:text-text"
+          >
+            Channels
+          </Link>
           <FaucetButton className="hidden sm:flex" />
           <SessionPill />
           <GameBalance />

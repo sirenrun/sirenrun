@@ -240,6 +240,10 @@ export function MarketsPanel({ id, demo = false }: { id: number; demo?: boolean 
   const [open, setOpen] = useState(false);
 
   useEffect(() => watch(demo ? null : id), [demo, id, watch]);
+  const ensureConfig = useBalance((s) => s.ensureConfig);
+  useEffect(() => {
+    if (!demo) void ensureConfig();
+  }, [demo, ensureConfig]);
 
   const sessionLive = session !== null && isSessionLive(session, now / 1000);
   const blocker = tradeBlocker({

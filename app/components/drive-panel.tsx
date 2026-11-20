@@ -93,8 +93,9 @@ export function DrivePanel() {
   const { start, starting, error } = useDrive();
   const setDrawer = useUi((s) => s.setDrawer);
   const now = useNow(15_000);
+  const resultsOpen = useUi((s) => s.resultsOpen);
 
-  if (status !== "idle") return null;
+  if (status !== "idle" || resultsOpen) return null;
   const stake = config === null ? null : config.entryFee + config.bond;
   const available = game?.available ?? 0n;
   const sessionLive = session !== null && isSessionLive(session, now / 1000);

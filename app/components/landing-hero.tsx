@@ -6,8 +6,8 @@ import { useEffect, useRef, useState } from "react";
 
 const HeroStage = dynamic(() => import("./hero-stage"), { ssr: false });
 
-/** Until there is a lobby, both buttons lead to the first channel. */
-const FIRST_CHANNEL = "/c/1";
+/** Both buttons lead to the lobby: drive an idle channel or watch one in progress. */
+const LOBBY = "/lobby";
 
 /** Sunset gradient shown before the scene loads and instead of it when there is no motion. */
 function Poster() {
@@ -58,13 +58,13 @@ export function LandingHero() {
         </p>
         <div className="flex flex-wrap justify-center gap-3">
           <Link
-            href={FIRST_CHANNEL}
+            href={LOBBY}
             className="rounded-md bg-neon-pink px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-[#e0267a]"
           >
             Drive
           </Link>
           <Link
-            href={FIRST_CHANNEL}
+            href={LOBBY}
             className="rounded-md border border-white/25 bg-black/30 px-6 py-3 text-base font-semibold backdrop-blur transition-colors hover:border-white/50"
           >
             Watch live
