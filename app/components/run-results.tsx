@@ -116,11 +116,11 @@ export function RunResults() {
       <div className="mt-5 flex gap-2">
         <Link
           href="/lobby"
-          className="flex-1 rounded-md border border-white/25 py-2 text-center text-sm font-semibold hover:border-white/50"
+          className="flex-1 rounded-md border border-white/25 py-2 text-center text-sm font-semibold hover:border-white/50 hover:bg-white/5"
         >
           Watch next
         </Link>
-        <SaveClip className="flex-1 rounded-md border border-white/25 py-2 text-center text-sm font-semibold hover:border-white/50" />
+        <SaveClip className="flex-1 rounded-md border border-white/25 py-2 text-center text-sm font-semibold hover:border-white/50 hover:bg-white/5" />
         <button type="button" className="btn-primary flex-1" onClick={() => setSummary(null)}>
           Close
         </button>

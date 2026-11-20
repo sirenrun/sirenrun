@@ -68,7 +68,7 @@ function SessionPill() {
       disabled={pending}
       onClick={() => void start(signer)}
       title={error ?? "One signature; no more wallet popups for an hour"}
-      className="rounded-full border border-muted/40 px-3 py-1 text-xs text-muted transition-colors hover:text-text disabled:opacity-50"
+      className="rounded-full border border-muted/40 px-3 py-1 text-xs text-muted hover:border-muted/70 hover:text-text disabled:opacity-50"
     >
       {pending ? "Signing…" : error !== null ? "Session failed · retry" : "Start session"}
     </button>
@@ -85,7 +85,7 @@ function GameBalance() {
     <button
       type="button"
       onClick={() => setDrawer(true)}
-      className="rounded-md px-2 py-1 text-right leading-tight transition-colors hover:bg-white/5"
+      className="rounded-md px-2 py-1 text-right leading-tight hover:bg-white/5"
     >
       <span className="block text-sm font-semibold tabular-nums">
         {formatTokenAmount(game?.available ?? 0n)} <span className="text-muted">tUSDC</span>
@@ -115,10 +115,7 @@ export function Header() {
           />
         </Link>
         <div className="flex flex-wrap items-center justify-end gap-3">
-          <Link
-            href="/lobby"
-            className="text-sm font-semibold text-muted transition-colors hover:text-text"
-          >
+          <Link href="/lobby" className="text-sm font-semibold text-muted hover:text-text">
             Channels
           </Link>
           <FaucetButton className="hidden sm:flex" />

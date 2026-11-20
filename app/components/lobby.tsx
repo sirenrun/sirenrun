@@ -48,7 +48,7 @@ export function Lobby() {
           return (
             <li
               key={id}
-              className="flex flex-col rounded-xl border border-white/10 bg-white/[0.03] p-5"
+              className="flex flex-col rounded-xl border border-white/10 bg-white/[0.03] p-5 transition-[border-color,box-shadow,translate] duration-200 ease-[var(--ease-ui)] hover:-translate-y-0.5 hover:border-white/20 hover:shadow-[0_12px_32px_-16px_rgb(255_46_136/0.45)]"
             >
               <div className="flex items-baseline justify-between">
                 <h2 className="font-display text-2xl font-extrabold italic">CH-{id + 1}</h2>
@@ -92,10 +92,10 @@ export function Lobby() {
               </dl>
               <Link
                 href={`/c/${id + 1}`}
-                className={`mt-5 rounded-md py-2 text-center text-sm font-semibold transition-colors ${
+                className={`mt-5 rounded-md py-2 text-center text-sm font-semibold ${
                   status.action === "Drive"
-                    ? "bg-neon-pink text-white hover:bg-[#e0267a]"
-                    : "border border-white/25 hover:border-white/50"
+                    ? "btn-glow bg-neon-pink text-white hover:bg-[#e0267a]"
+                    : "border border-white/25 hover:border-white/50 hover:bg-white/5"
                 }`}
               >
                 {status.action}

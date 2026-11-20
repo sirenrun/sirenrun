@@ -113,10 +113,10 @@ function MarketRow(props: {
         type="button"
         disabled={!canTrade || !view.open || buying !== null}
         onClick={() => void buy(view.index, side, amount)}
-        className={`flex flex-1 flex-col items-center rounded-md border px-2 py-1.5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+        className={`flex flex-1 flex-col items-center rounded-md border px-2 py-1.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${
           side === "yes"
-            ? "border-neon-pink/50 bg-neon-pink/10 hover:bg-neon-pink/25"
-            : "border-neon-cyan/50 bg-neon-cyan/10 hover:bg-neon-cyan/25"
+            ? "border-neon-pink/50 bg-neon-pink/10 enabled:hover:bg-neon-pink/25 enabled:hover:shadow-[0_0_18px_-6px_var(--color-neon-pink)]"
+            : "border-neon-cyan/50 bg-neon-cyan/10 enabled:hover:bg-neon-cyan/25 enabled:hover:shadow-[0_0_18px_-6px_var(--color-neon-cyan)]"
         }`}
       >
         <span>
@@ -300,7 +300,7 @@ export function MarketsPanel({ id, demo = false }: { id: number; demo?: boolean 
         </span>
       </button>
       <div
-        className={`flex-1 space-y-4 overflow-y-auto px-4 pb-4 lg:block lg:pt-4 ${open ? "block" : "hidden"}`}
+        className={`flex-1 space-y-4 overflow-y-auto overscroll-contain px-4 pb-4 lg:block lg:pt-4 ${open ? "block" : "hidden"}`}
       >
         <div className="hidden items-baseline justify-between lg:flex">
           <h2 className="font-display text-2xl font-extrabold italic">Markets</h2>
@@ -343,7 +343,7 @@ export function MarketsPanel({ id, demo = false }: { id: number; demo?: boolean 
               role="radio"
               aria-checked={preset === p}
               onClick={() => setPreset(p)}
-              className={`flex-1 rounded-md border py-1.5 text-sm font-semibold tabular-nums transition-colors ${
+              className={`flex-1 rounded-md border py-1.5 text-sm font-semibold tabular-nums ${
                 preset === p
                   ? "border-white/60 bg-white/10"
                   : "border-white/15 text-muted hover:border-white/35"

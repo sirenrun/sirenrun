@@ -52,7 +52,7 @@ export function AmountForm(props: {
         <button
           type="submit"
           disabled={props.busy || props.max === 0n}
-          className="shrink-0 rounded-md bg-neon-pink px-4 py-2 text-sm font-semibold text-white transition-opacity disabled:opacity-40"
+          className="shrink-0 rounded-md bg-neon-pink px-4 py-2 text-sm font-semibold text-white btn-glow disabled:opacity-40"
         >
           {props.label}
         </button>

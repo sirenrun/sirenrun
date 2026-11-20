@@ -45,7 +45,7 @@ export function FaucetButton({ className = "" }: { className?: string }) {
         type="button"
         onClick={() => void claim()}
         disabled={busy}
-        className="rounded-md border border-neon-cyan/40 px-3 py-1.5 text-sm text-neon-cyan transition-colors hover:bg-neon-cyan/10 disabled:opacity-50"
+        className="rounded-md border border-neon-cyan/40 px-3 py-1.5 text-sm text-neon-cyan enabled:hover:bg-neon-cyan/10 enabled:hover:shadow-[0_0_16px_-6px_var(--color-neon-cyan)] disabled:opacity-50"
       >
         {busy ? "Sending…" : "Get test USDC"}
       </button>

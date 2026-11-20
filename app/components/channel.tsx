@@ -39,7 +39,7 @@ export function Channel({ arena }: { arena: number }) {
         <RunResults />
         <div className="pointer-events-none absolute left-4 top-4 flex items-center gap-2 text-sm sm:left-6">
           <GameAudio />
-          <SaveClip className="rounded bg-black/50 px-2 py-1 font-semibold text-muted transition-colors hover:text-text" />
+          <SaveClip className="rounded bg-black/50 px-2 py-1 font-semibold text-muted hover:bg-black/70 hover:text-text" />
           <span className="rounded bg-black/50 px-2 py-1 font-semibold tracking-wide">
             CH-{arena + 1}
           </span>

@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Barlow_Condensed, Inter } from "next/font/google";
 import type { ReactNode } from "react";
+import { GameCursor } from "../components/game-cursor";
 import { Header } from "../components/header";
 import { Providers } from "../components/providers";
 import { Toasts } from "../components/toasts";
@@ -27,6 +28,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <Header />
           {children}
           <Toasts />
+          <GameCursor />
         </Providers>
       </body>
     </html>

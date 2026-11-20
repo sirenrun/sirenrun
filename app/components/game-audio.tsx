@@ -67,7 +67,7 @@ function MuteButton({ muted }: { muted: boolean }) {
       aria-pressed={muted}
       aria-label={muted ? "Turn sound on" : "Turn sound off"}
       title={muted ? "Sound off" : "Sound on"}
-      className="pointer-events-auto rounded bg-black/50 px-2 py-1 text-sm text-muted transition-colors hover:text-text"
+      className="pointer-events-auto rounded bg-black/50 px-2 py-1 text-sm text-muted hover:bg-black/70 hover:text-text"
     >
       {muted ? "🔇" : "🔊"}
     </button>

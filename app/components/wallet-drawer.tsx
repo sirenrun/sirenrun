@@ -41,7 +41,7 @@ export function WalletDrawer() {
         aria-modal="true"
         aria-label="Wallet"
         onClick={(e) => e.stopPropagation()}
-        className="flex h-full w-full max-w-sm flex-col gap-6 overflow-y-auto border-l border-white/10 bg-bg p-5"
+        className="flex h-full w-full max-w-sm flex-col gap-6 overflow-y-auto overscroll-contain border-l border-white/10 bg-bg p-5"
       >
         <div className="flex items-center justify-between">
           <h2 className="text-lg font-semibold">Wallet</h2>

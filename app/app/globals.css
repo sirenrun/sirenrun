@@ -11,10 +11,123 @@
   --color-police-blue: #3b6bff;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-barlow), var(--font-inter), ui-sans-serif, sans-serif;
+  --ease-ui: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration-ui: 160ms;
 }
 
 html {
   color-scheme: dark;
+  scrollbar-width: thin;
+  scrollbar-color: rgb(255 46 136 / 0.45) transparent;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  border-radius: 9999px;
+  background: rgb(255 46 136 / 0.35);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgb(255 46 136 / 0.6);
+}
+
+/* Game reticle as the native cursor, so aiming never lags behind the mouse; the trailing ring
+   (GameCursor) adds the motion. Mouse only: touch screens never show a cursor. */
+@media (pointer: fine) {
+  html {
+    cursor:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg fill='none' stroke='%2307060f' stroke-width='4' stroke-linecap='round' opacity='.7'%3E%3Ccircle cx='16' cy='16' r='9'/%3E%3Cpath d='M16 2v4M16 26v4M2 16h4M26 16h4'/%3E%3C/g%3E%3Cg fill='none' stroke='%23edeaf7' stroke-width='1.75' stroke-linecap='round'%3E%3Ccircle cx='16' cy='16' r='9'/%3E%3Cpath d='M16 2v4M16 26v4M2 16h4M26 16h4'/%3E%3C/g%3E%3Ccircle cx='16' cy='16' r='2.25' fill='%23ff2e88' stroke='%2307060f'/%3E%3C/svg%3E")
+        16 16,
+      crosshair;
+  }
+  :where(a[href], button:not(:disabled), [role="button"], select, summary, label[for]) {
+    cursor:
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='32' height='32' viewBox='0 0 32 32'%3E%3Cg fill='none' stroke='%2307060f' stroke-width='4' stroke-linecap='round' opacity='.7'%3E%3Ccircle cx='16' cy='16' r='7'/%3E%3Cpath d='M16 4v5M16 23v5M4 16h5M23 16h5'/%3E%3C/g%3E%3Cg fill='none' stroke='%23ff2e88' stroke-width='2' stroke-linecap='round'%3E%3Ccircle cx='16' cy='16' r='7'/%3E%3Cpath d='M16 4v5M16 23v5M4 16h5M23 16h5'/%3E%3C/g%3E%3Ccircle cx='16' cy='16' r='2.25' fill='%23edeaf7' stroke='%2307060f'/%3E%3C/svg%3E")
+        16 16,
+      pointer;
+  }
+  :where(input:not([type="range"]):not([type="checkbox"]), textarea) {
+    cursor: text;
+  }
+}
+
+/* One feel for every control: quick ease-out on colour, glow and press, a small squeeze while
+   held, and a clear ring for keyboard focus. Only compositor-friendly properties animate. */
+@layer base {
+  :where(a, button, [role="button"], summary, select, input, textarea) {
+    transition-property:
+      color, background-color, border-color, box-shadow, opacity, scale, translate;
+    transition-duration: var(--duration-ui);
+    transition-timing-function: var(--ease-ui);
+  }
+  :where(button, [role="button"], a.btn-glow):not(:disabled):active {
+    scale: 0.97;
+    transition-duration: 70ms;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-neon-cyan);
+    outline-offset: 2px;
+  }
+}
+
+.game-cursor {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 2147483000;
+  pointer-events: none;
+  opacity: 0;
+  will-change: transform;
+  transition: opacity 200ms var(--ease-ui);
+}
+.game-cursor[data-visible] {
+  opacity: 1;
+}
+.game-cursor-ring {
+  width: 38px;
+  height: 38px;
+  margin: -19px 0 0 -19px;
+  border-radius: 9999px;
+  border: 1.5px solid rgb(34 225 255 / 0.55);
+  box-shadow:
+    0 0 14px rgb(34 225 255 / 0.3),
+    inset 0 0 8px rgb(34 225 255 / 0.12);
+  transition:
+    scale 220ms var(--ease-ui),
+    opacity 160ms var(--ease-ui),
+    border-color 180ms var(--ease-ui),
+    background-color 180ms var(--ease-ui),
+    box-shadow 180ms var(--ease-ui);
+}
+.game-cursor-ring[data-mode="hover"] {
+  scale: 1.4;
+  border-color: rgb(255 46 136 / 0.85);
+  background-color: rgb(255 46 136 / 0.08);
+  box-shadow:
+    0 0 18px rgb(255 46 136 / 0.45),
+    inset 0 0 10px rgb(255 46 136 / 0.2);
+}
+.game-cursor-ring[data-mode="hidden"] {
+  opacity: 0;
+  scale: 0.5;
+}
+.game-cursor-ring[data-down] {
+  scale: 0.75;
+  transition-duration: 80ms;
+}
+.game-cursor-ring[data-mode="hover"][data-down] {
+  scale: 1.1;
 }
 
 body {
@@ -42,11 +155,23 @@ body {
   font-size: 0.875rem;
   font-weight: 600;
   color: white;
-  transition: opacity 150ms ease-out;
 }
 
 .btn-primary:disabled {
   opacity: 0.4;
+}
+
+/* Pink buttons lift and glow on hover, like a lit sign switching on. */
+.btn-primary:not(:disabled):hover,
+.btn-glow:not(:disabled):hover {
+  translate: 0 -1px;
+  box-shadow:
+    0 0 0 1px rgb(255 46 136 / 0.6),
+    0 8px 24px -8px rgb(255 46 136 / 0.75);
+}
+.btn-primary:not(:disabled):active,
+.btn-glow:not(:disabled):active {
+  translate: 0 0;
 }
 
 /* Siren light bleeding in from the screen edges behind the car; the HUD sets its opacity

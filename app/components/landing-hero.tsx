@@ -59,13 +59,13 @@ export function LandingHero() {
         <div className="flex flex-wrap justify-center gap-3">
           <Link
             href={LOBBY}
-            className="rounded-md bg-neon-pink px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-[#e0267a]"
+            className="rounded-md bg-neon-pink px-6 py-3 text-base font-semibold text-white btn-glow hover:bg-[#e0267a]"
           >
             Drive
           </Link>
           <Link
             href={LOBBY}
-            className="rounded-md border border-white/25 bg-black/30 px-6 py-3 text-base font-semibold backdrop-blur transition-colors hover:border-white/50"
+            className="rounded-md border border-white/25 bg-black/30 px-6 py-3 text-base font-semibold backdrop-blur hover:border-white/50 hover:bg-black/45"
           >
             Watch live
           </Link>
