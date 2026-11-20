@@ -2,7 +2,7 @@
 
 import { Canvas, useFrame } from "@react-three/fiber";
 import { INVULN_TICKS, NITRO_TICKS } from "@sirenrun/sim";
-import { useEffect, useMemo, useRef } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   MathUtils,
   Matrix4,
@@ -18,6 +18,7 @@ import { frame, resetFrame } from "./frame";
 import { Obstacles } from "./Obstacles";
 import { PlaybackClock, sample } from "./playback";
 import { Road } from "./Road";
+import { webglAvailable } from "./webgl";
 import { worldX, worldZ } from "./world";
 
 const FOG = { color: "#1a0d2c", near: 18, far: 150 };
@@ -199,8 +200,39 @@ function Water() {
   );
 }
 
+/** Shown instead of the scene when the browser cannot render WebGL. The HUD still works. */
+function NoWebgl({ lost }: { lost: boolean }) {
+  return (
+    <div className="absolute inset-x-4 top-16 flex justify-center">
+      <div
+        className="max-w-md rounded-xl border border-amber/30 bg-black/70 p-4 text-sm"
+        role="status"
+      >
+        <p className="font-semibold">
+          {lost
+            ? "The 3D view stopped (graphics reset)"
+            : "Your browser has 3D graphics turned off"}
+        </p>
+        <p className="mt-2 text-muted">
+          {lost
+            ? "Reload the page to bring it back. The timer, gap meter and controls keep working."
+            : "Turn on graphics acceleration in your browser settings and relaunch it. In Chrome: Settings → System → “Use graphics acceleration when available”. The timer, gap meter and controls still work without it."}
+        </p>
+        {lost && (
+          <button type="button" className="btn-primary mt-3" onClick={() => location.reload()}>
+            Reload
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function Scene({ className }: { className?: string }) {
   useEffect(() => resetFrame(), []);
+  const [available] = useState(webglAvailable);
+  const [lost, setLost] = useState(false);
+  if (!available || lost) return <NoWebgl lost={lost} />;
   return (
     <Canvas
       className={className}
@@ -208,6 +240,9 @@ export default function Scene({ className }: { className?: string }) {
       dpr={[1, 2]}
       gl={{ antialias: true, powerPreference: "high-performance" }}
       camera={{ fov: 62, near: 0.1, far: 260, position: [0, 3.9, 10.5] }}
+      onCreated={({ gl }) => {
+        gl.domElement.addEventListener("webglcontextlost", () => setLost(true), { once: true });
+      }}
     >
       <FrameDriver />
       <World />
