@@ -2,32 +2,19 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
-import {
-  AdditiveBlending,
-  CanvasTexture,
-  Color,
-  Euler,
-  Matrix4,
-  NearestFilter,
-  Quaternion,
-  RepeatWrapping,
-  ShaderMaterial,
-  SRGBColorSpace,
-  Vector3,
-  type InstancedMesh,
-  type Mesh,
-} from "three";
+import { AdditiveBlending, Euler, Matrix4, Quaternion, Vector3, type InstancedMesh } from "three";
 import { frame } from "./frame";
 import { glowTexture } from "./glow";
-import { FOG_FAR, FOG_NEAR, NEON } from "./palette";
+import { Guardrails } from "./Guardrails";
+import { Skyline } from "./Skyline";
+import { Water } from "./Water";
+import { LAMP_HEAD_X, LAMP_SPACING, PALM_MIN_X, POLE_X } from "./layout";
+import { NEON } from "./palette";
 import { recycledZ } from "./recycle";
-import { ROAD_HALF, worldZ } from "./world";
+import { worldZ } from "./world";
 
-/** Streetlights repeat every 24 m on both edges; the road shader draws their light pools. */
-export const LAMP_SPACING = 24;
 const LAMPS_PER_SIDE = 17;
 const LAMP_SPAN = LAMP_SPACING * LAMPS_PER_SIDE;
-const POLE_X = ROAD_HALF + 1.4;
 const POLE_HEIGHT = 7;
 
 const m4 = new Matrix4();
@@ -68,13 +55,13 @@ function Streetlights() {
       );
       p.setMatrixAt(count + i, m4);
       m4.compose(
-        pos.set(side * (POLE_X - 2.1), POLE_HEIGHT - 0.12, z),
+        pos.set(side * LAMP_HEAD_X, POLE_HEIGHT - 0.12, z),
         IDENTITY,
         scl.set(0.7, 0.12, 0.4),
       );
       h.setMatrixAt(i, m4);
       m4.compose(
-        pos.set(side * (POLE_X - 2.1), POLE_HEIGHT - 0.25, z + 0.05),
+        pos.set(side * LAMP_HEAD_X, POLE_HEIGHT - 0.25, z + 0.05),
         IDENTITY,
         scl.set(3.2, 3.2, 1),
       );
@@ -132,7 +119,7 @@ function Palms() {
         return {
           side: i % 2 === 0 ? -1 : 1,
           offset: Math.floor(i / 2) * PALM_SPACING + r(1) * 8,
-          x: ROAD_HALF + 4 + r(2) * 7,
+          x: PALM_MIN_X + r(2) * 7,
           height: 7 + r(3) * 5,
           lean: (r(4) - 0.5) * 0.35,
           spin: r(5) * Math.PI,
@@ -188,155 +175,6 @@ function Palms() {
   );
 }
 
-/** Lit-window texture for the towers: a grid with a random mix of warm, pink and dark windows. */
-function windowTexture(): CanvasTexture {
-  const w = 64;
-  const h = 128;
-  const canvas = document.createElement("canvas");
-  canvas.width = w;
-  canvas.height = h;
-  const ctx = canvas.getContext("2d");
-  if (ctx !== null) {
-    ctx.fillStyle = "#000";
-    ctx.fillRect(0, 0, w, h);
-    for (let y = 2; y < h; y += 6) {
-      for (let x = 2; x < w; x += 5) {
-        const r = Math.random();
-        if (r < 0.55) continue;
-        ctx.fillStyle = r < 0.8 ? "#ffcf8a" : r < 0.92 ? "#ff5fa8" : "#5fe6ff";
-        ctx.globalAlpha = 0.5 + Math.random() * 0.5;
-        ctx.fillRect(x, y, 3, 3);
-      }
-    }
-  }
-  const tex = new CanvasTexture(canvas);
-  tex.colorSpace = SRGBColorSpace;
-  tex.wrapS = RepeatWrapping;
-  tex.wrapT = RepeatWrapping;
-  tex.magFilter = NearestFilter;
-  return tex;
-}
-
-const TOWERS = 60;
-const TOWER_SPAN = (TOWERS / 2) * 16;
-
-/** Distant towers on both shores with lit windows, recycled along the road. */
-function Skyline() {
-  const mesh = useRef<InstancedMesh>(null);
-  const windows = useMemo(() => windowTexture(), []);
-  const layout = useMemo(
-    () =>
-      Array.from({ length: TOWERS }, (_, i) => {
-        const r = (n: number) => {
-          const v = Math.sin(i * 12.9898 + n * 78.233) * 43758.5453;
-          return v - Math.floor(v);
-        };
-        return {
-          side: i % 2 === 0 ? -1 : 1,
-          offset: Math.floor(i / 2) * 16 + r(1) * 6,
-          height: 18 + r(2) * r(2) * 70,
-          width: 7 + r(3) * 9,
-          distance: 70 + r(4) * 80,
-        };
-      }),
-    [],
-  );
-
-  useFrame(() => {
-    const m = mesh.current;
-    if (m === null) return;
-    const carZ = worldZ(frame.distance);
-    layout.forEach((b, i) => {
-      const z = recycledZ(b.offset, carZ, TOWER_SPAN, 30);
-      m4.compose(
-        pos.set(b.side * b.distance, b.height / 2 - 1, z),
-        IDENTITY,
-        scl.set(b.width, b.height, b.width),
-      );
-      m.setMatrixAt(i, m4);
-    });
-    m.instanceMatrix.needsUpdate = true;
-  });
-
-  return (
-    <instancedMesh ref={mesh} args={[undefined, undefined, TOWERS]} frustumCulled={false}>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial
-        color={NEON.building}
-        emissive="#ffffff"
-        emissiveMap={windows}
-        emissiveIntensity={0.9}
-        roughness={0.9}
-      />
-    </instancedMesh>
-  );
-}
-
-/** Dark bay water with the sun's reflection as a glittering column down the middle. */
-function Water() {
-  const mesh = useRef<Mesh>(null);
-  const material = useMemo(
-    () =>
-      new ShaderMaterial({
-        vertexShader: /* glsl */ `
-          varying vec3 vWorld;
-          void main() {
-            vec4 w = modelMatrix * vec4(position, 1.0);
-            vWorld = w.xyz;
-            gl_Position = projectionMatrix * viewMatrix * w;
-          }
-        `,
-        fragmentShader: /* glsl */ `
-          uniform vec3 uWater;
-          uniform vec3 uSun;
-          uniform vec3 uHorizon;
-          uniform vec3 uFog;
-          uniform vec3 uCamera;
-          uniform float uTime;
-          uniform float uNear;
-          uniform float uFar;
-          varying vec3 vWorld;
-          void main() {
-            float depth = distance(vWorld, uCamera);
-            vec3 c = mix(uWater, uHorizon * 0.5, smoothstep(30.0, 250.0, depth));
-            // Sun glitter: a column toward -z around the camera's x, broken by ripples.
-            float lateral = abs(vWorld.x - uCamera.x) / max(8.0, depth * 0.12);
-            float ripple = step(0.62, fract(sin(floor(vWorld.z * 1.6 - uTime * 3.0) * 12.9898 + floor(vWorld.x * 0.8) * 78.233) * 43758.5453));
-            c += uSun * ripple * exp(-lateral * lateral * 3.0) * smoothstep(20.0, 120.0, depth) * 0.9;
-            float fog = smoothstep(uNear, uFar, depth);
-            gl_FragColor = vec4(mix(c, uFog, fog * 0.6), 1.0);
-          }
-        `,
-        uniforms: {
-          uWater: { value: new Color(NEON.water) },
-          uSun: { value: new Color(NEON.sunTop) },
-          uHorizon: { value: new Color(NEON.skyHorizon) },
-          uFog: { value: new Color(NEON.fog) },
-          uCamera: { value: null },
-          uTime: { value: 0 },
-          uNear: { value: FOG_NEAR },
-          uFar: { value: FOG_FAR + 60 },
-        },
-      }),
-    [],
-  );
-
-  useFrame((state, delta) => {
-    const m = mesh.current;
-    if (m === null) return;
-    m.position.z = worldZ(frame.distance) - 140;
-    ((m.material as ShaderMaterial).uniforms.uCamera as { value: unknown }).value =
-      state.camera.position;
-    ((m.material as ShaderMaterial).uniforms.uTime as { value: number }).value += delta;
-  });
-
-  return (
-    <mesh ref={mesh} rotation-x={-Math.PI / 2} position={[0, -0.8, 0]} material={material}>
-      <planeGeometry args={[700, 560]} />
-    </mesh>
-  );
-}
-
 /** Everything beside the road. */
 export function Roadside() {
   return (
@@ -344,6 +182,7 @@ export function Roadside() {
       <Water />
       <Skyline />
       <Palms />
+      <Guardrails />
       <Streetlights />
     </>
   );

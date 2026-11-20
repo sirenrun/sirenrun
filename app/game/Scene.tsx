@@ -1,16 +1,20 @@
 "use client";
 
+import { PerformanceMonitor } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { INVULN_TICKS, NITRO_BOOST, NITRO_TICKS, SPEED_MAX } from "@sirenrun/sim";
-import { useEffect, useMemo, useRef, useState } from "react";
-import { MathUtils, Vector3, type PerspectiveCamera } from "three";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
+import { MathUtils, NeutralToneMapping, Vector3, type PerspectiveCamera } from "three";
 import { useArena } from "../stores/arena";
 import { PlayerCar, Police } from "./Cars";
 import { laneMotion, prefersReducedMotion } from "./controls";
 import { frame, resetFrame } from "./frame";
 import { Sparks, SpeedLines } from "./Effects";
+import { preloadCars } from "./models";
 import { Obstacles } from "./Obstacles";
 import { PlaybackClock, sample } from "./playback";
+import { Post } from "./Post";
+import { initialQuality, QUALITY, qualityAt, stepQuality } from "./quality";
 import { FOG_FAR, FOG_NEAR, NEON } from "./palette";
 import { Road } from "./Road";
 import { Roadside } from "./Roadside";
@@ -18,6 +22,8 @@ import { Sky } from "./Sky";
 import { webglAvailable } from "./webgl";
 import { spring } from "./spring";
 import { metresPerSecond, worldX, worldZ } from "./world";
+
+preloadCars();
 
 /** Runs first each frame: advances the playback clock and fills the shared `Frame`. */
 function FrameDriver() {
@@ -200,9 +206,12 @@ function World() {
       <Sky />
       <Roadside />
       <Road />
-      <Obstacles />
-      <PlayerCar />
-      <Police />
+      {/* The road and city draw at once; the cars join when their models arrive. */}
+      <Suspense fallback={null}>
+        <Obstacles />
+        <PlayerCar />
+        <Police />
+      </Suspense>
       <Sparks />
       <SpeedLines />
       <CameraRig />
@@ -242,20 +251,35 @@ export default function Scene({ className }: { className?: string }) {
   useEffect(() => resetFrame(), []);
   const [available] = useState(webglAvailable);
   const [lost, setLost] = useState(false);
+  const [quality, setQuality] = useState(() =>
+    initialQuality(typeof window === "undefined" ? 1 : window.devicePixelRatio),
+  );
   if (!available || lost) return <NoWebgl lost={lost} />;
+  const step = (change: "decline" | "incline") =>
+    setQuality((q) => stepQuality(q, change, window.devicePixelRatio));
+  const { dpr, post } = qualityAt(quality);
   return (
     <Canvas
       className={className}
       style={{ position: "absolute", inset: 0 }}
-      dpr={[1, 2]}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
+      dpr={dpr}
+      // One tone curve everywhere: three applies it only when drawing straight to the screen
+      // (post off); with post on the scene renders into a buffer and the composer applies it.
+      gl={{ antialias: true, powerPreference: "high-performance", toneMapping: NeutralToneMapping }}
       camera={{ fov: 62, near: 0.3, far: 900, position: [0, 4.3, 10.5] }}
       onCreated={({ gl }) => {
         gl.domElement.addEventListener("webglcontextlost", () => setLost(true), { once: true });
       }}
     >
+      <PerformanceMonitor
+        onDecline={() => step("decline")}
+        onIncline={() => step("incline")}
+        flipflops={4}
+        onFallback={() => setQuality(QUALITY.length - 1)}
+      />
       <FrameDriver />
       <World />
+      {post && <Post />}
     </Canvas>
   );
 }

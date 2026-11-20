@@ -13,6 +13,7 @@
   "dependencies": {
     "@react-three/drei": "catalog:",
     "@react-three/fiber": "catalog:",
+    "@react-three/postprocessing": "catalog:",
     "@sirenrun/sdk": "workspace:*",
     "@sirenrun/sim": "workspace:*",
     "@solana/wallet-adapter-base": "catalog:",
@@ -20,6 +21,7 @@
     "@solana/wallet-adapter-react-ui": "catalog:",
     "@solana/web3.js": "catalog:",
     "next": "catalog:",
+    "postprocessing": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "three": "catalog:",
