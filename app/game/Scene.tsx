@@ -247,7 +247,14 @@ function NoWebgl({ lost }: { lost: boolean }) {
   );
 }
 
-export default function Scene({ className }: { className?: string }) {
+/** `paused` keeps the scene mounted but stops rendering, e.g. while it is scrolled away. */
+export default function Scene({
+  className,
+  paused = false,
+}: {
+  className?: string;
+  paused?: boolean;
+}) {
   useEffect(() => resetFrame(), []);
   const [available] = useState(webglAvailable);
   const [lost, setLost] = useState(false);
@@ -263,6 +270,7 @@ export default function Scene({ className }: { className?: string }) {
       className={className}
       style={{ position: "absolute", inset: 0 }}
       dpr={dpr}
+      frameloop={paused ? "never" : "always"}
       // One tone curve everywhere: three applies it only when drawing straight to the screen
       // (post off); with post on the scene renders into a buffer and the composer applies it.
       gl={{ antialias: true, powerPreference: "high-performance", toneMapping: NeutralToneMapping }}
