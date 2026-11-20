@@ -989,6 +989,51 @@ export type Sirenrun = {
       ]
     },
     {
+      "name": "recoverArena",
+      "discriminator": [
+        90,
+        41,
+        181,
+        193,
+        200,
+        3,
+        137,
+        54
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "arena",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "setInput",
       "discriminator": [
         139,
@@ -1289,6 +1334,33 @@ export type Sirenrun = {
               }
             ]
           }
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "arena0"
+        },
+        {
+          "name": "arena1"
+        },
+        {
+          "name": "arena2"
         },
         {
           "name": "magicProgram",
@@ -1700,6 +1772,16 @@ export type Sirenrun = {
       "code": 6018,
       "name": "noEntry",
       "msg": "No position in this entry"
+    },
+    {
+      "code": 6019,
+      "name": "balanceInUse",
+      "msg": "Balance is in use by a run"
+    },
+    {
+      "code": 6020,
+      "name": "arenaNotSettled",
+      "msg": "Arena is not settled"
     }
   ],
   "types": [

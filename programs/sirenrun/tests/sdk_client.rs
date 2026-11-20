@@ -397,11 +397,26 @@ fn er_instructions() -> Vec<Value> {
                 signer,
                 session_token,
                 balance: balance_pda(&user),
+                config,
+                arena_0: arena_pda(0),
+                arena_1: arena_pda(1),
+                arena_2: arena_pda(2),
                 magic_program: MAGIC_PROGRAM_ID,
                 magic_context: MAGIC_CONTEXT_ID,
             },
         ));
     }
+    cases.push(sirenrun_case(
+        "recoverArena",
+        "er",
+        json!({ "admin": key(ADMIN).to_string(), "id": 0 }),
+        instruction::RecoverArena {},
+        accounts::RecoverArena {
+            admin: key(ADMIN),
+            config,
+            arena: arena_pda(0),
+        },
+    ));
     cases.push(sirenrun_case(
         "buy (yes)",
         "er",
@@ -832,6 +847,7 @@ fn every_client_instruction_has_a_vector() {
         "buy",
         "claim",
         "undelegateBalance",
+        "recoverArena",
         "createSession",
         "revokeSession",
     ] {

@@ -383,8 +383,24 @@ impl World {
                 signer: key(signer),
                 session_token: None,
                 balance: balance_pda(owner),
+                config: self.config,
+                arena_0: arena_pda(0),
+                arena_1: arena_pda(1),
+                arena_2: arena_pda(2),
                 magic_program: MagicProgram::id(),
                 magic_context: MAGIC_CONTEXT_ID,
+            },
+        );
+        self.send(Ephemeral, signer, ix)
+    }
+
+    pub fn recover_arena(&mut self, signer: &Keypair, id: u8) -> Result<(), TransactionError> {
+        let ix = ix(
+            instruction::RecoverArena {},
+            accounts::RecoverArena {
+                admin: key(signer),
+                config: self.config,
+                arena: arena_pda(id),
             },
         );
         self.send(Ephemeral, signer, ix)

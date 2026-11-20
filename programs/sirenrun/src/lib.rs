@@ -88,4 +88,8 @@ pub mod sirenrun {
     pub fn claim(ctx: Context<Claim>, entry_index: u8) -> Result<()> {
         instructions::claim(ctx, entry_index)
     }
+
+    pub fn recover_arena(ctx: Context<RecoverArena>) -> Result<()> {
+        instructions::recover_arena(ctx)
+    }
 }

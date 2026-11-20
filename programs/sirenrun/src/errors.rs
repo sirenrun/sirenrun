@@ -40,4 +40,8 @@ pub enum SirenrunError {
     InvalidArena,
     #[msg("No position in this entry")]
     NoEntry,
+    #[msg("Balance is in use by a run")]
+    BalanceInUse,
+    #[msg("Arena is not settled")]
+    ArenaNotSettled,
 }

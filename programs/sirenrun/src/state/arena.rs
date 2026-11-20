@@ -170,6 +170,25 @@ pub struct RunTerms {
 impl Arena {
     pub const SPACE: usize = 8 + Self::INIT_SPACE;
 
+    /// True while this arena's crank still writes `owner`'s balance: as the runner of a run
+    /// that is not idle yet, or as the house while any run is not idle. Undelegating such a
+    /// balance would make every later `tick` fail and leave the arena stuck.
+    pub fn uses_balance(&self, owner: &Pubkey, house: &Pubkey) -> bool {
+        self.status != ArenaStatus::Idle && (self.runner == *owner || owner == house)
+    }
+
+    /// Admin recovery for an arena whose crank can no longer run. Only a Settled arena may be
+    /// reset: its payouts were applied when it settled, so this only skips the results hold.
+    pub fn recover(&mut self) -> Result<()> {
+        require!(
+            self.status == ArenaStatus::Settled,
+            SirenrunError::ArenaNotSettled
+        );
+        self.status = ArenaStatus::Idle;
+        self.phase_ticks = 0;
+        Ok(())
+    }
+
     /// Starts a run: checks everything first, then takes the runner's stake, funds the pools
     /// from the house and resets the arena.
     pub fn start(
@@ -520,5 +539,45 @@ mod tests {
         state.set_input(4, true);
         state.police_gap = -12;
         assert_eq!(SimState::from(RunSim::from(state)), state);
+    }
+
+    #[test]
+    fn a_run_holds_the_runner_and_house_balances_until_idle() {
+        let mut arena = staged(true);
+        let runner = arena.runner;
+        let house = Pubkey::new_unique();
+        let other = Pubkey::new_unique();
+        for status in [
+            ArenaStatus::Staging,
+            ArenaStatus::Live,
+            ArenaStatus::Settled,
+        ] {
+            arena.status = status;
+            assert!(arena.uses_balance(&runner, &house));
+            assert!(arena.uses_balance(&house, &house));
+            assert!(!arena.uses_balance(&other, &house));
+        }
+        arena.status = ArenaStatus::Idle;
+        assert!(!arena.uses_balance(&runner, &house));
+        assert!(!arena.uses_balance(&house, &house));
+    }
+
+    #[test]
+    fn recover_only_resets_a_settled_arena() {
+        let mut arena = staged(true);
+        for status in [ArenaStatus::Idle, ArenaStatus::Staging, ArenaStatus::Live] {
+            arena.status = status;
+            let before = arena.status;
+            assert!(arena.recover().is_err());
+            assert_eq!(arena.status, before);
+        }
+        arena.status = ArenaStatus::Settled;
+        arena.phase_ticks = 28;
+        let nonce = arena.nonce;
+        arena.recover().unwrap();
+        assert_eq!(
+            (arena.status, arena.phase_ticks, arena.nonce),
+            (ArenaStatus::Idle, 0, nonce)
+        );
     }
 }

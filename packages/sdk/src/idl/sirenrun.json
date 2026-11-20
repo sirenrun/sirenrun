@@ -983,6 +983,51 @@
       ]
     },
     {
+      "name": "recover_arena",
+      "discriminator": [
+        90,
+        41,
+        181,
+        193,
+        200,
+        3,
+        137,
+        54
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "signer": true,
+          "relations": [
+            "config"
+          ]
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "arena",
+          "writable": true
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "set_input",
       "discriminator": [
         139,
@@ -1283,6 +1328,33 @@
               }
             ]
           }
+        },
+        {
+          "name": "config",
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "arena_0"
+        },
+        {
+          "name": "arena_1"
+        },
+        {
+          "name": "arena_2"
         },
         {
           "name": "magic_program",
@@ -1694,6 +1766,16 @@
       "code": 6018,
       "name": "NoEntry",
       "msg": "No position in this entry"
+    },
+    {
+      "code": 6019,
+      "name": "BalanceInUse",
+      "msg": "Balance is in use by a run"
+    },
+    {
+      "code": 6020,
+      "name": "ArenaNotSettled",
+      "msg": "Arena is not settled"
     }
   ],
   "types": [

@@ -36,8 +36,16 @@ interface FundsState {
   withdraw: (wallet: WalletSigner, amount: bigint) => Promise<boolean>;
 }
 
+const FRIENDLY: Record<string, string> = {
+  BalanceInUse: "Your run is still settling. Try again in a few seconds.",
+  InsufficientBalance: "Not enough tUSDC in your game balance.",
+};
+
 function describe(e: unknown): string {
-  if (e instanceof TransactionFailed) return e.errorName ?? e.message;
+  if (e instanceof TransactionFailed) {
+    const name = e.errorName;
+    return (name !== undefined ? FRIENDLY[name] : undefined) ?? name ?? e.message;
+  }
   return e instanceof Error ? e.message : String(e);
 }
 
