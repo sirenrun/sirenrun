@@ -14,6 +14,7 @@ magicblock-test-storage/
 node_modules/
 .next/
 next-env.d.ts
+app/AGENTS.md
 out/
 dist/
 coverage/
