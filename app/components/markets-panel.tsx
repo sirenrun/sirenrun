@@ -160,7 +160,7 @@ function MarketRow(props: {
           {button("no")}
         </div>
       )}
-      {closing && (
+      {closing && !demo && (
         <p className="mt-1 text-[11px] text-amber">
           Closing: buys now are refunded if it resolves.
         </p>
