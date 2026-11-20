@@ -34,7 +34,7 @@ and keep the math integer-only.
 | `SPEED_START` | 100 | Units per tick at go |
 | `SPEED_MAX` | 200 | Cruise cap without nitro |
 | `ACCEL` | 2 | Units per tick per tick |
-| `NITRO_CHARGES` | 3 | Per run |
+| `NITRO_CHARGES` | 3 | Per run; each charge fired costs the driver `Config.nitro_fee` |
 | `NITRO_BOOST` | 40 | Extra speed while active |
 | `NITRO_TICKS` | 20 | 2 s per charge |
 | `CRASH_SPEED_PCT` | 40 | Speed after a hit = speed × 40 / 100 |
