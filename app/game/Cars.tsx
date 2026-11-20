@@ -5,6 +5,7 @@ import { GAP_MAX, LANE_WIDTH, LANES, NITRO_BOOST } from "@sirenrun/sim";
 import { useEffect, useMemo, useRef } from "react";
 import {
   AdditiveBlending,
+  Color,
   DoubleSide,
   MathUtils,
   Object3D,
@@ -17,7 +18,7 @@ import {
 import { policeLamp } from "./car-fit";
 import { frame } from "./frame";
 import { glowTexture } from "./glow";
-import { policeLights } from "./lights";
+import { policeLights, sirenIntensity, sirenRed } from "./lights";
 import { useCarKit } from "./models";
 import { hot, NEON } from "./palette";
 import { spring } from "./spring";
@@ -113,6 +114,9 @@ export function PlayerCar() {
 
     const eff = frame.speed + (frame.nitro ? NITRO_BOOST : 0);
     const mps = metresPerSecond(eff);
+    // The sim holds its launch speed through the countdown; the parked car must not buzz or
+    // spin its wheels until the run is live.
+    const rolling = frame.status === "live" && !frame.busted ? mps : 0;
     if (dt > 0) {
       const raw = MathUtils.clamp((mps - d.mps) / dt, -400, 400);
       d.accel = MathUtils.lerp(d.accel, raw, 1 - Math.exp(-dt / 0.1));
@@ -129,14 +133,14 @@ export function PlayerCar() {
     [d.pitch, d.vpitch] = spring(d.pitch, d.vpitch, pitchTarget, 9, 0.45, dt);
     const rollTarget = MathUtils.clamp(-vx * 0.022 - ax * 0.0012, -0.12, 0.12);
     [d.roll, d.vroll] = spring(d.roll, d.vroll, rollTarget, 11, 0.4, dt);
-    const buzz = Math.sin(frame.time * 57) * Math.sin(frame.time * 23) * 0.012 * (mps / 50);
+    const buzz = Math.sin(frame.time * 57) * Math.sin(frame.time * 23) * 0.012 * (rolling / 50);
     b.rotation.x = d.pitch;
     b.rotation.z = d.roll;
     b.rotation.y = MathUtils.clamp(-vx * 0.028, -0.1, 0.1);
     b.position.y = buzz - Math.abs(d.roll) * 0.25;
     b.visible = frame.invuln === 0 || Math.floor(frame.time * 12) % 2 === 0;
 
-    d.spin -= (mps / wheelRadius) * dt;
+    d.spin -= (rolling / wheelRadius) * dt;
     for (const w of wheels.current) if (w) w.rotation.x = d.spin;
 
     // Nitro flames: snap on, flicker, and snuff out when a hit cancels the burn.
@@ -254,6 +258,8 @@ export function PlayerCar() {
 /** Light bar colours: well past the bloom threshold when lit, a dull glass when not. */
 const LAMP_ON = { red: hot(NEON.policeRed, 6), blue: hot(NEON.policeBlue, 7) };
 const LAMP_OFF = { red: hot(NEON.policeRed, 0.18), blue: hot(NEON.policeBlue, 0.18) };
+const SIREN_RED = new Color(NEON.policeRed);
+const SIREN_BLUE = new Color(NEON.policeBlue);
 
 const CRUISERS = [
   { lane: 0, back: 0 },
@@ -278,7 +284,8 @@ export function Police() {
 
   useFrame((three, delta) => {
     // The cruisers keep pace with the car, so their wheels turn at its speed.
-    const mps = metresPerSecond(frame.speed + (frame.nitro ? NITRO_BOOST : 0));
+    const mps =
+      frame.status === "live" ? metresPerSecond(frame.speed + (frame.nitro ? NITRO_BOOST : 0)) : 0;
     spin.current -= (mps / (KIT_WHEEL_RADIUS * kit.police.fit.wheel)) * Math.min(delta, 0.05);
     for (const w of wheels.current) if (w) w.rotation.x = frame.busted ? 0 : spin.current;
     const visible = frame.ready && frame.status !== "idle";
@@ -288,7 +295,9 @@ export function Police() {
     // They hunt your lane harder the closer they get.
     const chase = 1.6 + closeness * closeness * 4;
     follow.current = MathUtils.lerp(follow.current, frame.displayX, 1 - Math.exp(-delta * chase));
-    const flash = Math.sin(frame.time * 14) > 0;
+    const red = sirenRed(frame.time);
+    // The small light bars keep a crisp flash; only the light they throw cross-fades.
+    const flash = red > 0.5;
     // A cruiser is drawn only while its rear bumper is in front of the camera; otherwise
     // the camera plane slices it open.
     const cutoff = three.camera.position.z - 0.8;
@@ -326,7 +335,7 @@ export function Police() {
         policeLights.visible = g.visible;
         policeLights.x = g.position.x;
         policeLights.z = g.position.z;
-        policeLights.red = flash ? 1 : 0;
+        policeLights.red = red;
         policeLights.closeness = closeness;
       }
       const pair = lamps.current[i];
@@ -340,8 +349,8 @@ export function Police() {
     if (l !== null) {
       l.visible = visible;
       l.position.set(worldX(follow.current), 2.6, carZ + lead - 1.5);
-      l.color.set(flash ? NEON.policeRed : NEON.policeBlue);
-      l.intensity = 12 + closeness * 28;
+      l.color.copy(SIREN_BLUE).lerp(SIREN_RED, red);
+      l.intensity = sirenIntensity(frame.status, closeness);
     }
   });
 
