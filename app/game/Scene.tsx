@@ -1,27 +1,21 @@
 "use client";
 
 import { Canvas, useFrame } from "@react-three/fiber";
-import { INVULN_TICKS, NITRO_TICKS } from "@sirenrun/sim";
+import { INVULN_TICKS, NITRO_TICKS, SPEED_MAX } from "@sirenrun/sim";
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  MathUtils,
-  Matrix4,
-  Vector3,
-  type InstancedMesh,
-  type Mesh,
-  type PerspectiveCamera,
-} from "three";
+import { MathUtils, Vector3, type PerspectiveCamera } from "three";
 import { useArena } from "../stores/arena";
 import { PlayerCar, Police } from "./Cars";
 import { laneMotion, prefersReducedMotion } from "./controls";
 import { frame, resetFrame } from "./frame";
 import { Obstacles } from "./Obstacles";
 import { PlaybackClock, sample } from "./playback";
+import { FOG_FAR, FOG_NEAR, NEON } from "./palette";
 import { Road } from "./Road";
+import { Roadside } from "./Roadside";
+import { Sky } from "./Sky";
 import { webglAvailable } from "./webgl";
 import { worldX, worldZ } from "./world";
-
-const FOG = { color: "#1a0d2c", near: 18, far: 150 };
 
 /** Runs first each frame: advances the playback clock and fills the shared `Frame`. */
 function FrameDriver() {
@@ -85,7 +79,7 @@ const look = new Vector3();
 /** Chase camera: behind and above, lags on lane changes, widens on nitro, shakes on a hit. */
 function CameraRig() {
   const reduced = useMemo(() => prefersReducedMotion(), []);
-  const state = useRef({ x: 0, shake: 0, fov: 62 });
+  const state = useRef({ x: 0, shake: 0, fov: 60 });
 
   useFrame((three, delta) => {
     const camera = three.camera as PerspectiveCamera;
@@ -97,13 +91,17 @@ function CameraRig() {
     s.shake = Math.max(0, s.shake - delta / 0.15);
     const jitter = s.shake * 0.22;
     // Z follows exactly: any lag along the road reads as stutter at speed.
+    // Higher than a plain chase cam, so the road reads ~18 rows ahead and dodges can be
+    // planned; z follows exactly, since any lag along the road reads as stutter at speed.
     camera.position.set(
       s.x + (Math.random() - 0.5) * jitter,
-      3.9 + (Math.random() - 0.5) * jitter,
-      carZ + 10.5,
+      5.4 + (Math.random() - 0.5) * jitter,
+      carZ + 11.5,
     );
-    camera.lookAt(look.set(MathUtils.lerp(s.x, carX, 0.5), 0.2, carZ - 16));
-    const targetFov = frame.nitro && !reduced ? 70 : 62;
+    camera.lookAt(look.set(MathUtils.lerp(s.x, carX, 0.5), 0, carZ - 24));
+    // Wider with speed, and a kick on nitro: the main sense of pace.
+    const speedFov = 58 + Math.min(1, frame.speed / SPEED_MAX) * 6;
+    const targetFov = reduced ? 60 : speedFov + (frame.nitro ? 8 : 0);
     s.fov = MathUtils.lerp(s.fov, targetFov, 1 - Math.exp(-delta * 4));
     if (Math.abs(camera.fov - s.fov) > 0.01) {
       camera.fov = s.fov;
@@ -114,89 +112,24 @@ function CameraRig() {
   return null;
 }
 
-const SKYLINE = 48;
-const mod = (a: number, n: number) => ((a % n) + n) % n;
-const building = new Matrix4();
-
-/** Distant towers on both shores, recycled along the road so the skyline never ends. */
-function Skyline() {
-  const mesh = useRef<InstancedMesh>(null);
-  const layout = useMemo(
-    () =>
-      Array.from({ length: SKYLINE }, (_, i) => {
-        const r = Math.sin(i * 12.9898) * 43758.5453;
-        const rand = r - Math.floor(r);
-        const r2 = Math.sin(i * 78.233) * 12543.123;
-        const rand2 = r2 - Math.floor(r2);
-        return {
-          side: i % 2 === 0 ? -1 : 1,
-          offset: Math.floor(i / 2) * 14 + rand2 * 6,
-          height: 14 + rand * rand * 52,
-          width: 5 + rand2 * 8,
-          distance: 60 + rand2 * 70,
-        };
-      }),
-    [],
-  );
-  const span = (SKYLINE / 2) * 14;
-
-  useFrame(() => {
-    const m = mesh.current;
-    if (m === null) return;
-    const carZ = worldZ(frame.distance);
-    layout.forEach((b, i) => {
-      // A tower's world z is -offset plus a whole number of spans: fixed in the world, and
-      // recycled into the window (carZ + 20 - span, carZ + 20] as the car passes.
-      const z = carZ + 20 - mod(carZ + 20 + b.offset, span);
-      building.makeScale(b.width, b.height, b.width);
-      building.setPosition(b.side * b.distance, b.height / 2 - 1, z);
-      m.setMatrixAt(i, building);
-    });
-    m.instanceMatrix.needsUpdate = true;
-  });
-
-  return (
-    <instancedMesh ref={mesh} args={[undefined, undefined, SKYLINE]} frustumCulled={false}>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial
-        color="#120c22"
-        emissive="#2a0e3d"
-        emissiveIntensity={0.6}
-        roughness={0.9}
-      />
-    </instancedMesh>
-  );
-}
-
 function World() {
   return (
     <>
-      <color attach="background" args={["#0b0717"]} />
-      <fog attach="fog" args={[FOG.color, FOG.near, FOG.far]} />
-      <hemisphereLight args={["#5b3a8a", "#07060f", 0.9]} />
-      <directionalLight position={[-6, 12, 4]} intensity={0.8} color="#c9b8ff" />
-      <Water />
-      <Skyline />
-      <Road fog={FOG} />
+      <fog attach="fog" args={[NEON.fog, FOG_NEAR, FOG_FAR]} />
+      {/* Warm sunset fill from ahead, violet sky light, dark ground bounce. */}
+      <hemisphereLight args={["#9a72e0", "#1c1028", 1.3]} />
+      {/* Key light from behind the camera: the faces the player sees (car rears) are lit. */}
+      <directionalLight position={[8, 16, 30]} intensity={1.4} color="#ffd2e8" />
+      <directionalLight position={[0, 6, -40]} intensity={0.5} color={NEON.skyGlow} />
+      <ambientLight intensity={0.25} color="#ff9ad5" />
+      <Sky />
+      <Roadside />
+      <Road />
       <Obstacles />
       <PlayerCar />
       <Police />
       <CameraRig />
     </>
-  );
-}
-
-/** Dark water on both sides of the causeway; follows the car so it never ends. */
-function Water() {
-  const mesh = useRef<Mesh>(null);
-  useFrame(() => {
-    if (mesh.current !== null) mesh.current.position.z = worldZ(frame.distance) - 60;
-  });
-  return (
-    <mesh ref={mesh} rotation-x={-Math.PI / 2} position={[0, -0.6, 0]}>
-      <planeGeometry args={[400, 320]} />
-      <meshStandardMaterial color="#05040c" roughness={0.15} metalness={0.8} />
-    </mesh>
   );
 }
 
@@ -239,7 +172,7 @@ export default function Scene({ className }: { className?: string }) {
       style={{ position: "absolute", inset: 0 }}
       dpr={[1, 2]}
       gl={{ antialias: true, powerPreference: "high-performance" }}
-      camera={{ fov: 62, near: 0.1, far: 260, position: [0, 3.9, 10.5] }}
+      camera={{ fov: 60, near: 0.1, far: 700, position: [0, 5.4, 11.5] }}
       onCreated={({ gl }) => {
         gl.domElement.addEventListener("webglcontextlost", () => setLost(true), { once: true });
       }}
