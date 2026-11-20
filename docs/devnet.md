@@ -4,9 +4,9 @@
 
 | What | Address |
 |---|---|
-| Program | `8NnGx94QrpwcUW6LL7NBzbgrTPUfVyaLsd8iHnfserHj` (deployed 2026-11-20) |
-| Config PDA | `45ZPR1NTLK9adm2RnvJDF4Rk5N2CE2x9CTfYdEmwz3Rq` |
-| Arena PDAs 0, 1, 2 | `4JJZ8iHwasVhBNgXhVCaPSVsbb9BkRgsyBv5YBj165UD`, `GAzj9xcnbsTHkZSc4e62u79atXzWzDAtmFpyzJtwbSMX`, `6dfuJvcBt5YRf7XtgnTFHUxzhvQdp3C7EzYwC8MkrMh4` |
+| Program | `6D65tPwcsoSoPK2qcXD87jcUQpMxwCjfX7tX7tKARiZ4` (deployed 2026-11-21) |
+| Config PDA | `BwF2fRi8vCXBUAuJx1GajG61ymKAF4rFE9QRTi4YdWyu` |
+| Arena PDAs 0, 1, 2 | `CSLE8p4H2zB2RRbsaFtKVYh5YKZVpRoc5tdrABMRV66B`, `2tRiPD6dbwchUBbte1X434Dy4NMNus1Xj4NwGgXSbpep`, `3PSeBtQ8WvVehxrN98QQdsAuaQk5sn45XD7KRk57KEnm` |
 | tUSDC mint | `6B4g5L3Ep7FwhmsnNC5saupGySfs39T8o8BWTWFLVWQU` (6 decimals; also stored in Config) |
 | ER (Asia) | `https://devnet-as.magicblock.app`, validator `MAS1Dt9qreoRMQ14YQuhg8UTZMMzDdKhmkZMECCzk57` |
 | VRF queue (ER) | `5hBR571xnXppuCPveTrctfTU7tJLSN94nq7kv7FRK5Tc` |
@@ -17,13 +17,17 @@ The default base RPC is `https://rpc.magicblock.app/devnet`: `api.devnet.solana.
 rate-limits a browser that subscribes and polls (HTTP 429). Set `NEXT_PUBLIC_BASE_RPC` to
 use another, e.g. a keyed provider for a public demo.
 
-## Smoke run (2026-11-20)
+## Smoke run (2026-11-21)
 
-Arena 0, run 1: the VRF seed landed about 0.2 s after `start_run`, staging took 10 s, the
-driver was busted at t = 519, and the lines resolved 30 s YES, 60 s NO, 90 s NO. The
-trader paid 8 tUSDC (5 YES on 30 s, 3 NO on 90 s), claimed 9.362659 + 5.716728 and
-withdrew 107.079387. The driver paid entry 1 + bond 25, lost the bond, earned 0.08 in
-runner fees and withdrew 74.08. Both match the program's math to the unit.
+Fresh program id for the run-economics account layout (Config 188 bytes, Arena 641); the
+2026-11-20 deployment `8NnGx94QrpwcUW6LL7NBzbgrTPUfVyaLsd8iHnfserHj` is no longer used. The
+tUSDC mint is unchanged.
+
+Arena 0, run 1: the driver was busted at t = 274, so all three lines resolved NO. The trader
+paid 8 tUSDC (5 YES on 30 s, 3 NO on 90 s) and claimed 0 + 3.43001, withdrawing 95.43001.
+The driver paid entry 0.5 and lost only 0.49001 of the bond (the BUST profit owed on the
+90 s line; that line had no RIDE holders, so the house kept it), earned 0.08 in runner fees
+and withdrew 99.08999. Both match the program's math to the unit.
 
 ## Setup
 
