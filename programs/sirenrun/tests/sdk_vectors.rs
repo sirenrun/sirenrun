@@ -4,7 +4,11 @@
 use anchor_lang::prelude::Pubkey;
 use anchor_lang::AccountSerialize;
 use anchor_spl::associated_token::get_associated_token_address;
-use ephemeral_rollups_sdk::vrf::consts::{DEFAULT_EPHEMERAL_QUEUE, DEFAULT_EPHEMERAL_TEST_QUEUE};
+use ephemeral_rollups_sdk::consts::{MAGIC_CONTEXT_ID, MAGIC_PROGRAM_ID};
+use ephemeral_rollups_sdk::cpi::DELEGATION_PROGRAM_ID;
+use ephemeral_rollups_sdk::vrf::consts::{
+    DEFAULT_EPHEMERAL_QUEUE, DEFAULT_EPHEMERAL_TEST_QUEUE, VRF_PROGRAM_ID,
+};
 use serde_json::{json, Value};
 use sirenrun::constants::LINES;
 use sirenrun::state::{
@@ -305,6 +309,10 @@ fn programs() -> Value {
         "vrfTestQueue": DEFAULT_EPHEMERAL_TEST_QUEUE.to_string(),
         "token": anchor_spl::token::ID.to_string(),
         "associatedToken": anchor_spl::associated_token::ID.to_string(),
+        "delegation": DELEGATION_PROGRAM_ID.to_string(),
+        "magic": MAGIC_PROGRAM_ID.to_string(),
+        "magicContext": MAGIC_CONTEXT_ID.to_string(),
+        "vrf": VRF_PROGRAM_ID.to_string(),
     })
 }
 

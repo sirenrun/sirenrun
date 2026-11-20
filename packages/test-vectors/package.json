@@ -3,6 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "exports": {
+    "./client.json": "./client.json",
     "./fpmm.json": "./fpmm.json",
     "./sdk.json": "./sdk.json",
     "./sim.json": "./sim.json"

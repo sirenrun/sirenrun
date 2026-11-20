@@ -40,6 +40,9 @@ export {
 export {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   BPS_DENOMINATOR,
+  DELEGATION_PROGRAM_ID,
+  MAGIC_CONTEXT_ID,
+  MAGIC_PROGRAM_ID,
   PROGRAM_ID,
   SESSION_PROGRAM_ID,
   TOKEN_DECIMALS,
@@ -49,13 +52,17 @@ export {
   U64_MAX,
   VRF_EPHEMERAL_QUEUE,
   VRF_EPHEMERAL_TEST_QUEUE,
+  VRF_PROGRAM_ID,
 } from "./constants.ts";
 export {
   arenaPda,
   associatedTokenAddress,
   balancePda,
   configPda,
+  delegationAccounts,
+  sessionTokenPda,
   vaultPda,
+  type DelegationAccounts,
   type Pda,
 } from "./pdas.ts";
 export {
@@ -77,3 +84,64 @@ export {
   type Side,
 } from "./price.ts";
 export type { Sirenrun } from "./idl/sirenrun.ts";
+export {
+  type Authority,
+  type BaseInstruction,
+  type ErInstruction,
+  type LayerInstruction,
+} from "./ix/instruction.ts";
+export {
+  buyIx,
+  claimIx,
+  delegateArenaIx,
+  delegateBalanceIx,
+  depositIx,
+  initArenaIx,
+  initBalanceIx,
+  initConfigIx,
+  setInputIx,
+  startRunIx,
+  undelegateBalanceIx,
+  updateConfigIx,
+  withdrawIx,
+  type ConfigParams,
+} from "./ix/sirenrun.ts";
+export {
+  claimableEntries,
+  expiredEntries,
+  previewClaim,
+  type ClaimError,
+  type ClaimPreview,
+  type ClaimableEntry,
+} from "./positions.ts";
+export {
+  TransactionFailed,
+  customErrorCode,
+  isDelegated,
+  sendBase,
+  sendEr,
+  waitForDelegation,
+  waitForUndelegation,
+  type Payer,
+  type PollOptions,
+  type WalletSigner,
+} from "./send.ts";
+export {
+  SESSION_SECONDS,
+  createSession,
+  createSessionIx,
+  decodeSessionToken,
+  fetchSessionToken,
+  isSessionLive,
+  revokeSessionIx,
+  sessionAuthority,
+  type Session,
+  type SessionToken,
+} from "./session.ts";
+export {
+  parseEvents,
+  subscribeArena,
+  subscribeEvents,
+  type SirenrunEvent,
+  type Unsubscribe,
+} from "./subscribe.ts";
