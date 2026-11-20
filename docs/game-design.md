@@ -35,7 +35,7 @@ and keep the math integer-only.
 | `SPEED_MAX` | 200 | Cruise cap without nitro |
 | `ACCEL` | 2 | Units per tick per tick |
 | `NITRO_CHARGES` | 3 | Per run |
-| `NITRO_BOOST` | 60 | Extra speed while active |
+| `NITRO_BOOST` | 40 | Extra speed while active |
 | `NITRO_TICKS` | 20 | 2 s per charge |
 | `CRASH_SPEED_PCT` | 40 | Speed after a hit = speed × 40 / 100 |
 | `INVULN_TICKS` | 10 | No new hits for 1 s after a hit |
@@ -44,32 +44,39 @@ and keep the math integer-only.
 | `GAP_START` | 1500 | Police start 1500 units behind |
 | `GAP_MAX` | 1500 | You can't get further ahead than this |
 | `POLICE_BASE` | 160 | Police speed at live tick 0 |
-| `POLICE_ACCEL_NUM / DEN` | 5 / 100 | Police speed += 0.05 per tick |
+| `POLICE_ACCEL_NUM / DEN` | 6 / 100 | Police speed += 0.06 per tick |
 | `BLOCK_BASE` | 40 | Base block threshold (out of 256) |
 | `BLOCK_CAP` | 190 | Max block threshold |
 | `LINES` | [300, 600, 900] | Market lines in live ticks (30 s, 60 s, 90 s) |
 
 Sanity check of the curve: police start at 160, faster than the car's launch speed, so
 the gap drops from 1500 to about 620 in the first 3 s before the car pulls back to the cap
-around 10 s. Police reach the car's cruise speed (200) at tick 800 (80 s); after that the
+around 10 s. Police reach the car's cruise speed (200) at tick 667 (66.7 s); after that the
 gap shrinks by an ever-growing amount. The cap is small on purpose: the car is never far
 ahead, so a hit (speed × 40 / 100, then +2 per tick) costs real ground at any point in the
-run. With perfect play the car is caught at tick 1055 (105.5 s). Nitro adds almost nothing
-to a clean run, since the lead is already at the cap; it is the way back after a hit.
+run. A flawless run without nitro is caught at exactly tick 900, which still resolves the
+90 s line YES because lines are checked before the bust. So the 90 s line comes down to
+nitro: fired while the gap is at its cap, a charge only spends lead the cap throws away;
+saved until the police are close, the same flawless run lasts 99.7 s.
 
 Checked with a prototype of these exact rules: a perfect bot that always steers to the
-next row's safe lane takes zero hits on every seed tried, and is caught at 105.5 s
-without nitro and 105.7 s with nitro fired when the gap drops below 1500. The sim tests
-use these two numbers as expectations.
+next row's safe lane takes zero hits on every seed tried, and is caught at 90.0 s
+without nitro and 90.1 s with nitro fired as soon as the gap drops below 1500 (all three
+charges burn in the launch dip). The sim tests use these two numbers as expectations.
 
 Balance targets, from 1000 seeds of simulated players who steer like the perfect bot but
-miss a row (hold their lane instead of reacting) with the given chance, nitro on:
+miss a row (hold their lane instead of reacting) with the given chance, and fire nitro once
+the gap is below 700:
 
 | Player | Misses | Mean | Passes 30 s | 60 s | 90 s |
 |---|---|---|---|---|---|
-| Perfect | 0% | 105.7 s | 100% | 100% | 100% |
-| Good | 5% | 82.4 s | 98% | 81% | 46% |
-| Average | 12% | 61.7 s | 91% | 52% | 12% |
+| Perfect | 0% | 99.7 s | 100% | 100% | 100% |
+| Good | 5% | 78.0 s | 98% | 78% | 41% |
+| Average | 12% | 60.2 s | 91% | 50% | 11% |
+
+The lines hold up however players use nitro. An average player who burns it all at launch
+passes 91% / 36% / 9%; one who saves it for below 400 passes 94% / 45% / 11%. Market
+prices should not depend much on a crowd's nitro habits.
 
 Real players react late and miss in clusters, so expect live numbers somewhat below these.
 Every line stays uncertain for most players, which is what keeps all three markets
@@ -167,7 +174,7 @@ Markets react to the new state after the sim step (see [onchain-program.md](onch
 - First 10 s: easy, learn the controls, a few cars.
 - 20–40 s: two blocked lanes common, first real dodges.
 - 60 s+: three blocked lanes common, police lights in the mirror, one hit hurts.
-- 80 s+: police faster than you; nitro decides whether you make 90 s.
+- 67 s+: police faster than you; nitro decides whether you make 90 s.
 - A run should rarely end in under 15 s for a careful player.
 
 ## Parity tests

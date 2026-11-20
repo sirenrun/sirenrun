@@ -5,7 +5,7 @@ export const SCALE = 1 / 100;
 /**
  * Along the road, sim units per metre. The sim is unitless; this only sets how fast the
  * picture moves. At 1/40 the car's top speed (200 per tick) reads as 180 km/h, nitro as
- * 234 km/h, and obstacle rows sit 25 m apart. At the lateral scale it read as 72 km/h.
+ * 216 km/h, and obstacle rows sit 25 m apart. At the lateral scale it read as 72 km/h.
  */
 export const Z_SCALE = 1 / 40;
 export const LANE_W = LANE_WIDTH * SCALE;

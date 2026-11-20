@@ -45,11 +45,8 @@ describe("perfect bot", () => {
     return { t: state.t, hits };
   }
 
-  it.each([1n, 2n, 3n, 42n, 1234567n])(
-    "seed %s survives 105.5 s, or 105.7 s with nitro",
-    (seed) => {
-      expect(run(seed, false)).toEqual({ t: 1055, hits: 0 });
-      expect(run(seed, true)).toEqual({ t: 1057, hits: 0 });
-    },
-  );
+  it.each([1n, 2n, 3n, 42n, 1234567n])("seed %s survives 90.0 s, or 90.1 s with nitro", (seed) => {
+    expect(run(seed, false)).toEqual({ t: 900, hits: 0 });
+    expect(run(seed, true)).toEqual({ t: 901, hits: 0 });
+  });
 });

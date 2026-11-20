@@ -13,7 +13,7 @@ export const SPEED_MAX = 200;
 export const ACCEL = 2;
 
 export const NITRO_CHARGES = 3;
-export const NITRO_BOOST = 60;
+export const NITRO_BOOST = 40;
 export const NITRO_TICKS = 20;
 
 export const CRASH_SPEED_PCT = 40;
@@ -27,7 +27,7 @@ export const BLOCK_CAP = 190;
 export const GAP_START = 1500;
 export const GAP_MAX = 1500;
 export const POLICE_BASE = 160;
-export const POLICE_ACCEL_NUM = 5;
+export const POLICE_ACCEL_NUM = 6;
 export const POLICE_ACCEL_DEN = 100;
 
 export const LINES = [300, 600, 900] as const;
