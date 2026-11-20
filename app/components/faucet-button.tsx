@@ -36,20 +36,36 @@ export function useFaucet() {
   return { ...state, claim, available: publicKey !== null };
 }
 
-export function FaucetButton({ className = "" }: { className?: string }) {
+/**
+ * `floatNote` drops the status note below the button instead of beside it, for tight rows
+ * like the header where a note appearing would shift everything.
+ */
+export function FaucetButton({
+  className = "",
+  floatNote = false,
+}: {
+  className?: string;
+  floatNote?: boolean;
+}) {
   const { busy, note, claim, available } = useFaucet();
   if (!available) return null;
   return (
-    <div className={`flex items-center gap-2 ${className}`}>
+    <div className={`relative flex items-center gap-2 ${className}`}>
       <button
         type="button"
         onClick={() => void claim()}
         disabled={busy}
-        className="rounded-md border border-neon-cyan/40 px-3 py-1.5 text-sm text-neon-cyan enabled:hover:bg-neon-cyan/10 enabled:hover:shadow-[0_0_16px_-6px_var(--color-neon-cyan)] disabled:opacity-50"
+        className="h-9 rounded-lg border border-neon-cyan/40 px-3 text-sm font-medium text-neon-cyan enabled:hover:bg-neon-cyan/10 enabled:hover:shadow-[0_0_16px_-6px_var(--color-neon-cyan)] disabled:opacity-50"
       >
         {busy ? "Sending…" : "Get test USDC"}
       </button>
-      {note !== null && <span className="text-xs text-muted">{note}</span>}
+      {note !== null && (
+        <span
+          className={`text-xs text-muted ${floatNote ? "absolute top-full right-0 mt-1 whitespace-nowrap" : ""}`}
+        >
+          {note}
+        </span>
+      )}
     </div>
   );
 }
