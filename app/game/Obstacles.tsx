@@ -3,40 +3,63 @@
 import { useFrame } from "@react-three/fiber";
 import { LANES, ROW_GAP, rowHash } from "@sirenrun/sim";
 import { useMemo, useRef } from "react";
-import { Color, Matrix4, Quaternion, Vector3, type InstancedMesh } from "three";
+import { AdditiveBlending, Color, Matrix4, Quaternion, Vector3, type InstancedMesh } from "three";
 import { Course } from "./course";
 import { frame } from "./frame";
+import { glowTexture } from "./glow";
+import { NEON } from "./palette";
 import { laneX, rowZ } from "./world";
 
-/** Rows drawn behind and ahead of the car. Ahead reaches into the fog. */
+/** Rows drawn behind and ahead of the car: 18 rows is 180 m, well inside the fog. */
 const BEHIND = 2;
-const AHEAD = 16;
+const AHEAD = 18;
 const MAX = (BEHIND + AHEAD) * LANES;
 
-/** Cosmetic obstacle kinds; the program only knows "blocked". Picked from spare hash bits. */
-const KINDS = [
-  { size: [1.7, 1.1, 3.6], color: "#2d2a44" }, // traffic car
-  { size: [1.7, 1.1, 3.6], color: "#3a2440" }, // traffic car, other paint
-  { size: [2.2, 0.9, 0.5], color: "#ffb020" }, // roadblock
-  { size: [2.0, 0.14, 0.9], color: "#8c86a6" }, // spike strip
-] as const;
+type Kind = "car" | "roadblock" | "spikes";
 
-const matrix = new Matrix4();
-const position = new Vector3();
-const scale = new Vector3();
-const rotation = new Quaternion();
-const color = new Color();
+/** Traffic paints: bright enough to stand out on dark asphalt. Cosmetic; picked from hash bits. */
+/** No pink or white: those belong to the player's car. */
+const PAINTS = ["#ffc93c", "#19c3b3", "#4aa3ff", "#8a5cff", "#ff7a3d"].map((c) => new Color(c));
+const RED = new Color(NEON.red);
+const AMBER = new Color(NEON.amber);
+const GLASS = new Color("#141022");
+const STRIPE = new Color("#f4f1ff");
+const DARK = new Color("#26202f");
 
+const m4 = new Matrix4();
+const pos = new Vector3();
+const scl = new Vector3();
+const IDENTITY = new Quaternion();
+
+/** Uses hash bits 48..62, which the program never reads (lane bytes are bits 8..47). */
+function kindOf(hash: bigint, lane: number): { kind: Kind; paint: number } {
+  const bits = Number((hash >> BigInt(48 + lane * 3)) & 7n);
+  const paint = Number((hash >> BigInt(lane * 2 + 1)) & 3n) + (bits & 1);
+  if (bits < 5) return { kind: "car", paint: paint % PAINTS.length };
+  return { kind: bits < 7 ? "roadblock" : "spikes", paint: 0 };
+}
+
+/**
+ * Obstacle rows from the VRF seed, exactly as the program generates them. Every obstacle
+ * carries its own fog-proof light (tail lights, amber beacons, a glowing spike strip) so the
+ * blocked lanes read from the far end of the road, like traffic at night.
+ */
 export function Obstacles() {
-  const mesh = useRef<InstancedMesh>(null);
+  const bodies = useRef<InstancedMesh>(null);
+  const tops = useRef<InstancedMesh>(null);
+  const lights = useRef<InstancedMesh>(null);
+  const halos = useRef<InstancedMesh>(null);
   const state = useRef<{ course: Course | null; first: number }>({ course: null, first: -1 });
-  const colors = useMemo(() => KINDS.map((k) => new Color(k.color)), []);
+  const glow = useMemo(() => glowTexture(), []);
 
   useFrame(() => {
-    const instances = mesh.current;
-    if (instances === null) return;
+    const b = bodies.current;
+    const t = tops.current;
+    const l = lights.current;
+    const h = halos.current;
+    if (b === null || t === null || l === null || h === null) return;
     if (!frame.ready || !frame.seedReady) {
-      instances.count = 0;
+      b.count = t.count = l.count = h.count = 0;
       state.current.first = -1;
       return;
     }
@@ -46,34 +69,93 @@ export function Obstacles() {
       s.first = -1;
     }
     const first = Math.max(0, Math.floor(frame.distance / ROW_GAP) - BEHIND);
-    if (first === s.first) return; // rows are static in the world; rebuild only when the window moves
+    if (first === s.first) return; // rows are fixed in the world; rebuild only when the window moves
     s.first = first;
 
-    let count = 0;
+    let nb = 0;
+    let nt = 0;
+    let nl = 0;
+    let nh = 0;
+    const put = (
+      mesh: InstancedMesh,
+      i: number,
+      x: number,
+      y: number,
+      z: number,
+      sx: number,
+      sy: number,
+      sz: number,
+      c: Color,
+    ) => {
+      m4.compose(pos.set(x, y, z), IDENTITY, scl.set(sx, sy, sz));
+      mesh.setMatrixAt(i, m4);
+      mesh.setColorAt(i, c);
+    };
+
     for (let row = first; row < first + BEHIND + AHEAD; row += 1) {
       const blocked = s.course.row(row).blocked;
       const hash = rowHash(frame.seed, row);
+      const z = rowZ(row);
       for (let lane = 0; lane < LANES; lane += 1) {
         if (!blocked[lane]) continue;
-        const kindIndex = Number((hash >> BigInt(48 + lane * 2)) & 3n);
-        const kind = KINDS[kindIndex] ?? KINDS[0];
-        position.set(laneX(lane), kind.size[1] / 2, rowZ(row));
-        scale.set(kind.size[0], kind.size[1], kind.size[2]);
-        matrix.compose(position, rotation, scale);
-        instances.setMatrixAt(count, matrix);
-        instances.setColorAt(count, color.copy(colors[kindIndex] ?? (colors[0] as Color)));
-        count += 1;
+        const x = laneX(lane);
+        const { kind, paint } = kindOf(hash, lane);
+        if (kind === "car") {
+          put(b, nb++, x, 0.55, z, 1.8, 0.75, 3.9, PAINTS[paint] as Color);
+          put(t, nt++, x, 1.12, z + 0.3, 1.5, 0.45, 2.0, GLASS);
+          // Tail lights face the player (+z).
+          put(l, nl++, x - 0.6, 0.72, z + 1.97, 0.42, 0.14, 0.06, RED);
+          put(l, nl++, x + 0.6, 0.72, z + 1.97, 0.42, 0.14, 0.06, RED);
+          put(h, nh++, x, 0.75, z + 2.05, 3.4, 1.4, 1, RED);
+        } else if (kind === "roadblock") {
+          put(b, nb++, x, 0.5, z, 2.2, 0.9, 0.45, STRIPE);
+          put(t, nt++, x, 0.5, z + 0.05, 2.24, 0.3, 0.42, RED);
+          put(l, nl++, x - 0.85, 1.08, z, 0.22, 0.22, 0.22, AMBER);
+          put(l, nl++, x + 0.85, 1.08, z, 0.22, 0.22, 0.22, AMBER);
+          put(h, nh++, x, 1.0, z + 0.3, 3.6, 1.6, 1, AMBER);
+        } else {
+          put(b, nb++, x, 0.06, z, 2.1, 0.12, 0.9, DARK);
+          put(l, nl++, x, 0.14, z + 0.3, 2.0, 0.06, 0.12, RED);
+          put(h, nh++, x, 0.3, z + 0.5, 3.2, 0.9, 1, RED);
+        }
       }
     }
-    instances.count = count;
-    instances.instanceMatrix.needsUpdate = true;
-    if (instances.instanceColor !== null) instances.instanceColor.needsUpdate = true;
+    b.count = nb;
+    t.count = nt;
+    l.count = nl;
+    h.count = nh;
+    for (const mesh of [b, t, l, h]) {
+      mesh.instanceMatrix.needsUpdate = true;
+      if (mesh.instanceColor !== null) mesh.instanceColor.needsUpdate = true;
+    }
   });
 
   return (
-    <instancedMesh ref={mesh} args={[undefined, undefined, MAX]} frustumCulled={false}>
-      <boxGeometry args={[1, 1, 1]} />
-      <meshStandardMaterial roughness={0.55} metalness={0.25} />
-    </instancedMesh>
+    <>
+      <instancedMesh ref={bodies} args={[undefined, undefined, MAX]} frustumCulled={false}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial roughness={0.35} metalness={0.4} />
+      </instancedMesh>
+      <instancedMesh ref={tops} args={[undefined, undefined, MAX]} frustumCulled={false}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshStandardMaterial roughness={0.15} metalness={0.8} />
+      </instancedMesh>
+      <instancedMesh ref={lights} args={[undefined, undefined, MAX * 2]} frustumCulled={false}>
+        <boxGeometry args={[1, 1, 1]} />
+        <meshBasicMaterial toneMapped={false} fog={false} />
+      </instancedMesh>
+      <instancedMesh ref={halos} args={[undefined, undefined, MAX]} frustumCulled={false}>
+        <planeGeometry args={[1, 1]} />
+        <meshBasicMaterial
+          map={glow}
+          transparent
+          opacity={0.75}
+          blending={AdditiveBlending}
+          depthWrite={false}
+          toneMapped={false}
+          fog={false}
+        />
+      </instancedMesh>
+    </>
   );
 }
