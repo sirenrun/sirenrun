@@ -10,6 +10,7 @@
   --color-police-red: #ff3b3b;
   --color-police-blue: #3b6bff;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-barlow), var(--font-inter), ui-sans-serif, sans-serif;
 }
 
 html {
@@ -46,4 +47,63 @@ body {
 
 .btn-primary:disabled {
   opacity: 0.4;
+}
+
+/* HUD motion. Everything here is decorative and is skipped under reduced motion. */
+@media (prefers-reduced-motion: no-preference) {
+  .hud-pulse {
+    animation: hud-pulse 1s ease-out;
+  }
+  .hud-danger {
+    animation: hud-blink 0.5s steps(2, jump-none) infinite;
+  }
+  .hud-banner-in {
+    animation: hud-banner 1.6s ease-out forwards;
+  }
+  .hud-stamp-in {
+    animation: hud-stamp 0.35s cubic-bezier(0.2, 1.4, 0.4, 1) both;
+  }
+}
+
+@keyframes hud-pulse {
+  from {
+    transform: scale(1.25);
+    opacity: 0.6;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes hud-blink {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+@keyframes hud-banner {
+  0% {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  12%,
+  80% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+@keyframes hud-stamp {
+  from {
+    opacity: 0;
+    transform: scale(1.6) rotate(-8deg);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) rotate(-8deg);
+  }
 }
