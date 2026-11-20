@@ -226,6 +226,11 @@ stack (`scripts/local-up.sh --reset`).
   `er.onLogs(programId, …)` for events.
 - After `delegate_*` on base, wait until the account is readable on the ER before sending
   ER instructions (poll `er.getAccountInfo`).
+- Local stack check of the SDK (2026-11-20, `mb-stack` 1.1.1): init config, deposit,
+  delegate balances and arena, create session, session-signed `undelegate_balance`
+  (back on base in ~0.5 s), withdraw and revoke all work, and program errors decode by
+  name. One undelegation commit failed once and did not repeat; `waitForUndelegation`
+  times out instead of hanging.
 
 ## 9. Where MagicBlock is used
 
@@ -245,3 +250,4 @@ stack (`scripts/local-up.sh --reset`).
 | U4 | VRF request + crank schedule fit in one instruction's compute | Answered: `start_run` 40k CU, `tick` ≤ 27k CU (MagicSVM) |
 | U5 | ER websocket update rate to many subscribers | app scene PR |
 | U6 | Does the ER run the SBPF v3 build Anchor 1.2.2 produces? Local 1.1.1 ER: yes (2026-11-20). Devnet: unchecked | devnet deploy PR |
+| U7 | Who pays the VRF request fee inside the ER? Local 1.1.1 ER (2026-11-20): `start_run` fails. The VRF program transfers 500,000 lamports from the signer to the oracle queue; a session key has none, and a funded or escrow-topped-up key is rejected with "Feepayer … was modified without being delegated" and "Confined account <queue> has been illegally modified". MagicSVM does not enforce this. | open, blocks runs |

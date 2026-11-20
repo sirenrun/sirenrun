@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@anchor-lang/core": "catalog:",
+    "@magicblock-labs/gum-sdk": "catalog:",
+    "@sirenrun/sim": "workspace:*",
     "@solana/web3.js": "catalog:"
   },
   "devDependencies": {

@@ -26,3 +26,9 @@ export const TOKEN_UNIT = 1_000_000n;
 export const BPS_DENOMINATOR = 10_000n;
 export const U64_MAX = (1n << 64n) - 1n;
 export const U128_MAX = (1n << 128n) - 1n;
+
+/** MagicBlock programs; values match the IDL's fixed addresses and the Rust SDK. */
+export const DELEGATION_PROGRAM_ID = new PublicKey("DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh");
+export const MAGIC_PROGRAM_ID = new PublicKey("Magic11111111111111111111111111111111111111");
+export const MAGIC_CONTEXT_ID = new PublicKey("MagicContext1111111111111111111111111111111");
+export const VRF_PROGRAM_ID = new PublicKey("Vrf1RNUjXmQGjmQrQLvJHs9SNkvDJEsRVFPkfSQUwGz");

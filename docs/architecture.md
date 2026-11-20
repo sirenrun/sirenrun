@@ -138,6 +138,21 @@ sequenceDiagram
   account bytes, FPMM fills and quotes, and the MagicBlock addresses the SDK hardcodes
   (VRF queues, session program) because the pinned TS packages do not export them.
   End-to-end use against validators is the devnet smoke script.
+- Builders (`ix/sirenrun.ts`) return `{ layer, instruction, signers }`. Account metas come
+  from the IDL (order, signer and writable flags, fixed addresses); a missing optional
+  `session_token` is encoded as the program id, as Anchor does. `tick` and
+  `vrf_callback_seed` have no builders: only the crank and the VRF oracle can sign them.
+- `sendBase(base, payer, ixs)` and `sendEr(er, payer, ixs)` accept only their own layer's
+  connection and instructions (compile time and runtime), take the blockhash from that
+  layer, keep preflight on, and throw `TransactionFailed` with the sirenrun error name.
+  The payer is a keypair or anything with `signTransaction` (wallet adapter).
+- Sessions (`session.ts`) encode `create_session_v2` / `revoke_session_v2` from the IDL
+  shipped in `@magicblock-labs/gum-sdk`, with our Anchor coder, so the app never bundles
+  gum's Anchor 0.30 client. Revoke marks the authority as signer, which the program
+  requires while the session is valid.
+- `subscribeArena` / `subscribeEvents` wrap `onAccountChange` / `onLogs` on the ER and
+  return an unsubscribe function. `previewClaim` / `claimableEntries` mirror
+  `Arena::claim` for auto-claim.
 
 ## Real-time data flow
 

@@ -435,8 +435,12 @@
   },
   "programs": {
     "associatedToken": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL",
+    "delegation": "DELeGGvXpWV2fqJUhqcF5ZSYMS4JTLjteaAMARRSaeSh",
+    "magic": "Magic11111111111111111111111111111111111111",
+    "magicContext": "MagicContext1111111111111111111111111111111",
     "session": "KeyspM2ssCJbqUhQ4k7sveSiY4WjnYsrXkC8oDbwde5",
     "token": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA",
+    "vrf": "Vrf1RNUjXmQGjmQrQLvJHs9SNkvDJEsRVFPkfSQUwGz",
     "vrfQueue": "5hBR571xnXppuCPveTrctfTU7tJLSN94nq7kv7FRK5Tc",
     "vrfTestQueue": "Sc9MJUngNbQXSXGP3F67KvKwVnhaYn6kcioxXNVowYT"
   }

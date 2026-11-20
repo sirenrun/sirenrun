@@ -8,6 +8,7 @@ allowBuilds:
 
 catalog:
   "@anchor-lang/core": 1.2.2
+  "@magicblock-labs/gum-sdk": 3.0.10
   "@solana/web3.js": 1.99.0
   "@tailwindcss/postcss": 4.3.5
   "@types/node": 24.19.2
