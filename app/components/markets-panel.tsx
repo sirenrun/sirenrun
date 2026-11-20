@@ -278,7 +278,7 @@ export function MarketsPanel({ id, demo = false }: { id: number; demo?: boolean 
 
   return (
     <aside
-      className={`absolute inset-x-0 bottom-0 z-20 flex max-h-[75%] flex-col border-t border-white/10 bg-bg/95 backdrop-blur lg:static lg:max-h-none lg:w-[22rem] lg:shrink-0 lg:border-l lg:border-t-0 ${isDriver ? "hidden lg:flex" : ""}`}
+      className={`relative z-20 flex max-h-[60%] shrink-0 flex-col border-t border-white/10 bg-bg lg:max-h-none lg:w-[22rem] lg:border-l lg:border-t-0 ${isDriver ? "hidden lg:flex" : ""}`}
       aria-label="Markets"
     >
       {/* Phone: a bar with the three prices that opens the full panel. */}

@@ -14,6 +14,7 @@ import {
   type InstancedMesh,
   type Points,
 } from "three";
+import { prefersReducedMotion } from "./controls";
 import { frame } from "./frame";
 import { glowTexture } from "./glow";
 import { recycledZ } from "./recycle";
@@ -34,6 +35,8 @@ const STREAK_SPAN = 140;
  */
 export function SpeedLines() {
   const mesh = useRef<InstancedMesh>(null);
+  // Streaks rushing past are exactly the motion a reduced-motion visitor asked to avoid.
+  const reduced = useMemo(() => prefersReducedMotion(), []);
   const layout = useMemo(
     () =>
       Array.from({ length: STREAKS }, (_, i) => {
@@ -52,6 +55,10 @@ export function SpeedLines() {
   );
 
   useFrame(() => {
+    if (reduced) {
+      if (mesh.current) mesh.current.visible = false;
+      return;
+    }
     const m = mesh.current;
     if (m === null) return;
     const eff = frame.speed + (frame.nitro ? NITRO_BOOST : 0);
