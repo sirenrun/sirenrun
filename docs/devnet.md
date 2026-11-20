@@ -7,11 +7,19 @@
 | Program | `8NnGx94QrpwcUW6LL7NBzbgrTPUfVyaLsd8iHnfserHj` (deployed 2026-11-20) |
 | Config PDA | `45ZPR1NTLK9adm2RnvJDF4Rk5N2CE2x9CTfYdEmwz3Rq` |
 | Arena PDAs 0, 1, 2 | `4JJZ8iHwasVhBNgXhVCaPSVsbb9BkRgsyBv5YBj165UD`, `GAzj9xcnbsTHkZSc4e62u79atXzWzDAtmFpyzJtwbSMX`, `6dfuJvcBt5YRf7XtgnTFHUxzhvQdp3C7EzYwC8MkrMh4` |
-| tUSDC mint | set by `create-mint`; also stored in Config |
+| tUSDC mint | `6B4g5L3Ep7FwhmsnNC5saupGySfs39T8o8BWTWFLVWQU` (6 decimals; also stored in Config) |
 | ER (Asia) | `https://devnet-as.magicblock.app`, validator `MAS1Dt9qreoRMQ14YQuhg8UTZMMzDdKhmkZMECCzk57` |
 | VRF queue (ER) | `5hBR571xnXppuCPveTrctfTU7tJLSN94nq7kv7FRK5Tc` |
 
 The app reads the mint, house and fees from Config, so only the program id is hardcoded.
+
+## Smoke run (2026-11-20)
+
+Arena 0, run 1: the VRF seed landed about 0.2 s after `start_run`, staging took 10 s, the
+driver was busted at t = 519, and the lines resolved 30 s YES, 60 s NO, 90 s NO. The
+trader paid 8 tUSDC (5 YES on 30 s, 3 NO on 90 s), claimed 9.362659 + 5.716728 and
+withdrew 107.079387. The driver paid entry 1 + bond 25, lost the bond, earned 0.08 in
+runner fees and withdrew 74.08. Both match the program's math to the unit.
 
 ## Setup
 
