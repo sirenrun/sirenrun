@@ -1,8 +1,8 @@
 "use client";
 
 import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { formatTokenAmount, isSessionLive } from "@sirenrun/sdk";
+import dynamic from "next/dynamic";
 import Image from "next/image";
 import Link from "next/link";
 import { useEffect } from "react";
@@ -34,6 +34,18 @@ function useWalletSync() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, watch, reset, clearSession]);
 }
+
+/**
+ * The wallet button's label depends on the remembered wallet, which only the browser knows,
+ * so it renders on the client only. The placeholder has the same size to avoid layout shift.
+ */
+const WalletMultiButton = dynamic(
+  () => import("@solana/wallet-adapter-react-ui").then((m) => m.WalletMultiButton),
+  {
+    ssr: false,
+    loading: () => <div className="h-9 w-36 rounded-lg bg-neon-pink/20" aria-hidden />,
+  },
+);
 
 function SessionPill() {
   const signer = useWalletSigner();
