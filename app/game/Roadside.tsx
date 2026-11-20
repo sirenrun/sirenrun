@@ -29,6 +29,8 @@ const LAMPS_PER_SIDE = 17;
 const LAMP_SPAN = LAMP_SPACING * LAMPS_PER_SIDE;
 const POLE_X = ROAD_HALF + 1.4;
 const POLE_HEIGHT = 7;
+/** Lamp heads hang over the outer lanes on arms; the road mirrors them from here. */
+export const LAMP_HEAD_X = POLE_X - 2.1;
 
 const m4 = new Matrix4();
 const pos = new Vector3();
@@ -68,13 +70,13 @@ function Streetlights() {
       );
       p.setMatrixAt(count + i, m4);
       m4.compose(
-        pos.set(side * (POLE_X - 2.1), POLE_HEIGHT - 0.12, z),
+        pos.set(side * LAMP_HEAD_X, POLE_HEIGHT - 0.12, z),
         IDENTITY,
         scl.set(0.7, 0.12, 0.4),
       );
       h.setMatrixAt(i, m4);
       m4.compose(
-        pos.set(side * (POLE_X - 2.1), POLE_HEIGHT - 0.25, z + 0.05),
+        pos.set(side * LAMP_HEAD_X, POLE_HEIGHT - 0.25, z + 0.05),
         IDENTITY,
         scl.set(3.2, 3.2, 1),
       );
@@ -305,6 +307,11 @@ function Water() {
             c += uSun * ripple * exp(-lateral * lateral * 3.0) * smoothstep(20.0, 120.0, depth) * 0.9;
             float fog = smoothstep(uNear, uFar, depth);
             gl_FragColor = vec4(mix(c, uFog, fog * 0.6), 1.0);
+            // Colours here are tuned as display colours; hand three.js linear light so tone mapping,
+            // bloom and the final sRGB conversion treat this surface like every other material.
+            gl_FragColor = sRGBTransferEOTF(gl_FragColor);
+            #include <tonemapping_fragment>
+            #include <colorspace_fragment>
           }
         `,
         uniforms: {

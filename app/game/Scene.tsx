@@ -4,7 +4,7 @@ import { PerformanceMonitor } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { INVULN_TICKS, NITRO_BOOST, NITRO_TICKS, SPEED_MAX } from "@sirenrun/sim";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { MathUtils, Vector3, type PerspectiveCamera } from "three";
+import { MathUtils, NeutralToneMapping, Vector3, type PerspectiveCamera } from "three";
 import { useArena } from "../stores/arena";
 import { PlayerCar, Police } from "./Cars";
 import { laneMotion, prefersReducedMotion } from "./controls";
@@ -263,8 +263,9 @@ export default function Scene({ className }: { className?: string }) {
       className={className}
       style={{ position: "absolute", inset: 0 }}
       dpr={dpr}
-      flat={post}
-      gl={{ antialias: true, powerPreference: "high-performance" }}
+      // One tone curve everywhere: three applies it only when drawing straight to the screen
+      // (post off); with post on the scene renders into a buffer and the composer applies it.
+      gl={{ antialias: true, powerPreference: "high-performance", toneMapping: NeutralToneMapping }}
       camera={{ fov: 62, near: 0.3, far: 900, position: [0, 4.3, 10.5] }}
       onCreated={({ gl }) => {
         gl.domElement.addEventListener("webglcontextlost", () => setLost(true), { once: true });

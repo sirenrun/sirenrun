@@ -55,6 +55,11 @@ const fragment = /* glsl */ `
     // Below the horizon the water covers this; fade to the glow colour to avoid seams.
     sky = mix(uGlow * 0.35, sky, smoothstep(-0.03, 0.0, h));
     gl_FragColor = vec4(sky, 1.0);
+    // Colours here are tuned as display colours; hand three.js linear light so tone mapping,
+    // bloom and the final sRGB conversion treat this surface like every other material.
+    gl_FragColor = sRGBTransferEOTF(gl_FragColor);
+    #include <tonemapping_fragment>
+    #include <colorspace_fragment>
   }
 `;
 

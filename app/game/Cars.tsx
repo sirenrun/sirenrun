@@ -17,6 +17,7 @@ import {
 import { policeLamp } from "./car-fit";
 import { frame } from "./frame";
 import { glowTexture } from "./glow";
+import { policeLights } from "./lights";
 import { useCarKit } from "./models";
 import { hot, NEON } from "./palette";
 import { spring } from "./spring";
@@ -320,6 +321,13 @@ export function Police() {
         g.position.set(worldX(x), 0, z);
         g.rotation.y = 0;
         g.visible = visible && z + 2.1 < cutoff;
+      }
+      if (i === 0) {
+        policeLights.visible = g.visible;
+        policeLights.x = g.position.x;
+        policeLights.z = g.position.z;
+        policeLights.red = flash ? 1 : 0;
+        policeLights.closeness = closeness;
       }
       const pair = lamps.current[i];
       if (pair?.red && pair.blue) {
