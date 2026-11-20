@@ -698,6 +698,53 @@ fn arena_bytes(arena: &Arena) -> Vec<u8> {
     data
 }
 
+/// SPL token and ATA instructions the scripts and faucet use, built by the SPL crates.
+fn token_instructions() -> Vec<Value> {
+    use anchor_spl::associated_token::spl_associated_token_account::instruction::create_associated_token_account_idempotent;
+    use anchor_spl::token::spl_token::instruction::{initialize_mint2, mint_to_checked};
+
+    let (admin, user, mint) = (key(ADMIN), key(USER), key(MINT));
+    let token_case =
+        |name: &str, args: Value, ix: anchor_lang::solana_program::instruction::Instruction| {
+            json!({
+                "name": name,
+                "layer": "base",
+                "args": args,
+                "programId": ix.program_id.to_string(),
+                "keys": ix.accounts.iter().map(|m| json!({
+                    "pubkey": m.pubkey.to_string(),
+                    "isSigner": m.is_signer,
+                    "isWritable": m.is_writable,
+                })).collect::<Vec<_>>(),
+                "data": hex(&ix.data),
+            })
+        };
+    let ata = get_associated_token_address(&user, &mint);
+    vec![
+        token_case(
+            "initializeMint",
+            json!({ "mint": mint.to_string(), "authority": admin.to_string(), "decimals": 6 }),
+            initialize_mint2(&token::ID, &mint, &admin, None, 6).expect("initialize_mint2"),
+        ),
+        token_case(
+            "createAta",
+            json!({ "payer": admin.to_string(), "owner": user.to_string(), "mint": mint.to_string() }),
+            create_associated_token_account_idempotent(&admin, &user, &mint, &token::ID),
+        ),
+        token_case(
+            "mintTo",
+            json!({
+                "mint": mint.to_string(),
+                "destination": ata.to_string(),
+                "authority": admin.to_string(),
+                "amount": "100000000",
+                "decimals": 6,
+            }),
+            mint_to_checked(&token::ID, &mint, &ata, &admin, &[], 100_000_000, 6).expect("mint_to"),
+        ),
+    ]
+}
+
 fn session_token_account() -> Value {
     let token = SessionTokenV2 {
         authority: key(USER),
@@ -726,6 +773,7 @@ fn build_vectors() -> Value {
         .into_iter()
         .chain(er_instructions())
         .chain(session_instructions())
+        .chain(token_instructions())
         .collect();
     json!({
         "instructions": instructions,

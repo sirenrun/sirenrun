@@ -5,7 +5,10 @@ import {
   buyIx,
   claimIx,
   claimableEntries,
+  createAtaIx,
   createSessionIx,
+  initializeMintIx,
+  mintToIx,
   decodeArena,
   decodeSessionToken,
   delegateArenaIx,
@@ -122,6 +125,17 @@ const builders: Record<string, (a: Args) => LayerInstruction<"base" | "er">> = {
       sessionSigner: fakeSigner(key(a.sessionSigner)),
       validUntil: num(a.validUntil),
       topUpLamports: a.topUpLamports === null ? undefined : big(a.topUpLamports),
+    }),
+  initializeMint: (a) =>
+    initializeMintIx({ mint: key(a.mint), authority: key(a.authority), decimals: num(a.decimals) }),
+  createAta: (a) => createAtaIx({ payer: key(a.payer), owner: key(a.owner), mint: key(a.mint) }),
+  mintTo: (a) =>
+    mintToIx({
+      mint: key(a.mint),
+      destination: key(a.destination),
+      authority: key(a.authority),
+      amount: big(a.amount),
+      decimals: num(a.decimals),
     }),
   revokeSession: (a) =>
     revokeSessionIx({ authority: key(a.authority), sessionSigner: key(a.sessionSigner) }),

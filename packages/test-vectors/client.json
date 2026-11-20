@@ -1319,6 +1319,97 @@
       "layer": "base",
       "name": "revokeSession",
       "programId": "KeyspM2ssCJbqUhQ4k7sveSiY4WjnYsrXkC8oDbwde5"
+    },
+    {
+      "args": {
+        "authority": "4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi",
+        "decimals": 6,
+        "mint": "US517G5965aydkZ46HS38QLi7UQiSojurfbQfKCELFx"
+      },
+      "data": "1406010101010101010101010101010101010101010101010101010101010101010100",
+      "keys": [
+        {
+          "isSigner": false,
+          "isWritable": true,
+          "pubkey": "US517G5965aydkZ46HS38QLi7UQiSojurfbQfKCELFx"
+        }
+      ],
+      "layer": "base",
+      "name": "initializeMint",
+      "programId": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+    },
+    {
+      "args": {
+        "mint": "US517G5965aydkZ46HS38QLi7UQiSojurfbQfKCELFx",
+        "owner": "CktRuQ2mttgRGkXJtyksdKHjUdc2C4TgDzyB98oEzy8",
+        "payer": "4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"
+      },
+      "data": "01",
+      "keys": [
+        {
+          "isSigner": true,
+          "isWritable": true,
+          "pubkey": "4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"
+        },
+        {
+          "isSigner": false,
+          "isWritable": true,
+          "pubkey": "AMRXqnKpTo1xxKTBaWdA8yBoEiS8pRLyqFdHZt9W8TaX"
+        },
+        {
+          "isSigner": false,
+          "isWritable": false,
+          "pubkey": "CktRuQ2mttgRGkXJtyksdKHjUdc2C4TgDzyB98oEzy8"
+        },
+        {
+          "isSigner": false,
+          "isWritable": false,
+          "pubkey": "US517G5965aydkZ46HS38QLi7UQiSojurfbQfKCELFx"
+        },
+        {
+          "isSigner": false,
+          "isWritable": false,
+          "pubkey": "11111111111111111111111111111111"
+        },
+        {
+          "isSigner": false,
+          "isWritable": false,
+          "pubkey": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
+        }
+      ],
+      "layer": "base",
+      "name": "createAta",
+      "programId": "ATokenGPvbdGVxr1b2hvZbsiqW5xWH25efTNsLJA8knL"
+    },
+    {
+      "args": {
+        "amount": "100000000",
+        "authority": "4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi",
+        "decimals": 6,
+        "destination": "AMRXqnKpTo1xxKTBaWdA8yBoEiS8pRLyqFdHZt9W8TaX",
+        "mint": "US517G5965aydkZ46HS38QLi7UQiSojurfbQfKCELFx"
+      },
+      "data": "0e00e1f5050000000006",
+      "keys": [
+        {
+          "isSigner": false,
+          "isWritable": true,
+          "pubkey": "US517G5965aydkZ46HS38QLi7UQiSojurfbQfKCELFx"
+        },
+        {
+          "isSigner": false,
+          "isWritable": true,
+          "pubkey": "AMRXqnKpTo1xxKTBaWdA8yBoEiS8pRLyqFdHZt9W8TaX"
+        },
+        {
+          "isSigner": true,
+          "isWritable": false,
+          "pubkey": "4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"
+        }
+      ],
+      "layer": "base",
+      "name": "mintTo",
+      "programId": "TokenkegQfeZyiNwAJbNbGKPFXCWuBvf9Ss623VQ5DA"
     }
   ],
   "sessionToken": {
