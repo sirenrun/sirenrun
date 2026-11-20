@@ -240,11 +240,31 @@ export function claimIx(a: {
   );
 }
 
-/** Commits the balance to the base layer and hands it back; then `waitForUndelegation`. */
+/**
+ * Commits the balance to the base layer and hands it back; then `waitForUndelegation`.
+ * Fails with `BalanceInUse` while the owner drives a run that is not idle yet (or is the
+ * house during any run), because that run's crank still writes the balance.
+ */
 export function undelegateBalanceIx(a: { auth: Authority; owner: PublicKey }) {
   return er(
     "undelegate_balance",
     {},
-    { ...signedBy(a.auth), balance: balancePda(a.owner).address },
+    {
+      ...signedBy(a.auth),
+      balance: balancePda(a.owner).address,
+      config: configPda().address,
+      arena_0: arenaPda(0).address,
+      arena_1: arenaPda(1).address,
+      arena_2: arenaPda(2).address,
+    },
+  );
+}
+
+/** Admin only: moves a Settled arena whose crank can no longer run back to Idle. */
+export function recoverArenaIx(a: { admin: PublicKey; id: number }) {
+  return er(
+    "recover_arena",
+    {},
+    { admin: a.admin, config: configPda().address, arena: arenaPda(a.id).address },
   );
 }

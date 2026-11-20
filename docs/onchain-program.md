@@ -111,6 +111,7 @@ Legend: **B** = base layer, **ER** = ephemeral rollup, **S** = signer may be a s
 | 13 | `set_input(target_lane, nitro)` | ER | driver (S) | Steering |
 | 14 | `buy(market, side, amount, min_shares)` | ER | trader (S) | FPMM buy |
 | 15 | `claim(entry_index)` | ER | trader (S) | Pay winnings / refund voids |
+| 16 | `recover_arena()` | ER | admin | Move a stuck Settled arena to Idle |
 
 `deposit`/`withdraw` require the Balance to be **owned by the program** (i.e. not
 delegated). Anchor's owner check on `Account<Balance>` enforces this for free (error 3007,
@@ -119,7 +120,23 @@ first". The vault is the token account PDA `[b"vault"]`, owned by the Config PDA
 signs withdrawals. `undelegate_balance` accepts the balance owner or a `SessionTokenV2`
 signer for that owner; anyone else gets `Unauthorized`.
 
-Tests: `tests/magicsvm/` loads `target/deploy/sirenrun.so` into MagicSVM (base and ER
+`undelegate_balance` also takes `config` and the three arena PDAs (read-only, pinned by
+seeds; an arena that was never initialised counts as idle). It fails with `BalanceInUse`
+while the owner is the runner of an arena that is not Idle, or is the house while any arena
+is not Idle (`Arena::uses_balance`). Every `tick` lists the runner and house balances as
+writable, and the ER rejects writable accounts that are not delegated, so undelegating one
+mid-run would make every later tick fail and leave the arena stuck (found on devnet,
+2026-11-20).
+
+### `recover_arena` (ER)
+Accounts: `admin` (signer, `config.admin`), `config`, `arena` (mut). Only a **Settled**
+arena may be moved to Idle (`ArenaNotSettled` otherwise); its payouts were applied when it
+settled, so this only skips the results hold. `nonce` and `results` are kept, so leftover
+crank iterations of that run stay no-ops and claims still work. It exists to rescue an
+arena whose crank cannot run any more.
+
+Tests: `tests/magicsvm/tests/liveness.rs` covers the undelegate guard and recovery.
+`tests/magicsvm/` loads `target/deploy/sirenrun.so` into MagicSVM (base and ER
 ledgers in one process) and runs the money round trip. Run `anchor build` first, then
 `cargo test` in that folder.
 
@@ -299,7 +316,7 @@ version to the unit: after all claims, the vault equals the sum of all balances.
 `ArenaBusy, ArenaNotLive, MarketClosed, InsufficientBalance, HouseInsufficient,
 TooLarge, Slippage, NoInterestCapReached, RunnerCannotTrade, NoFreeEntry, NotResolved,
 ResultExpired, InvalidLane, Unauthorized, MathOverflow, SeedNotReady, InvalidConfig,
-InvalidArena, NoEntry`.
+InvalidArena, NoEntry, BalanceInUse, ArenaNotSettled`.
 
 Codes are `6000 + position`, so new variants are appended, never inserted. (`TickTooSoon`
 was removed before any deployment, together with `last_tick_slot`.)

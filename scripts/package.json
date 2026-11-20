@@ -8,7 +8,8 @@
     "create-mint": "node src/create-mint.ts",
     "init-devnet": "node src/init-devnet.ts",
     "smoke": "node src/devnet-smoke.ts",
-    "set-faucet": "node src/set-faucet.ts"
+    "set-faucet": "node src/set-faucet.ts",
+    "recover-arena": "node src/recover-arena.ts"
   },
   "dependencies": {
     "@sirenrun/sdk": "workspace:*",

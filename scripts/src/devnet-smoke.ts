@@ -231,8 +231,10 @@ for (const claim of claims) {
   ]);
 }
 await sleep(1_000);
-stopArena();
-stopEvents();
+
+// The crank writes the driver's and the house's balances until the arena is idle again;
+// the program refuses to undelegate them before that (BalanceInUse).
+await waitFor("the arena to return to idle", () => arena.status === "idle", 20_000);
 
 async function cashOut(name: string, wallet: Keypair, session: Session) {
   const onEr = await fetchBalance(er, wallet.publicKey);
@@ -254,6 +256,8 @@ async function cashOut(name: string, wallet: Keypair, session: Session) {
   );
   return tokens;
 }
+stopArena();
+stopEvents();
 const driverEnd = await cashOut("driver", driver.wallet, driver.session);
 const traderEnd = await cashOut("trader", trader.wallet, trader.session);
 

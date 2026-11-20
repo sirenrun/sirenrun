@@ -99,6 +99,7 @@ export {
   initArenaIx,
   initBalanceIx,
   initConfigIx,
+  recoverArenaIx,
   setInputIx,
   startRunIx,
   undelegateBalanceIx,

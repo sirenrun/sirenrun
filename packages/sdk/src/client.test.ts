@@ -21,6 +21,7 @@ import {
   initConfigIx,
   parseEvents,
   previewClaim,
+  recoverArenaIx,
   revokeSessionIx,
   sessionTokenPda,
   setInputIx,
@@ -119,6 +120,7 @@ const builders: Record<string, (a: Args) => LayerInstruction<"base" | "er">> = {
       id: num(a.id),
       entryIndex: num(a.entryIndex),
     }),
+  recoverArena: (a) => recoverArenaIx({ admin: key(a.admin), id: num(a.id) }),
   undelegateBalance: (a) => undelegateBalanceIx({ auth: auth(a.auth), owner: key(a.owner) }),
   createSession: (a) =>
     createSessionIx({

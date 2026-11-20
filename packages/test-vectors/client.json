@@ -889,6 +889,26 @@
         {
           "isSigner": false,
           "isWritable": false,
+          "pubkey": "7ZPzq7SZCek9be8gsmnydmJqcnjbfVN6cdx8ZUjxkvcu"
+        },
+        {
+          "isSigner": false,
+          "isWritable": false,
+          "pubkey": "4JJZ8iHwasVhBNgXhVCaPSVsbb9BkRgsyBv5YBj165UD"
+        },
+        {
+          "isSigner": false,
+          "isWritable": false,
+          "pubkey": "GAzj9xcnbsTHkZSc4e62u79atXzWzDAtmFpyzJtwbSMX"
+        },
+        {
+          "isSigner": false,
+          "isWritable": false,
+          "pubkey": "6dfuJvcBt5YRf7XtgnTFHUxzhvQdp3C7EzYwC8MkrMh4"
+        },
+        {
+          "isSigner": false,
+          "isWritable": false,
           "pubkey": "Magic11111111111111111111111111111111111111"
         },
         {
@@ -1138,6 +1158,26 @@
         {
           "isSigner": false,
           "isWritable": false,
+          "pubkey": "7ZPzq7SZCek9be8gsmnydmJqcnjbfVN6cdx8ZUjxkvcu"
+        },
+        {
+          "isSigner": false,
+          "isWritable": false,
+          "pubkey": "4JJZ8iHwasVhBNgXhVCaPSVsbb9BkRgsyBv5YBj165UD"
+        },
+        {
+          "isSigner": false,
+          "isWritable": false,
+          "pubkey": "GAzj9xcnbsTHkZSc4e62u79atXzWzDAtmFpyzJtwbSMX"
+        },
+        {
+          "isSigner": false,
+          "isWritable": false,
+          "pubkey": "6dfuJvcBt5YRf7XtgnTFHUxzhvQdp3C7EzYwC8MkrMh4"
+        },
+        {
+          "isSigner": false,
+          "isWritable": false,
           "pubkey": "Magic11111111111111111111111111111111111111"
         },
         {
@@ -1148,6 +1188,33 @@
       ],
       "layer": "er",
       "name": "undelegateBalance (session)",
+      "programId": "8NnGx94QrpwcUW6LL7NBzbgrTPUfVyaLsd8iHnfserHj"
+    },
+    {
+      "args": {
+        "admin": "4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi",
+        "id": 0
+      },
+      "data": "5a29b5c1c8038936",
+      "keys": [
+        {
+          "isSigner": true,
+          "isWritable": false,
+          "pubkey": "4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"
+        },
+        {
+          "isSigner": false,
+          "isWritable": false,
+          "pubkey": "7ZPzq7SZCek9be8gsmnydmJqcnjbfVN6cdx8ZUjxkvcu"
+        },
+        {
+          "isSigner": false,
+          "isWritable": true,
+          "pubkey": "4JJZ8iHwasVhBNgXhVCaPSVsbb9BkRgsyBv5YBj165UD"
+        }
+      ],
+      "layer": "er",
+      "name": "recoverArena",
       "programId": "8NnGx94QrpwcUW6LL7NBzbgrTPUfVyaLsd8iHnfserHj"
     },
     {
