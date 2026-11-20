@@ -7,12 +7,22 @@ import { grossOf, rememberPositions, shortAddress, summarizeRun } from "./result
 const RUNNER = new PublicKey("11111111111111111111111111111112");
 const T = 1_000_000n;
 
-const market = (line: number, status: Market["status"], resolvedTick = 0): Market => ({
+const market = (
+  line: number,
+  status: Market["status"],
+  resolvedTick = 0,
+  noProfit = 0n,
+): Market => ({
   line,
   status,
   yesR: 100n * T,
   noR: 100n * T,
   resolvedTick,
+  houseYes: 0n,
+  houseNo: 0n,
+  noProfit,
+  rideCost: 0n,
+  rideBackBps: 0,
 });
 
 function arena(over: Partial<Arena> = {}): Arena {
@@ -41,7 +51,6 @@ function arena(over: Partial<Arena> = {}): Arena {
       nitroPressed: false,
     },
     bond: 25n * T,
-    noProfitOi: 0n,
     runnerFees: 2n * T,
     markets: [market(300, "yes", 300), market(600, "yes", 600), market(900, "no", 640)],
     results: [],
@@ -61,26 +70,42 @@ const entry = (over: Partial<PositionEntry>): PositionEntry => ({
   ...over,
 });
 
-const terms = { feeBps: 200, entryFee: T };
+const terms = { feeBps: 200, entryFee: T, nitroFee: T / 2n };
 
 describe("run results", () => {
-  it("shows each line and the driver's take when the bond is lost", () => {
+  it("returns the whole bond on a bust nobody bet on, and charges each nitro fired", () => {
     const s = summarizeRun(arena(), [], terms);
     expect(s.lines.map((l) => `${l.seconds}:${l.status}`)).toEqual(["30:yes", "60:yes", "90:no"]);
-    expect(s.driver.bondBack).toBe(false);
-    expect(s.driver.net).toBe(2n * T - T - 25n * T);
+    expect(s.driver.bondLost).toBe(0n);
+    // All three charges fired (nitroLeft 0): 1.5 in nitro.
+    expect(s.driver.nitro).toBe((3n * T) / 2n);
+    expect(s.driver.net).toBe(2n * T - T - (3n * T) / 2n);
     expect(s.driver.address).toBe(shortAddress(RUNNER.toBase58()));
     expect(s.you).toBeNull();
   });
 
-  it("gives the bond back once the last line passes", () => {
-    const s = summarizeRun(
-      arena({ markets: [market(300, "yes"), market(600, "yes"), market(900, "yes", 900)] }),
+  it("takes only what BUST won on the busted lines, at most the bond", () => {
+    const owed = summarizeRun(
+      arena({
+        markets: [
+          market(300, "yes", 300, 40n * T),
+          market(600, "no", 640, 3n * T),
+          market(900, "no", 640, 4n * T),
+        ],
+      }),
       [],
       terms,
     );
-    expect(s.driver.bondBack).toBe(true);
-    expect(s.driver.net).toBe(2n * T - T);
+    // 30 s passed, so its BUST holders are owed nothing; 60 s and 90 s owe 7.
+    expect(owed.driver.bondLost).toBe(7n * T);
+    const capped = summarizeRun(
+      arena({
+        markets: [market(300, "no", 9, 30n * T), market(600, "no", 9), market(900, "no", 9)],
+      }),
+      [],
+      terms,
+    );
+    expect(capped.driver.bondLost).toBe(25n * T);
   });
 
   it("calls an aborted run even for everyone", () => {

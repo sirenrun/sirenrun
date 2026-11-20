@@ -27,7 +27,7 @@ pub struct Claim<'info> {
     #[account(seeds = [CONFIG_SEED], bump = config.bump)]
     pub config: Account<'info, Config>,
     #[account(seeds = [ARENA_SEED, &[arena.id]], bump = arena.bump)]
-    pub arena: Account<'info, Arena>,
+    pub arena: Box<Account<'info, Arena>>,
 }
 
 pub fn claim(ctx: Context<Claim>, entry_index: u8) -> Result<()> {

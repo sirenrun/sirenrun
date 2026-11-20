@@ -139,6 +139,8 @@ fn base_instructions() -> Vec<Value> {
         bond: 25_000_000,
         liquidity: 50_000_000,
         max_buy: u64::MAX,
+        nitro_fee: 500_000,
+        open_bps: [8_500, 4_500, 1_500],
     };
     let params_json = json!({
         "house": house.to_string(),
@@ -148,6 +150,8 @@ fn base_instructions() -> Vec<Value> {
         "bond": "25000000",
         "liquidity": "50000000",
         "maxBuy": u64::MAX.to_string(),
+        "nitroFee": "500000",
+        "openBps": [8_500, 4_500, 1_500],
     });
     let user_token = get_associated_token_address(&user, &mint);
     let other_token = key(9);
@@ -613,6 +617,7 @@ fn claim_arena() -> Arena {
         nonce: 9,
         outcomes: 0b11_10_01,
         resolved_ticks: [300, 450, 450],
+        ride_back_bps: [0, 2_500, 0],
     };
     Arena {
         id: 1,
@@ -625,7 +630,6 @@ fn claim_arena() -> Arena {
         seed: 1,
         sim: SimState::start().into(),
         bond: 25_000_000,
-        no_profit_oi: 0,
         runner_fees: 0,
         markets,
         results,
@@ -645,21 +649,34 @@ fn entry(arena_id: u8, nonce: u32, market: u8, side: u8, tick: u32) -> PositionE
     }
 }
 
+/// Room for a refunded winner to credit its shares back to the house.
+const HOUSE_FUNDS: u64 = 1_000_000_000_000;
+
 fn claims() -> Value {
     let arena = claim_arena();
     let cases = [
-        ("win", entry(1, 10, 0, 1, 100), u64::MAX),
-        ("loss", entry(1, 10, 0, 2, 100), u64::MAX),
-        ("cooldown refund", entry(1, 10, 0, 1, 290), u64::MAX),
-        ("cooldown edge pays", entry(1, 10, 0, 1, 285), u64::MAX),
-        ("open market", entry(1, 10, 1, 1, 100), u64::MAX),
-        ("void refund", entry(1, 10, 2, 2, 100), u64::MAX),
-        ("older run win", entry(1, 9, 1, 2, 10), u64::MAX),
-        ("older run void", entry(1, 9, 2, 1, 10), u64::MAX),
-        ("expired", entry(1, 3, 0, 1, 10), u64::MAX),
-        ("other arena", entry(2, 10, 0, 1, 100), u64::MAX),
-        ("empty", PositionEntry::default(), u64::MAX),
-        ("bad market", entry(1, 10, 5, 1, 100), u64::MAX),
+        ("win", entry(1, 10, 0, 1, 100), HOUSE_FUNDS),
+        ("loss", entry(1, 10, 0, 2, 100), HOUSE_FUNDS),
+        ("cooldown refund", entry(1, 10, 0, 1, 290), HOUSE_FUNDS),
+        ("cooldown edge pays", entry(1, 10, 0, 1, 285), HOUSE_FUNDS),
+        ("open market", entry(1, 10, 1, 1, 100), HOUSE_FUNDS),
+        ("void refund", entry(1, 10, 2, 2, 100), HOUSE_FUNDS),
+        ("older run win", entry(1, 9, 1, 2, 10), HOUSE_FUNDS),
+        ("older run void", entry(1, 9, 2, 1, 10), HOUSE_FUNDS),
+        (
+            "bust refunds part of a losing ride",
+            entry(1, 9, 1, 1, 10),
+            HOUSE_FUNDS,
+        ),
+        (
+            "house short for a ride refund",
+            entry(1, 9, 1, 1, 10),
+            2_449_999,
+        ),
+        ("expired", entry(1, 3, 0, 1, 10), HOUSE_FUNDS),
+        ("other arena", entry(2, 10, 0, 1, 100), HOUSE_FUNDS),
+        ("empty", PositionEntry::default(), HOUSE_FUNDS),
+        ("bad market", entry(1, 10, 5, 1, 100), HOUSE_FUNDS),
         ("house short", entry(1, 10, 2, 1, 100), 9_799_999),
     ];
     let mut out = Vec::new();
@@ -681,7 +698,7 @@ fn claims() -> Value {
             Ok(paid) => json!({
                 "kind": "ok",
                 "paid": paid.to_string(),
-                "houseDebit": (house_funds - house.available).to_string(),
+                "houseDelta": (i128::from(house.available) - i128::from(house_funds)).to_string(),
             }),
             Err(anchor_lang::error::Error::AnchorError(e)) => {
                 json!({ "kind": "error", "name": e.error_name })

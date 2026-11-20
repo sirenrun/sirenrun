@@ -17,12 +17,22 @@ const RUNNER = new PublicKey("11111111111111111111111111111112");
 const ME = new PublicKey("11111111111111111111111111111113");
 const T = 1_000_000n;
 
-const market = (line: number, yesR = 100n * T, noR = 100n * T, over: Partial<Market> = {}) => ({
+const market = (
+  line: number,
+  yesR = 100n * T,
+  noR = 100n * T,
+  over: Partial<Market> = {},
+): Market => ({
   line,
   status: "open" as const,
   yesR,
   noR,
   resolvedTick: 0,
+  houseYes: 0n,
+  houseNo: 0n,
+  noProfit: 0n,
+  rideCost: 0n,
+  rideBackBps: 0,
   ...over,
 });
 
@@ -52,7 +62,6 @@ function arena(over: Partial<Arena> = {}): Arena {
       nitroPressed: false,
     },
     bond: 25n * T,
-    noProfitOi: 0n,
     runnerFees: 0n,
     markets: [market(300), market(600), market(900)],
     results: [],

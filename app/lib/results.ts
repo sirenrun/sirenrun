@@ -1,4 +1,11 @@
-import { previewClaim, type Arena, type MarketStatus, type PositionEntry } from "@sirenrun/sdk";
+import {
+  bondForfeited,
+  previewClaim,
+  type Arena,
+  type MarketStatus,
+  type PositionEntry,
+} from "@sirenrun/sdk";
+import { NITRO_CHARGES } from "@sirenrun/sim";
 import { lineSeconds } from "./markets";
 
 /** `AbCd…WxYz`, for showing a wallet without its full length. */
@@ -20,8 +27,11 @@ export interface RunSummary {
     address: string;
     /** Runner fees earned on trades. */
     fees: bigint;
-    bondBack: boolean;
-    /** Fees plus the bond if it came back, minus the entry fee and bond paid at the start. */
+    /** Part of the bond that covered BUST winnings; the rest came back. */
+    bondLost: bigint;
+    /** Nitro fees paid, one per charge fired. */
+    nitro: bigint;
+    /** Fees minus the entry fee, the part of the bond lost and nitro. */
     net: bigint;
   };
   /** The viewer's result on this run, or null if they did not trade it. */
@@ -60,13 +70,14 @@ export function grossOf(cost: bigint, feeBps: number): bigint {
 export function summarizeRun(
   arena: Arena,
   positions: RunPositions,
-  terms: { feeBps: number; entryFee: bigint },
+  terms: { feeBps: number; entryFee: bigint; nitroFee: bigint },
 ): RunSummary {
   const statuses = arena.markets.map((m) => m.status);
   const aborted = statuses.every((s) => s === "void");
-  const bondBack = statuses[statuses.length - 1] === "yes";
   const fees = arena.runnerFees;
-  const net = aborted ? 0n : fees - terms.entryFee - (bondBack ? 0n : arena.bond);
+  const bondLost = aborted ? 0n : bondForfeited(arena);
+  const nitro = BigInt(NITRO_CHARGES - arena.sim.nitroLeft) * terms.nitroFee;
+  const net = aborted ? 0n : fees - terms.entryFee - bondLost - nitro;
 
   let you: RunSummary["you"] = null;
   const mine = positions.filter((e) => e.arenaId === arena.id && e.nonce === arena.nonce);
@@ -86,7 +97,7 @@ export function summarizeRun(
     t: arena.sim.t,
     aborted,
     lines: arena.markets.map((m) => ({ seconds: lineSeconds(m.line), status: m.status })),
-    driver: { address: shortAddress(arena.runner.toBase58()), fees, bondBack, net },
+    driver: { address: shortAddress(arena.runner.toBase58()), fees, bondLost, nitro, net },
     you,
   };
 }

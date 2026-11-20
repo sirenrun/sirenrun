@@ -60,6 +60,8 @@ function params(v: unknown): ConfigParams {
     bond: big(p.bond),
     liquidity: big(p.liquidity),
     maxBuy: big(p.maxBuy),
+    nitroFee: big(p.nitroFee),
+    openBps: (p.openBps as number[]).map(num) as [number, number, number],
   };
 }
 
@@ -273,7 +275,9 @@ describe("previewClaim", () => {
       expect(preview.ok).toBe(true);
       if (!preview.ok) return;
       expect(preview.paid.toString()).toBe(c.result.paid);
-      expect(preview.kind === "refund").toBe(c.result.houseDebit !== "0");
+      // Only refunds and bond refunds touch the house's balance.
+      const touchesHouse = preview.kind === "refund" || preview.kind === "rideBack";
+      expect(touchesHouse).toBe(c.result.houseDelta !== "0");
     },
   );
 

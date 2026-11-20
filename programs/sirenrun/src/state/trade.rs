@@ -86,15 +86,16 @@ impl Arena {
             .ok_or(SirenrunError::MathOverflow)?;
         require!(fill.shares >= min_shares, SirenrunError::Slippage);
 
-        // NO buyers profit if the run ends early; capping their total profit at the bond means
-        // a driver cannot win by crashing on purpose.
+        // BUST buyers profit if the run ends early. A bust takes what they won from the
+        // driver's bond, so capping what they can win on the lines still open at the bond
+        // means a driver can never profit from crashing on purpose.
+        let mut no_profit = self.markets[index].no_profit;
         if side == Side::No {
-            self.no_profit_oi = self
-                .no_profit_oi
+            no_profit = no_profit
                 .checked_add(fill.shares - net)
                 .ok_or(SirenrunError::MathOverflow)?;
             require!(
-                self.no_profit_oi <= self.bond,
+                self.open_no_profit(index, no_profit)? <= self.bond,
                 SirenrunError::NoInterestCapReached
             );
         }
@@ -128,7 +129,32 @@ impl Arena {
         let pool = &mut self.markets[index];
         pool.yes_r = fill.yes;
         pool.no_r = fill.no;
+        pool.no_profit = no_profit;
+        if side == Side::Yes {
+            pool.ride_cost = pool
+                .ride_cost
+                .checked_add(net)
+                .ok_or(SirenrunError::MathOverflow)?;
+        }
         Ok(Trade { net, fill })
+    }
+
+    /// BUST profit owed across the open markets if the run busted now, with `market`'s
+    /// figure replaced by `market_profit`. Passed lines owe BUST nothing, so they free room.
+    pub fn open_no_profit(&self, market: usize, market_profit: u64) -> Result<u64> {
+        let mut total: u64 = 0;
+        for (i, m) in self.markets.iter().enumerate() {
+            if m.status != MarketStatus::Open {
+                continue;
+            }
+            let owed = if i == market {
+                market_profit
+            } else {
+                m.no_profit
+            };
+            total = total.checked_add(owed).ok_or(SirenrunError::MathOverflow)?;
+        }
+        Ok(total)
     }
 }
 
@@ -146,7 +172,9 @@ impl MarketStatus {
 impl Arena {
     /// Outcome and resolution tick of `market` in run `nonce`: the live markets for the
     /// current run, the results ring for the 16 runs before it.
-    fn outcome(&self, nonce: u32, market: u8) -> Result<(MarketStatus, u32)> {
+    /// Outcome, resolution tick and RIDE refund share of `market` in run `nonce`: the live
+    /// markets for the current run, the results ring for the 16 runs before it.
+    fn outcome(&self, nonce: u32, market: u8) -> Result<(MarketStatus, u32, u16)> {
         let index = usize::from(market);
         require!(index < MARKETS, SirenrunError::MarketClosed);
         if nonce == self.nonce {
@@ -155,7 +183,7 @@ impl Arena {
                 market.status != MarketStatus::Open,
                 SirenrunError::NotResolved
             );
-            return Ok((market.status, market.resolved_tick));
+            return Ok((market.status, market.resolved_tick, market.ride_back_bps));
         }
         let result = self
             .results
@@ -163,31 +191,48 @@ impl Arena {
             .find(|r| r.nonce == nonce)
             .ok_or(SirenrunError::ResultExpired)?;
         let status = MarketStatus::from_bits(result.outcomes >> (2 * index));
-        Ok((status, result.resolved_ticks[index]))
+        Ok((
+            status,
+            result.resolved_ticks[index],
+            result.ride_back_bps[index],
+        ))
     }
 
     /// Settles one position and clears it. Returns the amount credited to the trader.
     ///
     /// Buys inside `COOLDOWN_TICKS` of the resolution, and VOID markets, get their net cost
     /// back from the house instead: nobody profits from reacting to a result they saw first.
+    /// The house funded that refund, so a refunded position that would have won hands its
+    /// winning shares to the house; otherwise they would sit in the vault owned by nobody.
+    /// A losing RIDE position on a line a bust closed gets `ride_back_bps` of its cost back
+    /// out of the driver's forfeited bond, which the house received at the bust.
     pub fn claim(&self, trader: &mut Balance, house: &mut Balance, index: u8) -> Result<u64> {
         let slot = usize::from(index);
         let entry = *trader.entries.get(slot).ok_or(SirenrunError::NoEntry)?;
         require!(entry.side != ENTRY_EMPTY, SirenrunError::NoEntry);
         require!(entry.arena_id == self.id, SirenrunError::InvalidArena);
 
-        let (outcome, resolved_tick) = self.outcome(entry.nonce, entry.market)?;
+        let (outcome, resolved_tick, ride_back) = self.outcome(entry.nonce, entry.market)?;
         let refund = outcome == MarketStatus::Void
             || resolved_tick < entry.tick.saturating_add(COOLDOWN_TICKS);
+        let won = outcome.winning_side() == Some(entry.side);
         let paid = if refund {
             require!(
                 house.available >= entry.cost,
                 SirenrunError::HouseInsufficient
             );
             house.debit(entry.cost)?;
+            if won {
+                house.credit(entry.shares)?;
+            }
             entry.cost
-        } else if outcome.winning_side() == Some(entry.side) {
+        } else if won {
             entry.shares
+        } else if entry.side == ENTRY_YES && ride_back > 0 {
+            let back = mul_bps(entry.cost, ride_back).ok_or(SirenrunError::MathOverflow)?;
+            require!(house.available >= back, SirenrunError::HouseInsufficient);
+            house.debit(back)?;
+            back
         } else {
             0
         };
@@ -231,7 +276,6 @@ mod tests {
             seed: 0,
             sim: SimState::start().into(),
             bond: 0,
-            no_profit_oi: 0,
             runner_fees: 0,
             markets: [Market::default(); MARKETS],
             results: [RunResult::default(); RESULTS],
@@ -241,7 +285,9 @@ mod tests {
             market.line = line as u16;
         }
         let runner = arena.runner;
-        arena.begin(runner, bond, liquidity).unwrap();
+        arena
+            .begin(runner, bond, liquidity, [5_000; MARKETS])
+            .unwrap();
         arena.seed_ready = true;
         arena.status = ArenaStatus::Live;
         arena.sim.t = 40;
@@ -362,14 +408,53 @@ mod tests {
         arena
             .buy(&mut trader, &mut house, TERMS, 2, Side::No, 1_000_000, 0)
             .unwrap();
-        assert!(arena.no_profit_oi > 0 && arena.no_profit_oi <= arena.bond);
+        let owed = arena.markets[2].no_profit;
+        assert!(owed > 0 && owed <= arena.bond);
         code(
             arena.buy(&mut trader, &mut house, TERMS, 2, Side::No, 50_000_000, 0),
+            SirenrunError::NoInterestCapReached,
+        );
+        // The cap spans every open line: market 1 cannot add past what market 2 left.
+        code(
+            arena.buy(&mut trader, &mut house, TERMS, 1, Side::No, 5_000_000, 0),
             SirenrunError::NoInterestCapReached,
         );
         arena
             .buy(&mut trader, &mut house, TERMS, 2, Side::Yes, 50_000_000, 0)
             .unwrap();
+    }
+
+    #[test]
+    fn a_passed_line_frees_its_room_under_the_cap() {
+        let mut arena = live_arena(50_000_000, 1_000_000);
+        let (mut trader, mut house) = (balance(100_000_000), balance(0));
+        arena
+            .buy(&mut trader, &mut house, TERMS, 0, Side::No, 900_000, 0)
+            .unwrap();
+        code(
+            arena.buy(&mut trader, &mut house, TERMS, 2, Side::No, 900_000, 0),
+            SirenrunError::NoInterestCapReached,
+        );
+        arena.markets[0].status = MarketStatus::Yes;
+        arena
+            .buy(&mut trader, &mut house, TERMS, 2, Side::No, 900_000, 0)
+            .unwrap();
+    }
+
+    #[test]
+    fn ride_buys_add_up_their_cost() {
+        let mut arena = live_arena(50_000_000, 25_000_000);
+        let (mut trader, mut house) = (balance(100_000_000), balance(0));
+        let a = arena
+            .buy(&mut trader, &mut house, TERMS, 1, Side::Yes, 2_000_000, 0)
+            .unwrap();
+        arena
+            .buy(&mut trader, &mut house, TERMS, 1, Side::No, 1_000_000, 0)
+            .unwrap();
+        let b = arena
+            .buy(&mut trader, &mut house, TERMS, 1, Side::Yes, 3_000_000, 0)
+            .unwrap();
+        assert_eq!(arena.markets[1].ride_cost, a.net + b.net);
     }
 
     fn claim_code(result: Result<u64>, expected: SirenrunError) {
@@ -435,7 +520,33 @@ mod tests {
         let house_before = house.available;
         assert_eq!(arena.claim(&mut trader, &mut house, 0).unwrap(), late.net);
         assert_eq!(arena.claim(&mut trader, &mut house, 1).unwrap(), late.net);
-        assert_eq!(house.available, house_before - 2 * late.net);
+        // The refunded late YES would have won: its shares go to the house that refunded it.
+        assert_eq!(
+            house.available,
+            house_before - 2 * late.net + late.fill.shares
+        );
+    }
+
+    #[test]
+    fn losing_ride_gets_its_share_of_a_forfeited_bond() {
+        let mut arena = live_arena(50_000_000, 25_000_000);
+        let (mut trader, mut house) = (balance(20_000_000), balance(10_000_000));
+        let ride = arena
+            .buy(&mut trader, &mut house, TERMS, 1, Side::Yes, 5_000_000, 0)
+            .unwrap();
+        arena
+            .buy(&mut trader, &mut house, TERMS, 2, Side::Yes, 1_000_000, 0)
+            .unwrap();
+        settle(&mut arena, 400, 1);
+        arena.markets[1].ride_back_bps = 2_500;
+        let before = house.available;
+        assert_eq!(
+            arena.claim(&mut trader, &mut house, 0).unwrap(),
+            ride.net / 4
+        );
+        assert_eq!(house.available, before - ride.net / 4);
+        // No forfeit on that line: a plain loss.
+        assert_eq!(arena.claim(&mut trader, &mut house, 1).unwrap(), 0);
     }
 
     #[test]
@@ -450,6 +561,7 @@ mod tests {
             nonce: arena.nonce,
             outcomes: arena.outcomes(),
             resolved_ticks: [600; MARKETS],
+            ride_back_bps: [0; MARKETS],
         };
         arena.nonce += 1;
         let mut other_arena = arena.clone();

@@ -77,6 +77,8 @@ fn sample_config() -> Config {
         bond: 25_000_000,
         liquidity: 50_000_000,
         max_buy: u64::MAX - 1,
+        nitro_fee: 500_000,
+        open_bps: [8_500, 4_500, 1_500],
         bump: 254,
         vault_bump: 253,
     }
@@ -94,6 +96,8 @@ fn config_fields(c: &Config) -> Value {
         "bond": c.bond.to_string(),
         "liquidity": c.liquidity.to_string(),
         "maxBuy": c.max_buy.to_string(),
+        "nitroFee": c.nitro_fee.to_string(),
+        "openBps": c.open_bps,
         "bump": c.bump,
         "vaultBump": c.vault_bump,
     })
@@ -168,17 +172,24 @@ fn sample_arena() -> Arena {
         market.yes_r = 50_000_000 + i as u64 * 7;
         market.no_r = 41_666_667 - i as u64 * 3;
         market.resolved_tick = if i == 1 { 0 } else { 300 + i as u32 };
+        market.house_yes = 1_000 + i as u64;
+        market.house_no = 2_000 + i as u64;
+        market.no_profit = 3_333_333 + i as u64;
+        market.ride_cost = u64::MAX - i as u64;
+        market.ride_back_bps = 9_999 - i as u16;
     }
     let mut results = [RunResult::default(); RESULTS];
     results[0] = RunResult {
         nonce: 5,
         outcomes: 0b11_10_01,
         resolved_ticks: [300, 451, 451],
+        ride_back_bps: [0, 1_234, 10_000],
     };
     results[15] = RunResult {
         nonce: u32::MAX,
         outcomes: 0b10_10_10,
         resolved_ticks: [7, 7, 7],
+        ride_back_bps: [1, 2, 3],
     };
     Arena {
         id: 2,
@@ -205,7 +216,6 @@ fn sample_arena() -> Arena {
             nitro_pressed: true,
         },
         bond: 25_000_000,
-        no_profit_oi: 3_333_333,
         runner_fees: 98_765,
         markets,
         results,
@@ -240,6 +250,11 @@ fn arena_fields(a: &Arena) -> Value {
                 "yesR": m.yes_r.to_string(),
                 "noR": m.no_r.to_string(),
                 "resolvedTick": m.resolved_tick,
+                "houseYes": m.house_yes.to_string(),
+                "houseNo": m.house_no.to_string(),
+                "noProfit": m.no_profit.to_string(),
+                "rideCost": m.ride_cost.to_string(),
+                "rideBackBps": m.ride_back_bps,
             })
         })
         .collect();
@@ -254,6 +269,7 @@ fn arena_fields(a: &Arena) -> Value {
                 "nonce": r.nonce,
                 "outcomes": outcomes,
                 "resolvedTicks": r.resolved_ticks,
+                "rideBackBps": r.ride_back_bps,
             })
         })
         .collect();
@@ -282,7 +298,6 @@ fn arena_fields(a: &Arena) -> Value {
             "nitroPressed": s.nitro_pressed,
         },
         "bond": a.bond.to_string(),
-        "noProfitOi": a.no_profit_oi.to_string(),
         "runnerFees": a.runner_fees.to_string(),
         "markets": markets,
         "results": results,

@@ -150,11 +150,14 @@ export function DrivePanel() {
         <dl className="mt-3 grid grid-cols-2 gap-y-1 text-sm">
           <dt className="text-muted">Entry fee</dt>
           <dd className="text-right tabular-nums">{formatTokenAmount(config.entryFee)} tUSDC</dd>
-          <dt className="text-muted">Bond</dt>
+          <dt className="text-muted">Bond (held)</dt>
           <dd className="text-right tabular-nums">{formatTokenAmount(config.bond)} tUSDC</dd>
-          <dt className="col-span-2 text-xs text-muted">
-            The bond comes back if you pass 90 s. You also earn {config.runnerFeeBps / 100}% of
-            every trade on your run.
+          <dt className="text-muted">Nitro, per boost used</dt>
+          <dd className="text-right tabular-nums">{formatTokenAmount(config.nitroFee)} tUSDC</dd>
+          <dt className="col-span-2 mt-1 text-xs text-muted">
+            The bond comes back after the run. If you get busted, it only covers what BUST bets won
+            on your run, and that goes to the fans who backed you, so if nobody bet against you, you
+            lose nothing. You earn {config.runnerFeeBps / 100}% of every trade on your run.
           </dt>
         </dl>
       )}

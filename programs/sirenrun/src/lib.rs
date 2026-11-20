@@ -12,7 +12,7 @@ pub mod state;
 use instructions::*;
 use state::{ConfigParams, Side};
 
-declare_id!("8NnGx94QrpwcUW6LL7NBzbgrTPUfVyaLsd8iHnfserHj");
+declare_id!("6D65tPwcsoSoPK2qcXD87jcUQpMxwCjfX7tX7tKARiZ4");
 
 #[ephemeral]
 #[program]

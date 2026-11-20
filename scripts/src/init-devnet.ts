@@ -46,10 +46,14 @@ if (config === null) {
         house: admin.publicKey,
         feeBps: 200,
         runnerFeeBps: 100,
-        entryFee: 1n * TOKEN_UNIT,
+        // Run economics, from simulated drivers and crowds of 0 to 100 traders: see
+        // docs/onchain-program.md, "Run economics".
+        entryFee: TOKEN_UNIT / 2n,
         bond: 25n * TOKEN_UNIT,
         liquidity: 50n * TOKEN_UNIT,
         maxBuy: 50n * TOKEN_UNIT,
+        nitroFee: TOKEN_UNIT / 2n,
+        openBps: [8_500, 4_500, 1_500],
       },
     }),
   ]);

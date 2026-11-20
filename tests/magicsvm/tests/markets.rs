@@ -2,6 +2,7 @@ mod common;
 
 use common::{custom_code, key, Ephemeral, World, TUSDC};
 use sirenrun::errors::SirenrunError;
+use sirenrun::sim::generate_row;
 use sirenrun::state::{ArenaStatus, MarketStatus, Side, ENTRY_EMPTY, ENTRY_YES};
 use solana_keypair::Keypair;
 
@@ -111,4 +112,73 @@ fn trades_and_resolution_conserve_every_unit() {
         u32::from(SirenrunError::NoEntry)
     );
     assert_eq!(world.token_amount(world.vault), available(&world));
+}
+
+/// Steers into the next row's blocked lanes until the police catch the car.
+fn crash_on_purpose(world: &mut World, runner: &Keypair) {
+    for _ in 0..10_000 {
+        let arena = world.arena(Ephemeral, 0);
+        if arena.status == ArenaStatus::Idle {
+            return;
+        }
+        if arena.status == ArenaStatus::Live && !arena.sim.busted {
+            let next = generate_row(arena.seed, arena.sim.row, arena.sim.safe_lane);
+            if let Some(lane) = (0..5u8).find(|&l| next.blocked[usize::from(l)]) {
+                if lane != arena.sim.target_lane {
+                    world.set_input(runner, 0, lane, false).expect("set_input");
+                }
+            }
+        }
+        world.advance_slot();
+    }
+    panic!("run never finished");
+}
+
+#[test]
+fn a_bust_pays_bust_from_the_pool_and_refunds_ride_from_the_bond() {
+    let (mut world, spectator) = world_with_spectator();
+    let user = world.user.insecure_clone();
+    let (runner, fan, house) = (key(&user), key(&spectator), key(&world.admin));
+
+    world.start_run(&user, &runner, 0).expect("start_run");
+    world.advance_slot();
+    world
+        .buy(&spectator, &fan, 0, 0, Side::Yes, 10 * TUSDC, 1)
+        .expect("buy RIDE 30s");
+    world
+        .buy(&spectator, &fan, 0, 0, Side::No, TUSDC, 1)
+        .expect("buy BUST 30s");
+    let staked = world.balance(Ephemeral, &runner).available;
+    let arena = world.arena(Ephemeral, 0);
+    let (owed, ride_cost) = (arena.markets[0].no_profit, arena.markets[0].ride_cost);
+    let runner_fees = arena.runner_fees;
+    assert!(owed > 0 && owed < arena.bond);
+
+    crash_on_purpose(&mut world, &user);
+    let arena = world.arena(Ephemeral, 0);
+    let outcome = arena.results[0];
+    assert_eq!(outcome.outcomes & 0b11, MarketStatus::No as u8);
+    // The bond covered exactly what BUST won; the driver got the rest back with the fees.
+    assert_eq!(
+        world.balance(Ephemeral, &runner).available,
+        staked + arena.bond - owed + runner_fees
+    );
+    let bps = u64::from(outcome.ride_back_bps[0]);
+    assert_eq!(bps, owed * 10_000 / ride_cost);
+
+    let entries = world.balance(Ephemeral, &fan).entries;
+    let before = world.balance(Ephemeral, &fan).available;
+    world.claim(&spectator, &fan, 0, 0).expect("claim RIDE");
+    world.claim(&spectator, &fan, 0, 1).expect("claim BUST");
+    let ride_back = entries[0].cost * bps / 10_000;
+    assert_eq!(
+        world.balance(Ephemeral, &fan).available,
+        before + ride_back + entries[1].shares
+    );
+
+    let available: u64 = [runner, fan, house]
+        .iter()
+        .map(|owner| world.balance(Ephemeral, owner).available)
+        .sum();
+    assert_eq!(world.token_amount(world.vault), available);
 }

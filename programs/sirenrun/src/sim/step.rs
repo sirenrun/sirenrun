@@ -10,7 +10,7 @@ pub fn step(state: &mut SimState, seed: u64) {
         return;
     }
 
-    if state.nitro_pressed && state.nitro_left > 0 && state.nitro_ticks == 0 {
+    if state.nitro_will_fire() {
         state.nitro_left -= 1;
         state.nitro_ticks = NITRO_TICKS;
     }

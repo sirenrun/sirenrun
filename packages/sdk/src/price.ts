@@ -64,10 +64,30 @@ export interface Pool {
   noR: bigint;
 }
 
-/** Run fields the NO profit cap reads. */
+/**
+ * What the BUST profit cap reads: the bought line's BUST profit and that of the other lines
+ * still open. Passed lines owe BUST nothing, so they do not count.
+ */
 export interface RunCap {
   bond: bigint;
-  noProfitOi: bigint;
+  noProfit: bigint;
+  otherNoProfit: bigint;
+}
+
+/** `RunCap` for buying `market` in `arena`, as `Arena::open_no_profit` sums it. */
+export function runCap(
+  arena: { bond: bigint; markets: { status: string; noProfit: bigint }[] },
+  market: number,
+): RunCap {
+  let other = 0n;
+  arena.markets.forEach((m, i) => {
+    if (i !== market && m.status === "open") other += m.noProfit;
+  });
+  return {
+    bond: arena.bond,
+    noProfit: arena.markets[market]?.noProfit ?? 0n,
+    otherNoProfit: other,
+  };
 }
 
 export interface Quote {
@@ -79,7 +99,8 @@ export interface Quote {
   shares: bigint;
   yesR: bigint;
   noR: bigint;
-  noProfitOi: bigint;
+  /** The bought line's BUST profit after the trade. */
+  noProfit: bigint;
   /** `amount / shares`, the price paid per share including the fee. */
   avgPrice: number;
   /** Price of the bought side once the trade lands. */
@@ -112,13 +133,13 @@ export function quoteBuy(
   if (fill === null) {
     return { ok: false, error: "MathOverflow" };
   }
-  let noProfitOi = run.noProfitOi;
+  let noProfit = run.noProfit;
   if (side === "no") {
-    noProfitOi += fill.shares - net;
-    if (!fitsU64(noProfitOi)) {
+    noProfit += fill.shares - net;
+    if (!fitsU64(noProfit) || !fitsU64(noProfit + run.otherNoProfit)) {
       return { ok: false, error: "MathOverflow" };
     }
-    if (noProfitOi > run.bond) {
+    if (noProfit + run.otherNoProfit > run.bond) {
       return { ok: false, error: "NoInterestCapReached" };
     }
   }
@@ -131,7 +152,7 @@ export function quoteBuy(
       shares: fill.shares,
       yesR: fill.yes,
       noR: fill.no,
-      noProfitOi,
+      noProfit,
       avgPrice: fill.shares === 0n ? 0 : Number(amount) / Number(fill.shares),
       priceAfter: priceOf(side, fill.yes, fill.no),
     },

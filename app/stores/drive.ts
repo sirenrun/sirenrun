@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import {
   TransactionFailed,
+  formatTokenAmount,
   isSessionLive,
   sendEr,
   sessionAuthority,
@@ -99,6 +100,14 @@ export const useDrive = create<DriveState>((set, get) => {
     nitro: () => {
       const latest = useArena.getState().latest;
       if (latest === null) return;
+      // The program skips a boost the driver cannot pay for; say so instead of doing nothing.
+      const { config, game } = useBalance.getState();
+      const fee = config?.nitroFee ?? 0n;
+      const left = latest.sim.nitroLeft > 0 && latest.sim.nitroTicks === 0;
+      if (left && fee > 0n && (game?.available ?? 0n) < fee) {
+        set({ error: `Nitro costs ${formatTokenAmount(fee)} tUSDC; top up your game balance.` });
+        return;
+      }
       send(laneMotion.targetLane(latest.sim.targetLane), true);
     },
   };

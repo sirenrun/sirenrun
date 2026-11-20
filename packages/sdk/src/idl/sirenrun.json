@@ -1,5 +1,5 @@
 {
-  "address": "8NnGx94QrpwcUW6LL7NBzbgrTPUfVyaLsd8iHnfserHj",
+  "address": "6D65tPwcsoSoPK2qcXD87jcUQpMxwCjfX7tX7tKARiZ4",
   "metadata": {
     "name": "sirenrun",
     "version": "0.1.0",
@@ -9,16 +9,7 @@
   "instructions": [
     {
       "name": "buy",
-      "discriminator": [
-        102,
-        6,
-        61,
-        18,
-        1,
-        218,
-        235,
-        234
-      ],
+      "discriminator": [102, 6, 61, 18, 1, 218, 235, 234],
       "accounts": [
         {
           "name": "signer",
@@ -35,15 +26,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  98,
-                  97,
-                  108,
-                  97,
-                  110,
-                  99,
-                  101
-                ]
+                "value": [98, 97, 108, 97, 110, 99, 101]
               },
               {
                 "kind": "account",
@@ -60,15 +43,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  98,
-                  97,
-                  108,
-                  97,
-                  110,
-                  99,
-                  101
-                ]
+                "value": [98, 97, 108, 97, 110, 99, 101]
               },
               {
                 "kind": "account",
@@ -84,14 +59,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -126,16 +94,7 @@
     },
     {
       "name": "claim",
-      "discriminator": [
-        62,
-        198,
-        214,
-        193,
-        213,
-        159,
-        108,
-        210
-      ],
+      "discriminator": [62, 198, 214, 193, 213, 159, 108, 210],
       "accounts": [
         {
           "name": "signer",
@@ -152,15 +111,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  98,
-                  97,
-                  108,
-                  97,
-                  110,
-                  99,
-                  101
-                ]
+                "value": [98, 97, 108, 97, 110, 99, 101]
               },
               {
                 "kind": "account",
@@ -177,15 +128,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  98,
-                  97,
-                  108,
-                  97,
-                  110,
-                  99,
-                  101
-                ]
+                "value": [98, 97, 108, 97, 110, 99, 101]
               },
               {
                 "kind": "account",
@@ -201,14 +144,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -226,23 +162,12 @@
     },
     {
       "name": "delegate_arena",
-      "discriminator": [
-        216,
-        55,
-        214,
-        212,
-        195,
-        162,
-        39,
-        100
-      ],
+      "discriminator": [216, 55, 214, 212, 195, 162, 39, 100],
       "accounts": [
         {
           "name": "admin",
           "signer": true,
-          "relations": [
-            "config"
-          ]
+          "relations": ["config"]
         },
         {
           "name": "config",
@@ -250,14 +175,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -269,14 +187,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  98,
-                  117,
-                  102,
-                  102,
-                  101,
-                  114
-                ]
+                "value": [98, 117, 102, 102, 101, 114]
               },
               {
                 "kind": "account",
@@ -286,38 +197,8 @@
             "program": {
               "kind": "const",
               "value": [
-                109,
-                150,
-                50,
-                182,
-                71,
-                25,
-                15,
-                197,
-                109,
-                165,
-                98,
-                80,
-                157,
-                138,
-                193,
-                9,
-                159,
-                183,
-                115,
-                84,
-                54,
-                15,
-                192,
-                173,
-                83,
-                41,
-                22,
-                47,
-                6,
-                135,
-                162,
-                150
+                77, 99, 39, 50, 110, 33, 243, 183, 78, 74, 43, 118, 213, 236, 209, 31, 96, 111, 77,
+                111, 173, 20, 14, 162, 55, 69, 198, 31, 30, 114, 34, 87
               ]
             }
           }
@@ -329,18 +210,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  100,
-                  101,
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  105,
-                  111,
-                  110
-                ]
+                "value": [100, 101, 108, 101, 103, 97, 116, 105, 111, 110]
               },
               {
                 "kind": "account",
@@ -361,25 +231,8 @@
               {
                 "kind": "const",
                 "value": [
-                  100,
-                  101,
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  105,
-                  111,
-                  110,
-                  45,
-                  109,
-                  101,
-                  116,
-                  97,
-                  100,
-                  97,
-                  116,
-                  97
+                  100, 101, 108, 101, 103, 97, 116, 105, 111, 110, 45, 109, 101, 116, 97, 100, 97,
+                  116, 97
                 ]
               },
               {
@@ -399,7 +252,7 @@
         },
         {
           "name": "owner_program",
-          "address": "8NnGx94QrpwcUW6LL7NBzbgrTPUfVyaLsd8iHnfserHj"
+          "address": "6D65tPwcsoSoPK2qcXD87jcUQpMxwCjfX7tX7tKARiZ4"
         },
         {
           "name": "delegation_program",
@@ -419,16 +272,7 @@
     },
     {
       "name": "delegate_balance",
-      "discriminator": [
-        199,
-        112,
-        131,
-        196,
-        76,
-        135,
-        198,
-        238
-      ],
+      "discriminator": [199, 112, 131, 196, 76, 135, 198, 238],
       "accounts": [
         {
           "name": "owner",
@@ -441,14 +285,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  98,
-                  117,
-                  102,
-                  102,
-                  101,
-                  114
-                ]
+                "value": [98, 117, 102, 102, 101, 114]
               },
               {
                 "kind": "account",
@@ -458,38 +295,8 @@
             "program": {
               "kind": "const",
               "value": [
-                109,
-                150,
-                50,
-                182,
-                71,
-                25,
-                15,
-                197,
-                109,
-                165,
-                98,
-                80,
-                157,
-                138,
-                193,
-                9,
-                159,
-                183,
-                115,
-                84,
-                54,
-                15,
-                192,
-                173,
-                83,
-                41,
-                22,
-                47,
-                6,
-                135,
-                162,
-                150
+                77, 99, 39, 50, 110, 33, 243, 183, 78, 74, 43, 118, 213, 236, 209, 31, 96, 111, 77,
+                111, 173, 20, 14, 162, 55, 69, 198, 31, 30, 114, 34, 87
               ]
             }
           }
@@ -501,18 +308,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  100,
-                  101,
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  105,
-                  111,
-                  110
-                ]
+                "value": [100, 101, 108, 101, 103, 97, 116, 105, 111, 110]
               },
               {
                 "kind": "account",
@@ -533,25 +329,8 @@
               {
                 "kind": "const",
                 "value": [
-                  100,
-                  101,
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  105,
-                  111,
-                  110,
-                  45,
-                  109,
-                  101,
-                  116,
-                  97,
-                  100,
-                  97,
-                  116,
-                  97
+                  100, 101, 108, 101, 103, 97, 116, 105, 111, 110, 45, 109, 101, 116, 97, 100, 97,
+                  116, 97
                 ]
               },
               {
@@ -572,15 +351,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  98,
-                  97,
-                  108,
-                  97,
-                  110,
-                  99,
-                  101
-                ]
+                "value": [98, 97, 108, 97, 110, 99, 101]
               },
               {
                 "kind": "account",
@@ -591,7 +362,7 @@
         },
         {
           "name": "owner_program",
-          "address": "8NnGx94QrpwcUW6LL7NBzbgrTPUfVyaLsd8iHnfserHj"
+          "address": "6D65tPwcsoSoPK2qcXD87jcUQpMxwCjfX7tX7tKARiZ4"
         },
         {
           "name": "delegation_program",
@@ -606,23 +377,12 @@
     },
     {
       "name": "deposit",
-      "discriminator": [
-        242,
-        35,
-        198,
-        137,
-        82,
-        225,
-        242,
-        182
-      ],
+      "discriminator": [242, 35, 198, 137, 82, 225, 242, 182],
       "accounts": [
         {
           "name": "owner",
           "signer": true,
-          "relations": [
-            "balance"
-          ]
+          "relations": ["balance"]
         },
         {
           "name": "balance",
@@ -631,15 +391,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  98,
-                  97,
-                  108,
-                  97,
-                  110,
-                  99,
-                  101
-                ]
+                "value": [98, 97, 108, 97, 110, 99, 101]
               },
               {
                 "kind": "account",
@@ -654,23 +406,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
         },
         {
           "name": "mint",
-          "relations": [
-            "config"
-          ]
+          "relations": ["config"]
         },
         {
           "name": "owner_token",
@@ -679,9 +422,7 @@
         {
           "name": "vault",
           "writable": true,
-          "relations": [
-            "config"
-          ]
+          "relations": ["config"]
         },
         {
           "name": "token_program",
@@ -697,24 +438,13 @@
     },
     {
       "name": "init_arena",
-      "discriminator": [
-        24,
-        246,
-        252,
-        176,
-        155,
-        175,
-        123,
-        124
-      ],
+      "discriminator": [24, 246, 252, 176, 155, 175, 123, 124],
       "accounts": [
         {
           "name": "admin",
           "writable": true,
           "signer": true,
-          "relations": [
-            "config"
-          ]
+          "relations": ["config"]
         },
         {
           "name": "config",
@@ -722,14 +452,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -752,16 +475,7 @@
     },
     {
       "name": "init_balance",
-      "discriminator": [
-        174,
-        51,
-        4,
-        34,
-        196,
-        72,
-        204,
-        66
-      ],
+      "discriminator": [174, 51, 4, 34, 196, 72, 204, 66],
       "accounts": [
         {
           "name": "owner",
@@ -775,15 +489,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  98,
-                  97,
-                  108,
-                  97,
-                  110,
-                  99,
-                  101
-                ]
+                "value": [98, 97, 108, 97, 110, 99, 101]
               },
               {
                 "kind": "account",
@@ -801,16 +507,7 @@
     },
     {
       "name": "init_config",
-      "discriminator": [
-        23,
-        235,
-        115,
-        232,
-        168,
-        96,
-        1,
-        231
-      ],
+      "discriminator": [23, 235, 115, 232, 168, 96, 1, 231],
       "accounts": [
         {
           "name": "admin",
@@ -824,14 +521,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -846,13 +536,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  118,
-                  97,
-                  117,
-                  108,
-                  116
-                ]
+                "value": [118, 97, 117, 108, 116]
               }
             ]
           }
@@ -879,16 +563,7 @@
     },
     {
       "name": "process_undelegation",
-      "discriminator": [
-        196,
-        28,
-        41,
-        206,
-        48,
-        37,
-        51,
-        167
-      ],
+      "discriminator": [196, 28, 41, 206, 48, 37, 51, 167],
       "accounts": [
         {
           "name": "base_account",
@@ -901,23 +576,7 @@
               {
                 "kind": "const",
                 "value": [
-                  117,
-                  110,
-                  100,
-                  101,
-                  108,
-                  101,
-                  103,
-                  97,
-                  116,
-                  101,
-                  45,
-                  98,
-                  117,
-                  102,
-                  102,
-                  101,
-                  114
+                  117, 110, 100, 101, 108, 101, 103, 97, 116, 101, 45, 98, 117, 102, 102, 101, 114
                 ]
               },
               {
@@ -928,38 +587,8 @@
             "program": {
               "kind": "const",
               "value": [
-                181,
-                183,
-                0,
-                225,
-                242,
-                87,
-                58,
-                192,
-                204,
-                6,
-                34,
-                1,
-                52,
-                74,
-                207,
-                151,
-                184,
-                53,
-                6,
-                235,
-                140,
-                229,
-                25,
-                152,
-                204,
-                98,
-                126,
-                24,
-                147,
-                128,
-                167,
-                62
+                181, 183, 0, 225, 242, 87, 58, 192, 204, 6, 34, 1, 52, 74, 207, 151, 184, 53, 6,
+                235, 140, 229, 25, 152, 204, 98, 126, 24, 147, 128, 167, 62
               ]
             }
           }
@@ -984,23 +613,12 @@
     },
     {
       "name": "recover_arena",
-      "discriminator": [
-        90,
-        41,
-        181,
-        193,
-        200,
-        3,
-        137,
-        54
-      ],
+      "discriminator": [90, 41, 181, 193, 200, 3, 137, 54],
       "accounts": [
         {
           "name": "admin",
           "signer": true,
-          "relations": [
-            "config"
-          ]
+          "relations": ["config"]
         },
         {
           "name": "config",
@@ -1008,14 +626,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -1029,16 +640,7 @@
     },
     {
       "name": "set_input",
-      "discriminator": [
-        139,
-        39,
-        34,
-        55,
-        105,
-        172,
-        163,
-        255
-      ],
+      "discriminator": [139, 39, 34, 55, 105, 172, 163, 255],
       "accounts": [
         {
           "name": "signer",
@@ -1066,16 +668,7 @@
     },
     {
       "name": "start_run",
-      "discriminator": [
-        72,
-        212,
-        1,
-        91,
-        61,
-        186,
-        2,
-        52
-      ],
+      "discriminator": [72, 212, 1, 91, 61, 186, 2, 52],
       "accounts": [
         {
           "name": "signer",
@@ -1093,15 +686,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  98,
-                  97,
-                  108,
-                  97,
-                  110,
-                  99,
-                  101
-                ]
+                "value": [98, 97, 108, 97, 110, 99, 101]
               },
               {
                 "kind": "account",
@@ -1118,15 +703,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  98,
-                  97,
-                  108,
-                  97,
-                  110,
-                  99,
-                  101
-                ]
+                "value": [98, 97, 108, 97, 110, 99, 101]
               },
               {
                 "kind": "account",
@@ -1142,14 +719,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -1160,7 +730,7 @@
         },
         {
           "name": "program_identity",
-          "address": "37HL9DPN7nLNtK24UDFfwTXKjbsL5XwbjfDXhdtSX3CT"
+          "address": "7TQzwcQLXQBZxWjBvSk4EqPnJAh5wjwbReehxUNC5QcM"
         },
         {
           "name": "oracle_queue",
@@ -1187,16 +757,7 @@
     },
     {
       "name": "tick",
-      "discriminator": [
-        92,
-        79,
-        44,
-        8,
-        101,
-        80,
-        63,
-        15
-      ],
+      "discriminator": [92, 79, 44, 8, 101, 80, 63, 15],
       "accounts": [
         {
           "name": "arena",
@@ -1209,15 +770,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  98,
-                  97,
-                  108,
-                  97,
-                  110,
-                  99,
-                  101
-                ]
+                "value": [98, 97, 108, 97, 110, 99, 101]
               },
               {
                 "kind": "account",
@@ -1234,15 +787,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  98,
-                  97,
-                  108,
-                  97,
-                  110,
-                  99,
-                  101
-                ]
+                "value": [98, 97, 108, 97, 110, 99, 101]
               },
               {
                 "kind": "account",
@@ -1258,14 +803,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -1284,16 +822,7 @@
     },
     {
       "name": "undelegate_balance",
-      "discriminator": [
-        7,
-        32,
-        46,
-        225,
-        36,
-        220,
-        19,
-        101
-      ],
+      "discriminator": [7, 32, 46, 225, 36, 220, 19, 101],
       "accounts": [
         {
           "name": "signer",
@@ -1311,15 +840,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  98,
-                  97,
-                  108,
-                  97,
-                  110,
-                  99,
-                  101
-                ]
+                "value": [98, 97, 108, 97, 110, 99, 101]
               },
               {
                 "kind": "account",
@@ -1335,14 +856,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -1370,23 +884,12 @@
     },
     {
       "name": "update_config",
-      "discriminator": [
-        29,
-        158,
-        252,
-        191,
-        10,
-        83,
-        219,
-        99
-      ],
+      "discriminator": [29, 158, 252, 191, 10, 83, 219, 99],
       "accounts": [
         {
           "name": "admin",
           "signer": true,
-          "relations": [
-            "config"
-          ]
+          "relations": ["config"]
         },
         {
           "name": "config",
@@ -1395,14 +898,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
@@ -1421,21 +917,12 @@
     },
     {
       "name": "vrf_callback_seed",
-      "discriminator": [
-        187,
-        189,
-        228,
-        7,
-        86,
-        222,
-        201,
-        234
-      ],
+      "discriminator": [187, 189, 228, 7, 86, 222, 201, 234],
       "accounts": [
         {
           "name": "vrf_program_identity",
           "signer": true,
-          "address": "Ao4WRmrvcfdZUqnTtar5DnLHJH8Bn9kEfQkwbTbezF76"
+          "address": "AdKf7vmQmyHiuqea4YzNP3Nxm7ZgVF2CCmWWkvPiDFaC"
         },
         {
           "name": "arena",
@@ -1446,10 +933,7 @@
         {
           "name": "randomness",
           "type": {
-            "array": [
-              "u8",
-              32
-            ]
+            "array": ["u8", 32]
           }
         },
         {
@@ -1460,23 +944,12 @@
     },
     {
       "name": "withdraw",
-      "discriminator": [
-        183,
-        18,
-        70,
-        156,
-        148,
-        109,
-        161,
-        34
-      ],
+      "discriminator": [183, 18, 70, 156, 148, 109, 161, 34],
       "accounts": [
         {
           "name": "owner",
           "signer": true,
-          "relations": [
-            "balance"
-          ]
+          "relations": ["balance"]
         },
         {
           "name": "balance",
@@ -1485,15 +958,7 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  98,
-                  97,
-                  108,
-                  97,
-                  110,
-                  99,
-                  101
-                ]
+                "value": [98, 97, 108, 97, 110, 99, 101]
               },
               {
                 "kind": "account",
@@ -1508,23 +973,14 @@
             "seeds": [
               {
                 "kind": "const",
-                "value": [
-                  99,
-                  111,
-                  110,
-                  102,
-                  105,
-                  103
-                ]
+                "value": [99, 111, 110, 102, 105, 103]
               }
             ]
           }
         },
         {
           "name": "mint",
-          "relations": [
-            "config"
-          ]
+          "relations": ["config"]
         },
         {
           "name": "owner_token",
@@ -1533,9 +989,7 @@
         {
           "name": "vault",
           "writable": true,
-          "relations": [
-            "config"
-          ]
+          "relations": ["config"]
         },
         {
           "name": "token_program",
@@ -1553,122 +1007,41 @@
   "accounts": [
     {
       "name": "Arena",
-      "discriminator": [
-        243,
-        215,
-        44,
-        44,
-        231,
-        211,
-        232,
-        168
-      ]
+      "discriminator": [243, 215, 44, 44, 231, 211, 232, 168]
     },
     {
       "name": "Balance",
-      "discriminator": [
-        127,
-        71,
-        25,
-        157,
-        105,
-        157,
-        241,
-        182
-      ]
+      "discriminator": [127, 71, 25, 157, 105, 157, 241, 182]
     },
     {
       "name": "Config",
-      "discriminator": [
-        155,
-        12,
-        170,
-        224,
-        30,
-        250,
-        204,
-        130
-      ]
+      "discriminator": [155, 12, 170, 224, 30, 250, 204, 130]
     }
   ],
   "events": [
     {
       "name": "Claimed",
-      "discriminator": [
-        217,
-        192,
-        123,
-        72,
-        108,
-        150,
-        248,
-        33
-      ]
+      "discriminator": [217, 192, 123, 72, 108, 150, 248, 33]
     },
     {
       "name": "LineCrossed",
-      "discriminator": [
-        89,
-        108,
-        163,
-        112,
-        190,
-        115,
-        57,
-        207
-      ]
+      "discriminator": [89, 108, 163, 112, 190, 115, 57, 207]
     },
     {
       "name": "RunSettled",
-      "discriminator": [
-        11,
-        20,
-        18,
-        58,
-        176,
-        238,
-        55,
-        27
-      ]
+      "discriminator": [11, 20, 18, 58, 176, 238, 55, 27]
     },
     {
       "name": "RunStarted",
-      "discriminator": [
-        204,
-        211,
-        34,
-        240,
-        253,
-        194,
-        41,
-        122
-      ]
+      "discriminator": [204, 211, 34, 240, 253, 194, 41, 122]
     },
     {
       "name": "SeedSet",
-      "discriminator": [
-        9,
-        179,
-        143,
-        172,
-        250,
-        146,
-        42,
-        6
-      ]
+      "discriminator": [9, 179, 143, 172, 250, 146, 42, 6]
     },
     {
       "name": "Trade",
-      "discriminator": [
-        24,
-        254,
-        218,
-        152,
-        253,
-        43,
-        18,
-        81
-      ]
+      "discriminator": [24, 254, 218, 152, 253, 43, 18, 81]
     }
   ],
   "errors": [
@@ -1830,10 +1203,6 @@
           },
           {
             "name": "bond",
-            "type": "u64"
-          },
-          {
-            "name": "no_profit_oi",
             "type": "u64"
           },
           {
@@ -2000,6 +1369,22 @@
             "type": "u64"
           },
           {
+            "name": "nitro_fee",
+            "docs": [
+              "Charged to the driver each time a nitro charge fires; unused charges cost nothing."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "open_bps",
+            "docs": [
+              "Opening RIDE (YES) price per line in bps, so no market opens at a free 50/50."
+            ],
+            "type": {
+              "array": ["u16", 3]
+            }
+          },
+          {
             "name": "bump",
             "type": "u8"
           },
@@ -2042,6 +1427,16 @@
           {
             "name": "max_buy",
             "type": "u64"
+          },
+          {
+            "name": "nitro_fee",
+            "type": "u64"
+          },
+          {
+            "name": "open_bps",
+            "type": {
+              "array": ["u16", 3]
+            }
           }
         ]
       }
@@ -2098,6 +1493,36 @@
           {
             "name": "resolved_tick",
             "type": "u32"
+          },
+          {
+            "name": "house_yes",
+            "docs": [
+              "Tokens the house minted at the opening but kept out of the pool (see `open_pool`)."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "house_no",
+            "type": "u64"
+          },
+          {
+            "name": "no_profit",
+            "docs": [
+              "What BUST holders would win here on a bust: sum of `shares - net` over NO buys."
+            ],
+            "type": "u64"
+          },
+          {
+            "name": "ride_cost",
+            "docs": ["Sum of `net` over RIDE buys, to share a forfeited bond between them."],
+            "type": "u64"
+          },
+          {
+            "name": "ride_back_bps",
+            "docs": [
+              "Share of a losing RIDE position's cost refunded from the driver's bond, set on bust."
+            ],
+            "type": "u16"
           }
         ]
       }
@@ -2174,10 +1599,13 @@
           {
             "name": "resolved_ticks",
             "type": {
-              "array": [
-                "u32",
-                3
-              ]
+              "array": ["u32", 3]
+            }
+          },
+          {
+            "name": "ride_back_bps",
+            "type": {
+              "array": ["u16", 3]
             }
           }
         ]
@@ -2209,9 +1637,7 @@
     },
     {
       "name": "RunSim",
-      "docs": [
-        "Borsh copy of `sim::SimState`, so the pure sim module stays free of Anchor."
-      ],
+      "docs": ["Borsh copy of `sim::SimState`, so the pure sim module stays free of Anchor."],
       "type": {
         "kind": "struct",
         "fields": [

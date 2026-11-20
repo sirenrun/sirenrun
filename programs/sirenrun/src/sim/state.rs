@@ -43,6 +43,12 @@ impl SimState {
         self.nitro_pressed |= nitro;
     }
 
+    /// True if the next tick will fire a nitro charge: a press is pending, a charge is
+    /// left and none is burning. The arena charges the nitro fee on exactly this condition.
+    pub fn nitro_will_fire(&self) -> bool {
+        self.nitro_pressed && self.nitro_left > 0 && self.nitro_ticks == 0
+    }
+
     pub fn lane(&self) -> u8 {
         ((self.car_x + LANE_WIDTH / 2) / LANE_WIDTH) as u8
     }
@@ -59,6 +65,19 @@ mod tests {
         state.set_input(0, false);
         assert_eq!(state.target_lane, 0);
         assert!(state.nitro_pressed);
+    }
+
+    #[test]
+    fn nitro_fires_only_on_a_press_with_a_charge_and_none_burning() {
+        let mut state = SimState::start();
+        assert!(!state.nitro_will_fire());
+        state.set_input(2, true);
+        assert!(state.nitro_will_fire());
+        state.nitro_ticks = 1;
+        assert!(!state.nitro_will_fire());
+        state.nitro_ticks = 0;
+        state.nitro_left = 0;
+        assert!(!state.nitro_will_fire());
     }
 
     #[test]

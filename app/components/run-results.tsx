@@ -94,8 +94,11 @@ export function RunResults() {
             {signed(summary.driver.net)} tUSDC
           </dd>
           <dt className="col-span-2 text-xs text-muted">
-            Earned {formatTokenAmount(summary.driver.fees)} in trading fees; bond{" "}
-            {summary.driver.bondBack ? "returned (passed 90 s)" : "lost"}.
+            Earned {formatTokenAmount(summary.driver.fees)} in trading fees.{" "}
+            {summary.driver.bondLost === 0n
+              ? "Bond returned in full."
+              : `${formatTokenAmount(summary.driver.bondLost)} of the bond paid out BUST winnings (to the fans who backed you); the rest came back.`}
+            {summary.driver.nitro > 0n && ` Nitro cost ${formatTokenAmount(summary.driver.nitro)}.`}
           </dt>
           {summary.you !== null && (
             <>

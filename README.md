@@ -25,13 +25,16 @@ No oracle and no manual resolution.
 1. **Drive.** A driver pays a small entry fee and a bond and starts a run on an idle channel.
    A 10 s countdown rolls the course from verifiable randomness. Then the car moves forward
    on its own; the driver changes lanes around traffic and roadblocks and has three nitro
-   charges. Every hit costs speed, the police get faster every second, and the run ends
+   charges, paid per charge used (unused ones cost nothing). Every hit costs speed, the police get faster every second, and the run ends
    when the gap reaches zero.
 2. **Trade.** Spectators buy RIDE or BUST on each line from a constant-product market the
-   house seeds. Prices move with every trade. The driver cannot trade their own run.
+   house seeds at that line's real odds, so nobody gets a free first trade. Prices move with
+   every trade. The driver cannot trade their own run.
 3. **Settle.** A line resolves RIDE the tick the run passes it, or BUST the tick the car is
    caught. Winning shares pay 1 tUSDC each and are claimed automatically. The driver earns
-   1% of every trade on their run and gets the bond back for passing 90 s.
+   1% of every trade on their run and gets the bond back after it. On a bust, the bond only
+   covers what BUST bets won, and that goes to the fans who backed the driver; if nobody bet
+   against them, they lose nothing. See [Run economics](docs/onchain-program.md#run-economics).
 
 The simulation is deterministic integer code. The program runs it in Rust; the browser runs
 a TypeScript port of the same rules to draw the course ahead, and shared test vectors keep
@@ -86,9 +89,9 @@ sequence diagram is in [docs/architecture.md](docs/architecture.md#run-lifecycle
 
 | What | Address |
 |---|---|
-| Program | `8NnGx94QrpwcUW6LL7NBzbgrTPUfVyaLsd8iHnfserHj` |
-| Config PDA | `45ZPR1NTLK9adm2RnvJDF4Rk5N2CE2x9CTfYdEmwz3Rq` |
-| Arenas 0, 1, 2 | `4JJZ8iHwasVhBNgXhVCaPSVsbb9BkRgsyBv5YBj165UD`, `GAzj9xcnbsTHkZSc4e62u79atXzWzDAtmFpyzJtwbSMX`, `6dfuJvcBt5YRf7XtgnTFHUxzhvQdp3C7EzYwC8MkrMh4` |
+| Program | `6D65tPwcsoSoPK2qcXD87jcUQpMxwCjfX7tX7tKARiZ4` |
+| Config PDA | `BwF2fRi8vCXBUAuJx1GajG61ymKAF4rFE9QRTi4YdWyu` |
+| Arenas 0, 1, 2 | `CSLE8p4H2zB2RRbsaFtKVYh5YKZVpRoc5tdrABMRV66B`, `2tRiPD6dbwchUBbte1X434Dy4NMNus1Xj4NwGgXSbpep`, `3PSeBtQ8WvVehxrN98QQdsAuaQk5sn45XD7KRk57KEnm` |
 | tUSDC mint | `6B4g5L3Ep7FwhmsnNC5saupGySfs39T8o8BWTWFLVWQU` |
 | Ephemeral Rollup | `https://devnet-as.magicblock.app` |
 

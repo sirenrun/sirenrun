@@ -1,5 +1,6 @@
 use anchor_lang::prelude::*;
 
+use super::MARKETS;
 use crate::errors::SirenrunError;
 
 pub const CONFIG_SEED: &[u8] = b"config";
@@ -20,6 +21,10 @@ pub struct Config {
     pub bond: u64,
     pub liquidity: u64,
     pub max_buy: u64,
+    /// Charged to the driver each time a nitro charge fires; unused charges cost nothing.
+    pub nitro_fee: u64,
+    /// Opening RIDE (YES) price per line in bps, so no market opens at a free 50/50.
+    pub open_bps: [u16; MARKETS],
     pub bump: u8,
     pub vault_bump: u8,
 }
@@ -33,6 +38,8 @@ pub struct ConfigParams {
     pub bond: u64,
     pub liquidity: u64,
     pub max_buy: u64,
+    pub nitro_fee: u64,
+    pub open_bps: [u16; MARKETS],
 }
 
 impl ConfigParams {
@@ -41,7 +48,11 @@ impl ConfigParams {
             self.fee_bps <= BPS_DENOMINATOR
                 && self.runner_fee_bps <= self.fee_bps
                 && self.liquidity > 0
-                && self.max_buy > 0,
+                && self.max_buy > 0
+                && self
+                    .open_bps
+                    .iter()
+                    .all(|&bps| bps > 0 && bps < BPS_DENOMINATOR),
             SirenrunError::InvalidConfig
         );
         Ok(())
@@ -59,6 +70,8 @@ impl Config {
         self.bond = params.bond;
         self.liquidity = params.liquidity;
         self.max_buy = params.max_buy;
+        self.nitro_fee = params.nitro_fee;
+        self.open_bps = params.open_bps;
     }
 }
 
@@ -75,12 +88,14 @@ mod tests {
             bond: 25_000_000,
             liquidity: 50_000_000,
             max_buy: 50_000_000,
+            nitro_fee: 500_000,
+            open_bps: [8_500, 4_500, 1_500],
         }
     }
 
     #[test]
     fn space_matches_spec() {
-        assert_eq!(Config::SPACE, 174);
+        assert_eq!(Config::SPACE, 188);
     }
 
     #[test]
@@ -105,6 +120,14 @@ mod tests {
             },
             ConfigParams {
                 max_buy: 0,
+                ..params()
+            },
+            ConfigParams {
+                open_bps: [8_500, 0, 1_500],
+                ..params()
+            },
+            ConfigParams {
+                open_bps: [10_000, 4_500, 1_500],
                 ..params()
             },
         ];

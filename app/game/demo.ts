@@ -120,8 +120,17 @@ export class DemoRun {
   arena(): Arena {
     const markets: Market[] = LINES.map((line, i) => {
       const m = this.resolved[i] ?? { status: "open" as MarketStatus, tick: 0 };
+      // The demo has no trades, so nothing is owed or kept outside the pool.
+      const quiet = { houseYes: 0n, houseNo: 0n, noProfit: 0n, rideCost: 0n, rideBackBps: 0 };
       if (m.status !== "open") {
-        return { line, status: m.status, yesR: RESERVE, noR: RESERVE, resolvedTick: m.tick };
+        return {
+          line,
+          status: m.status,
+          yesR: RESERVE,
+          noR: RESERVE,
+          resolvedTick: m.tick,
+          ...quiet,
+        };
       }
       // Price the open line at the demo's own odds: YES price = noR / (yesR + noR).
       const ppm = BigInt(Math.round(demoOdds(this.sim, line) * 1_000_000));
@@ -131,6 +140,7 @@ export class DemoRun {
         yesR: (2n * RESERVE * (1_000_000n - ppm)) / 1_000_000n,
         noR: (2n * RESERVE * ppm) / 1_000_000n,
         resolvedTick: m.tick,
+        ...quiet,
       };
     });
     return {
@@ -148,7 +158,6 @@ export class DemoRun {
       seed: this.seed,
       sim: { ...this.sim },
       bond: 0n,
-      noProfitOi: 0n,
       runnerFees: 0n,
       markets,
       results: [],

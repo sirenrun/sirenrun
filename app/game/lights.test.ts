@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { CAR_LENGTH } from "./car-fit";
 import { createFrame } from "./frame";
-import { reflections, type PoliceLights } from "./lights";
+import { reflections, sirenIntensity, sirenRed, type PoliceLights } from "./lights";
 import { worldX, worldZ } from "./world";
 
 const police = (over: Partial<PoliceLights> = {}): PoliceLights => ({
@@ -50,5 +50,21 @@ describe("road reflections", () => {
     expect(idle.police.strength).toBe(0);
     const live = { ...createFrame(), ready: true, status: "live" as const };
     expect(reflections(live, police({ visible: false })).police.strength).toBe(0);
+  });
+});
+
+describe("siren light", () => {
+  it("alternates red and blue without a hard strobe", () => {
+    const samples = Array.from({ length: 400 }, (_, i) => sirenRed(i / 1000));
+    expect(Math.max(...samples)).toBeGreaterThan(0.99);
+    expect(Math.min(...samples)).toBeLessThan(0.01);
+    // At 1 ms steps the light never jumps from one colour to the other in one step.
+    const jumps = samples.slice(1).map((v, i) => Math.abs(v - (samples[i] as number)));
+    expect(Math.max(...jumps)).toBeLessThan(0.1);
+  });
+
+  it("stays dim while the cruisers wait out the countdown", () => {
+    expect(sirenIntensity("staging", 0)).toBeLessThan(sirenIntensity("live", 0));
+    expect(sirenIntensity("live", 1)).toBeGreaterThan(sirenIntensity("live", 0));
   });
 });

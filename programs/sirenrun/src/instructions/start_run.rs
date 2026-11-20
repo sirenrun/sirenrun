@@ -44,7 +44,7 @@ pub struct StartRun<'info> {
     #[account(seeds = [CONFIG_SEED], bump = config.bump)]
     pub config: Account<'info, Config>,
     #[account(mut, seeds = [ARENA_SEED, &[arena.id]], bump = arena.bump)]
-    pub arena: Account<'info, Arena>,
+    pub arena: Box<Account<'info, Arena>>,
     /// CHECK: this program's VRF identity PDA, checked against a compile-time constant
     #[account(address = PROGRAM_IDENTITY)]
     pub program_identity: UncheckedAccount<'info>,
@@ -69,6 +69,7 @@ pub fn start_run<'info>(ctx: Context<'info, StartRun<'info>>) -> Result<()> {
         entry_fee: config.entry_fee,
         bond: config.bond,
         liquidity: config.liquidity,
+        open_bps: config.open_bps,
     };
     let arena = &mut ctx.accounts.arena;
     arena.start(
@@ -133,7 +134,7 @@ fn schedule_ticks<'info>(accounts: &'info StartRun<'info>) -> Result<()> {
     task_id[4..].copy_from_slice(&arena_key.to_bytes()[..4]);
 
     ScheduleCrankCpi {
-        payer: arena.as_ref(),
+        payer: arena.as_ref().as_ref(),
         magic_program: &accounts.magic_program,
         instruction_accounts: &[
             arena.to_account_info(),

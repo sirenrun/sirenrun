@@ -40,7 +40,11 @@ describe("quoteBuy", () => {
       const result = quoteBuy(
         { feeBps: v.feeBps, runnerFeeBps: v.runnerFeeBps, maxBuy: BigInt(v.maxBuy) },
         { yesR: BigInt(v.yesR), noR: BigInt(v.noR) },
-        { bond: BigInt(v.bond), noProfitOi: BigInt(v.noProfitOi) },
+        {
+          bond: BigInt(v.bond),
+          noProfit: BigInt(v.noProfit),
+          otherNoProfit: BigInt(v.otherNoProfit),
+        },
         v.side as Side,
         BigInt(v.amount),
       );
@@ -59,7 +63,7 @@ describe("quoteBuy", () => {
         shares: BigInt(v.result.shares ?? ""),
         yesR: BigInt(v.result.yesR ?? ""),
         noR: BigInt(v.result.noR ?? ""),
-        noProfitOi: BigInt(v.result.noProfitOi ?? ""),
+        noProfit: BigInt(v.result.noProfit ?? ""),
       });
       expect(priceAfter).toBeCloseTo(priceOf(v.side as Side, amounts.yesR, amounts.noR), 9);
       expect(avgPrice).toBeGreaterThanOrEqual(0);
@@ -70,7 +74,7 @@ describe("quoteBuy", () => {
     const result = quoteBuy(
       { feeBps: 200, runnerFeeBps: 100, maxBuy: 50_000_000n },
       { yesR: 50_000_000n, noR: 50_000_000n },
-      { bond: 25_000_000n, noProfitOi: 0n },
+      { bond: 25_000_000n, noProfit: 0n, otherNoProfit: 0n },
       "yes",
       10_000_000n,
     );

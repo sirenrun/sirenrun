@@ -19,6 +19,7 @@ import { initialQuality, QUALITY, qualityAt, stepQuality } from "./quality";
 import { FOG_FAR, FOG_NEAR, NEON } from "./palette";
 import { Road } from "./Road";
 import { Roadside } from "./Roadside";
+import { cameraRumble } from "./rumble";
 import { Sky } from "./Sky";
 import "./three-console";
 import { webglAvailable } from "./webgl";
@@ -152,7 +153,7 @@ function CameraRig() {
     s.punch = Math.max(0, s.punch - dt / 0.5);
     s.shake = Math.max(0, s.shake - dt / 0.4);
     const speedNorm = Math.min(1, eff / (SPEED_MAX + NITRO_BOOST));
-    const rumble = reduced ? 0 : 0.012 + speedNorm * speedNorm * 0.05;
+    const rumble = cameraRumble(speedNorm, frame.status, frame.busted, reduced);
     const hitAmp = s.shake * s.shake * 0.45;
     const t = s.time;
     const shakeX = (Math.sin(t * 31.7) + Math.sin(t * 17.3)) * 0.5 * (rumble + hitAmp);

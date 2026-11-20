@@ -2,6 +2,8 @@
 //!
 //! Quotes run through `Arena::buy`, the same pure function the `buy` instruction calls, so
 //! the client's fee rounding, NO profit cap and error choice cannot drift from the program.
+//! A quote buys market 0; `other_no_profit` is the BUST profit owed on the other open lines
+//! (put on market 1), which shares the cap with it.
 
 use anchor_lang::prelude::{Error, Pubkey};
 use serde::{Deserialize, Serialize};
@@ -60,7 +62,8 @@ struct QuoteCase {
     yes_r: String,
     no_r: String,
     bond: String,
-    no_profit_oi: String,
+    no_profit: String,
+    other_no_profit: String,
     side: String,
     amount: String,
     result: QuoteResult,
@@ -78,7 +81,7 @@ enum QuoteResult {
         shares: String,
         yes_r: String,
         no_r: String,
-        no_profit_oi: String,
+        no_profit: String,
     },
     #[serde(rename = "error")]
     Error { name: String },
@@ -89,7 +92,8 @@ struct QuoteInput {
     yes_r: u64,
     no_r: u64,
     bond: u64,
-    no_profit_oi: u64,
+    no_profit: u64,
+    other_no_profit: u64,
     side: Side,
     amount: u64,
 }
@@ -124,6 +128,8 @@ fn live_arena(input: &QuoteInput) -> Arena {
         market.yes_r = input.yes_r;
         market.no_r = input.no_r;
     }
+    markets[0].no_profit = input.no_profit;
+    markets[1].no_profit = input.other_no_profit;
     Arena {
         id: 0,
         bump: 255,
@@ -135,7 +141,6 @@ fn live_arena(input: &QuoteInput) -> Arena {
         seed: 42,
         sim: SimState::start().into(),
         bond: input.bond,
-        no_profit_oi: input.no_profit_oi,
         runner_fees: 0,
         markets,
         results: [RunResult::default(); RESULTS],
@@ -170,7 +175,7 @@ fn quote(input: QuoteInput) -> QuoteCase {
             shares: trade.fill.shares.to_string(),
             yes_r: trade.fill.yes.to_string(),
             no_r: trade.fill.no.to_string(),
-            no_profit_oi: arena.no_profit_oi.to_string(),
+            no_profit: arena.markets[0].no_profit.to_string(),
         },
         Err(err) => QuoteResult::Error {
             name: error_name(err),
@@ -183,7 +188,8 @@ fn quote(input: QuoteInput) -> QuoteCase {
         yes_r: input.yes_r.to_string(),
         no_r: input.no_r.to_string(),
         bond: input.bond.to_string(),
-        no_profit_oi: input.no_profit_oi.to_string(),
+        no_profit: input.no_profit.to_string(),
+        other_no_profit: input.other_no_profit.to_string(),
         side: format!("{:?}", input.side).to_lowercase(),
         amount: input.amount.to_string(),
         result,
@@ -251,7 +257,8 @@ fn build_vectors() -> VectorFile {
         yes_r: 50 * TUSDC,
         no_r: 50 * TUSDC,
         bond: 25 * TUSDC,
-        no_profit_oi: 0,
+        no_profit: 0,
+        other_no_profit: 0,
         side,
         amount,
     };
@@ -263,12 +270,16 @@ fn build_vectors() -> VectorFile {
         quote(base(Side::Yes, 50 * TUSDC)),
         quote(base(Side::Yes, 50 * TUSDC + 1)),
         quote(QuoteInput {
-            no_profit_oi: 25 * TUSDC - 1,
+            no_profit: 25 * TUSDC - 1,
             ..base(Side::No, 5 * TUSDC)
         }),
         quote(QuoteInput {
-            no_profit_oi: 25 * TUSDC - 1,
+            no_profit: 25 * TUSDC - 1,
             ..base(Side::Yes, 5 * TUSDC)
+        }),
+        quote(QuoteInput {
+            other_no_profit: 25 * TUSDC - 1,
+            ..base(Side::No, 5 * TUSDC)
         }),
         quote(QuoteInput {
             yes_r: u64::MAX,
@@ -291,7 +302,8 @@ fn build_vectors() -> VectorFile {
             yes_r: 1 + rng.below(200 * TUSDC),
             no_r: 1 + rng.below(200 * TUSDC),
             bond: 25 * TUSDC,
-            no_profit_oi: rng.below(25 * TUSDC),
+            no_profit: rng.below(15 * TUSDC),
+            other_no_profit: rng.below(15 * TUSDC),
             side: if rng.below(2) == 0 {
                 Side::Yes
             } else {
