@@ -11,6 +11,13 @@ describe("render quality", () => {
     expect(QUALITY[initialQuality(0.5)]?.dpr).toBe(1);
   });
 
+  it("starts handhelds one step down and never raises them past it", () => {
+    expect(QUALITY[initialQuality(3, true)]?.dpr).toBe(1.25);
+    expect(QUALITY[initialQuality(1, true)]?.dpr).toBe(1);
+    const q = initialQuality(2, true);
+    expect(QUALITY[stepQuality(q, "incline", 2, true)]?.dpr).toBe(1.25);
+  });
+
   it("drops resolution before it drops bloom", () => {
     let q = initialQuality(2);
     const seen = [];

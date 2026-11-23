@@ -347,10 +347,12 @@ export function Police() {
     });
     const l = light.current;
     if (l !== null) {
-      l.visible = visible;
+      // Dimmed, never hidden: a light that appears or disappears changes the scene's light
+      // count, which recompiles every lit material at once (a visible freeze at run start
+      // and at the bust).
       l.position.set(worldX(follow.current), 2.6, carZ + lead - 1.5);
       l.color.copy(SIREN_BLUE).lerp(SIREN_RED, red);
-      l.intensity = sirenIntensity(frame.status, closeness);
+      l.intensity = visible ? sirenIntensity(frame.status, closeness) : 0;
     }
   });
 
@@ -399,7 +401,7 @@ export function Police() {
           />
         </group>
       ))}
-      <pointLight ref={light} distance={30} decay={1.3} visible={false} />
+      <pointLight ref={light} distance={30} decay={1.3} intensity={0} />
     </>
   );
 }

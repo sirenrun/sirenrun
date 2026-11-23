@@ -23,10 +23,17 @@ export function qualityAt(index: number): Quality {
   return QUALITY[index] ?? LOWEST;
 }
 
-/** Starting step: no sharper than the screen can show. */
-export function initialQuality(devicePixelRatio: number): number {
+/** Handhelds start (and stay at most) one step down: phone GPUs push fewer pixels. */
+const HANDHELD_BEST = 1;
+
+/**
+ * Starting step: no sharper than the screen can show. A handheld (touch-first) device starts
+ * at 1.25 so it does not have to step down mid-run, which freezes a frame.
+ */
+export function initialQuality(devicePixelRatio: number, handheld = false): number {
   const i = QUALITY.findIndex((q) => q.dpr <= Math.max(1, devicePixelRatio));
-  return i === -1 ? LOWEST_INDEX : i;
+  const best = i === -1 ? LOWEST_INDEX : i;
+  return handheld ? Math.max(best, HANDHELD_BEST) : best;
 }
 
 /**
@@ -38,9 +45,10 @@ export function stepQuality(
   current: number,
   change: "decline" | "incline",
   devicePixelRatio: number,
+  handheld = false,
 ): number {
   if (current >= LOWEST_INDEX) return LOWEST_INDEX;
-  const best = initialQuality(devicePixelRatio);
+  const best = initialQuality(devicePixelRatio, handheld);
   const next = change === "decline" ? current + 1 : current - 1;
   return Math.min(LOWEST_INDEX, Math.max(best, next));
 }
