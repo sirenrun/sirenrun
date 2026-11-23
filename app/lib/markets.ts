@@ -231,6 +231,7 @@ const FRIENDLY: Record<string, string> = {
   Slippage: "The price moved before your buy landed. Try again.",
   NoInterestCapReached: "BUST is full on this run: the driver's bond caps what BUST can win.",
   RunnerCannotTrade: "You are driving this run, so you cannot trade on it.",
+  LineClosing: "That line resolves in a moment; trading on it has closed.",
   NoFreeEntry: "All 8 position slots are in use. Claim settled positions first.",
   SeedNotReady: "The course is still being rolled. Try again in a moment.",
   Unauthorized: "Your session is not valid for this wallet. Start a new session.",

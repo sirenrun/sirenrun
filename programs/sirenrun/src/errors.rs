@@ -44,4 +44,6 @@ pub enum SirenrunError {
     BalanceInUse,
     #[msg("Arena is not settled")]
     ArenaNotSettled,
+    #[msg("This line resolves in a moment; trading on it has closed")]
+    LineClosing,
 }

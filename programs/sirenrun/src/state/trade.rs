@@ -74,6 +74,13 @@ impl Arena {
             index < MARKETS && self.markets[index].status == MarketStatus::Open,
             SirenrunError::MarketClosed
         );
+        // A line closes COOLDOWN_TICKS before it can pay RIDE. Buys there used to be refunded;
+        // blocking them keeps refundable money out of the pass share computed at settle.
+        let line = u32::from(self.markets[index].line);
+        require!(
+            self.sim.t.saturating_add(COOLDOWN_TICKS) < line,
+            SirenrunError::LineClosing
+        );
         require_keys_neq!(trader.owner, self.runner, SirenrunError::RunnerCannotTrade);
         require!(amount <= terms.max_buy, SirenrunError::TooLarge);
 
@@ -504,27 +511,46 @@ mod tests {
     }
 
     #[test]
-    fn late_buys_and_void_markets_are_refunded_by_the_house() {
+    fn late_buys_before_a_bust_and_void_markets_are_refunded_by_the_house() {
         let mut arena = live_arena(50_000_000, 25_000_000);
         let (mut trader, mut house) = (balance(20_000_000), balance(10_000_000));
         arena.sim.t = 290;
+        // The 60 s line is still far off, so this buy is allowed; the bust at 300 then resolves
+        // it inside the cooldown, so it is refunded.
         let late = arena
-            .buy(&mut trader, &mut house, TERMS, 0, Side::Yes, 1_000_000, 0)
+            .buy(&mut trader, &mut house, TERMS, 1, Side::Yes, 1_000_000, 0)
             .unwrap();
         arena
-            .buy(&mut trader, &mut house, TERMS, 1, Side::No, 1_000_000, 0)
+            .buy(&mut trader, &mut house, TERMS, 2, Side::No, 1_000_000, 0)
             .unwrap();
         settle(&mut arena, 300, 1);
-        arena.markets[1].status = MarketStatus::Void;
+        arena.markets[2].status = MarketStatus::Void;
 
         let house_before = house.available;
         assert_eq!(arena.claim(&mut trader, &mut house, 0).unwrap(), late.net);
         assert_eq!(arena.claim(&mut trader, &mut house, 1).unwrap(), late.net);
-        // The refunded late YES would have won: its shares go to the house that refunded it.
+        assert_eq!(house.available, house_before - 2 * late.net);
+    }
+
+    #[test]
+    fn a_line_closes_to_buys_cooldown_ticks_before_it_pays_ride() {
+        let mut arena = live_arena(50_000_000, 25_000_000);
+        let (mut trader, mut house) = (balance(20_000_000), balance(10_000_000));
+        arena.sim.t = 300 - COOLDOWN_TICKS;
         assert_eq!(
-            house.available,
-            house_before - 2 * late.net + late.fill.shares
+            arena
+                .buy(&mut trader, &mut house, TERMS, 0, Side::No, 1_000_000, 0)
+                .unwrap_err(),
+            SirenrunError::LineClosing.into()
         );
+        // The other lines are still open, and the same line was open a tick earlier.
+        arena
+            .buy(&mut trader, &mut house, TERMS, 1, Side::No, 1_000_000, 0)
+            .unwrap();
+        arena.sim.t = 300 - COOLDOWN_TICKS - 1;
+        arena
+            .buy(&mut trader, &mut house, TERMS, 0, Side::No, 1_000_000, 0)
+            .unwrap();
     }
 
     #[test]
@@ -590,7 +616,7 @@ mod tests {
         let (mut trader, mut house) = (balance(20_000_000), balance(0));
         arena.sim.t = 299;
         arena
-            .buy(&mut trader, &mut house, TERMS, 0, Side::Yes, 1_000_000, 0)
+            .buy(&mut trader, &mut house, TERMS, 1, Side::Yes, 1_000_000, 0)
             .unwrap();
         settle(&mut arena, 300, 1);
         house.available = 0;

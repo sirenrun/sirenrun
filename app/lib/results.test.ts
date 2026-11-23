@@ -72,16 +72,16 @@ const entry = (over: Partial<PositionEntry>): PositionEntry => ({
   ...over,
 });
 
-const terms = { feeBps: 200, entryFee: T, nitroFee: T / 2n };
+const terms = { feeBps: 200, entryFee: T, nitroFee: T / 2n, liquidity: 100n * T };
 
 describe("run results", () => {
   it("returns the whole bond on a bust nobody bet on, and charges each nitro fired", () => {
     const s = summarizeRun(arena(), [], terms);
     expect(s.lines.map((l) => `${l.seconds}:${l.status}`)).toEqual(["30:yes", "60:yes", "90:no"]);
     expect(s.driver.bondLost).toBe(0n);
-    // All three charges fired (nitroLeft 0): 1.5 in nitro. 30 s and 60 s passed: 4 bonus.
+    // All three charges fired (nitroLeft 0): 1.5 in nitro. Pools untouched: no pass share.
     expect(s.driver.nitro).toBe((3n * T) / 2n);
-    expect(s.driver.net).toBe(2n * T + 4n * T - T - (3n * T) / 2n);
+    expect(s.driver.net).toBe(2n * T - T - (3n * T) / 2n);
     expect(s.driver.address).toBe(shortAddress(RUNNER.toBase58()));
     expect(s.you).toBeNull();
   });
@@ -148,31 +148,25 @@ describe("run results", () => {
     expect(split.driver).toMatchObject({ bondToRide: T, bondToHouse: 3n * T });
   });
 
-  it("adds the survival bonus for each line passed", () => {
-    // Default arena: 30 s and 60 s passed (1 + 3), busted before 90 s; 2 fees, 1 entry, 1.5 nitro.
+  it("pays no pass share when the house won nothing on the passed lines", () => {
+    // Default arena: 30 s and 60 s passed with untouched pools (house tokens = liquidity).
     const s = summarizeRun(arena(), [], terms);
-    expect(s.driver.bonus).toBe(4n * T);
-    expect(s.driver.net).toBe(2n * T + 4n * T - T - (3n * T) / 2n);
+    expect(s.driver.bonus).toBe(0n);
+    expect(s.driver.net).toBe(2n * T - T - (3n * T) / 2n);
   });
 
-  it("treats sub-cent rounding left for the house as refunded to RIDE", () => {
-    // Forfeit 1.445996; RIDE paid 2.0 and gets 7229 bps back: 1.4458, leaving 0.000196.
+  it("pays half of what the house won on passed lines, never offsetting a losing line", () => {
+    const won = (yes: bigint) => ({ ...market(300, "yes", 300), yesR: yes });
     const s = summarizeRun(
       arena({
-        markets: [
-          market(300, "no", 640, 1_445_996n, 2n * T, 7_229),
-          market(600, "no", 640),
-          market(900, "no", 640),
-        ],
+        markets: [won(110n * T + 1n), { ...won(90n * T), line: 600 }, market(900, "no", 640)],
       }),
       [],
       terms,
     );
-    expect(s.driver).toMatchObject({
-      bondLost: 1_445_996n,
-      bondToRide: 1_445_996n,
-      bondToHouse: 0n,
-    });
+    // 30 s: house up 10 + 1 unit; 60 s: house down 10, floored at 0. Half, rounded down.
+    expect(s.driver.bonus).toBe(5n * T);
+    expect(s.driver.net).toBe(2n * T + 5n * T - T - (3n * T) / 2n);
   });
 
   it("calls an aborted run even for everyone", () => {

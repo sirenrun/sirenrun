@@ -1,7 +1,7 @@
 mod common;
 
 use common::{custom_code, key, Base, Ephemeral, World, HOUSE_FUNDS, TUSDC};
-use sirenrun::constants::{LINES, LINE_BONUS};
+use sirenrun::constants::LINES;
 use sirenrun::errors::SirenrunError;
 use sirenrun::market::open_pool;
 use sirenrun::sim::{step, SimState};
@@ -157,15 +157,12 @@ fn crank_drives_a_full_run_that_matches_the_pure_sim() {
     assert_eq!(arena.results[0].outcomes, 0b01_01_01);
     assert_eq!(arena.results_head, 1);
 
-    // The bot passes all three lines, so the house also pays the full survival bonus.
-    let bonus: u64 = LINE_BONUS.iter().sum();
-    assert_eq!(
-        world.balance(Ephemeral, &runner).available,
-        39 * TUSDC + bonus
-    );
+    // The bot passes all three lines, but nobody traded: the house won nothing on them, so the
+    // pass share is zero and the driver only gets the bond back.
+    assert_eq!(world.balance(Ephemeral, &runner).available, 39 * TUSDC);
     assert_eq!(
         world.balance(Ephemeral, &house).available,
-        HOUSE_FUNDS + TUSDC - bonus
+        HOUSE_FUNDS + TUSDC
     );
 }
 

@@ -31,9 +31,11 @@ pub const POLICE_ACCEL_NUM: u32 = 6;
 pub const POLICE_ACCEL_DEN: u32 = 100;
 
 pub const LINES: [u32; 3] = [300, 600, 900];
-/// Survival bonus the house pays the driver at settle for each line passed, in tUSDC base
-/// units (1 / 3 / 6 tUSDC). Paid only up to what the house holds, so a tick never fails.
-pub const LINE_BONUS: [u64; 3] = [1_000_000, 3_000_000, 6_000_000];
+/// Pass share: on each line the driver passes, the driver gets this share (bps) of what the
+/// house won on that line's market, i.e. what BUST bettors lost net of RIDE winnings. Zero
+/// trades pay nothing, and BUST money from the driver's own second wallet always loses more
+/// than this returns, so it cannot be farmed.
+pub const PASS_SHARE_BPS: u64 = 5_000;
 
 pub const MAX_ENTRIES: usize = 8;
 pub const ARENAS: u8 = 3;
