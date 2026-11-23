@@ -5,7 +5,7 @@ import {
   type MarketStatus,
   type PositionEntry,
 } from "@sirenrun/sdk";
-import { NITRO_CHARGES } from "@sirenrun/sim";
+import { LINE_BONUS, NITRO_CHARGES } from "@sirenrun/sim";
 import { lineSeconds } from "./markets";
 
 /** `AbCd…WxYz`, for showing a wallet without its full length. */
@@ -35,7 +35,9 @@ export interface RunSummary {
     bondToHouse: bigint;
     /** Nitro fees paid, one per charge fired. */
     nitro: bigint;
-    /** Fees minus the entry fee, the part of the bond lost and nitro. */
+    /** Survival bonus from the house for the lines passed. */
+    bonus: bigint;
+    /** Fees plus bonus, minus the entry fee, the part of the bond lost and nitro. */
     net: bigint;
   };
   /** The viewer's result on this run, or null if they did not trade it. */
@@ -88,7 +90,15 @@ export function summarizeRun(
   const bondToRide = refunded > bondLost ? bondLost : refunded;
   const bondToHouse = bondLost - bondToRide;
   const nitro = BigInt(NITRO_CHARGES - arena.sim.nitroLeft) * terms.nitroFee;
-  const net = aborted ? 0n : fees - terms.entryFee - bondLost - nitro;
+  // The program caps the bonus at the house balance; the house holds far more, so the card
+  // shows the full amount.
+  const bonus = aborted
+    ? 0n
+    : arena.markets.reduce(
+        (sum, m, i) => sum + (m.status === "yes" ? BigInt(LINE_BONUS[i] ?? 0) : 0n),
+        0n,
+      );
+  const net = aborted ? 0n : fees + bonus - terms.entryFee - bondLost - nitro;
 
   let you: RunSummary["you"] = null;
   const mine = positions.filter((e) => e.arenaId === arena.id && e.nonce === arena.nonce);
@@ -115,6 +125,7 @@ export function summarizeRun(
       bondToRide,
       bondToHouse,
       nitro,
+      bonus,
       net,
     },
     you,

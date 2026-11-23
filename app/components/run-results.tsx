@@ -109,8 +109,10 @@ export function RunResults() {
             {signed(summary.driver.net)} tUSDC
           </dd>
           <dt className="col-span-2 text-xs text-muted">
-            Earned {formatTokenAmount(summary.driver.fees)} in trading fees.{" "}
-            {bondText(summary.driver)}
+            Earned {formatTokenAmount(summary.driver.fees)} in trading fees
+            {summary.driver.bonus > 0n &&
+              ` and a ${formatTokenAmount(summary.driver.bonus)} survival bonus`}
+            . {bondText(summary.driver)}
             {summary.driver.nitro > 0n && ` Nitro cost ${formatTokenAmount(summary.driver.nitro)}.`}
           </dt>
           {summary.you !== null && (

@@ -426,6 +426,16 @@ Why bond 10 and a 1.5% driver cut (simulated, 800 runs per setting, mixed driver
 | Bond 10, driver 1.5% (current) | -6.1 | -2.2 | 273 | +7.3 |
 | Bond 5, driver 1% | -3.5 | -1.0 | 256 | +8.0 |
 
+With the survival bonus on top of the current terms (estimated from the pass rates in
+[game-design.md](game-design.md)): good drivers about +3.6 per run, average about -3.6, weak
+about -6.9, the house about +3.9. The bonus is the driver's income on quiet runs, since fees
+need volume; it rewards staying alive, which crashing on purpose cannot fake.
+
+The driver must keep covering BUST winnings with the bond: if the house covered them, a
+driver could bet BUST from a second wallet and crash for a free profit. Before mainnet the
+bonus needs a guard against bots that drive perfectly (about 10 per run, every run): for
+example a daily cap per wallet, or paying it only on runs with outside traders.
+
 Nearly every run ends in a bust, so the bond, not the entry fee, is the driver's real cost.
 A smaller bond also caps BUST sooner (more "BUST is full" refusals, less volume), which is
 why it stops at 10 rather than 5.
@@ -435,9 +445,10 @@ why it stops at 10 rather than 5.
 The house is the Balance PDA of `Config.house` (on devnet the admin wallet), delegated to the
 rollup. It funds every run's three pools (3 x `liquidity`), so it is the counterparty to
 every trade, and it earns the entry fee, nitro, its part of the trade fee, any forfeit no
-RIDE holder takes, and the pools' remainder. It loses on a run when traders call it right
+RIDE holder takes, and the pools' remainder, and it pays the drivers' survival bonuses. It loses on a run when traders call it right
 against the opening prices. Under the current terms the model gives the house about
-+6 tUSDC per run on average (2 to 4% of volume) but a loss on roughly half of all runs,
++4 tUSDC per run on average with the survival bonus (2 to 4% of volume before it) but a
+loss on roughly half of all runs,
 from about -90 in a bad run to +230 in a good one, so it needs a buffer of many runs' pools.
 `start_run` fails with `HouseInsufficient` when the house cannot fund three pools.
 
@@ -449,6 +460,7 @@ Where the money goes:
 | Trade fee, 2% of each buy | 0.5% house, 1.5% driver (paid at settle) |
 | Nitro, per charge fired | House |
 | Bond, after the run | Driver, minus the forfeit |
+| Survival bonus, 1 / 3 / 6 for passing 30 / 60 / 90 s (`LINE_BONUS`) | Driver, from the house, at settle, capped at the house balance; included in `RunSettled.runner_paid` |
 | Forfeit (what BUST won on the busted lines, at most the bond) | RIDE holders on those lines, pro rata to cost, up to their cost; any rest to the house |
 | Pool remainder at resolution | House (it provided the liquidity) |
 

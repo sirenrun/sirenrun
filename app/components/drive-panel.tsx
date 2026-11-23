@@ -3,6 +3,7 @@
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { formatTokenAmount, isSessionLive } from "@sirenrun/sdk";
+import { LINE_BONUS } from "@sirenrun/sim";
 import { useEffect } from "react";
 import { roleOf } from "../lib/role";
 import { useNow } from "../lib/use-now";
@@ -154,7 +155,9 @@ export function DrivePanel() {
           <dt className="col-span-2 mt-1 text-xs text-muted">
             The bond comes back after the run. If you get busted, it only covers what BUST bets won
             on your run, and that goes to the fans who backed you, so if nobody bet against you, you
-            lose nothing. You earn {config.runnerFeeBps / 100}% of every trade on your run.
+            lose nothing. You earn {config.runnerFeeBps / 100}% of every trade on your run, plus a
+            survival bonus of {LINE_BONUS.map((b) => formatTokenAmount(BigInt(b))).join(" / ")}{" "}
+            tUSDC for passing 30 / 60 / 90 s.
           </dt>
         </dl>
       )}

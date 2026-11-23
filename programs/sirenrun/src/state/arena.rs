@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use super::Balance;
-use crate::constants::{LINES, SEED_TIMEOUT_TICKS, SETTLE_TICKS, STAGING_TICKS};
+use crate::constants::{LINES, LINE_BONUS, SEED_TIMEOUT_TICKS, SETTLE_TICKS, STAGING_TICKS};
 use crate::errors::SirenrunError;
 use crate::market::{forfeit, open_pool, ride_back_bps};
 use crate::sim::{step, SimState};
@@ -191,6 +191,8 @@ pub struct TickTerms {
     pub nitro_fee: u64,
     /// The runner's spendable balance before this tick, to decide if a nitro can be paid.
     pub runner_available: u64,
+    /// The house's spendable balance before this tick: the most a survival bonus can pay.
+    pub house_available: u64,
 }
 
 /// Stake and liquidity for a new run, copied from `Config`.
@@ -411,9 +413,24 @@ impl Arena {
             .house_in
             .checked_add(taken)
             .ok_or(SirenrunError::MathOverflow)?;
+        // Survival bonus for the lines the driver passed, paid by the house. It rewards staying
+        // alive, which crashing on purpose cannot fake, and never exceeds what the house holds.
+        let bonus = self
+            .markets
+            .iter()
+            .zip(LINE_BONUS)
+            .filter(|(m, _)| m.status == MarketStatus::Yes)
+            .try_fold(0u64, |sum, (_, b)| sum.checked_add(b))
+            .ok_or(SirenrunError::MathOverflow)?
+            .min(terms.house_available);
+        effects.house_out = effects
+            .house_out
+            .checked_add(bonus)
+            .ok_or(SirenrunError::MathOverflow)?;
         effects.runner = self
             .runner_fees
             .checked_add(self.bond - taken)
+            .and_then(|r| r.checked_add(bonus))
             .ok_or(SirenrunError::MathOverflow)?;
         self.finish();
         Ok(effects)
@@ -452,6 +469,7 @@ mod tests {
             entry_fee: 1,
             nitro_fee: 0,
             runner_available: 0,
+            house_available: 0,
         }
     }
 
@@ -555,6 +573,51 @@ mod tests {
         );
         assert_eq!(arena.results[0].outcomes, 0b10_10_10);
         assert_eq!(arena.results[0].ride_back_bps, [0; MARKETS]);
+    }
+
+    fn bust_with_house(arena: &mut Arena, house_available: u64) -> TickEffects {
+        arena.status = ArenaStatus::Live;
+        arena.sim.police_gap = 1;
+        arena.sim.speed = 0;
+        arena
+            .advance(TickTerms {
+                house_available,
+                ..terms()
+            })
+            .unwrap()
+    }
+
+    #[test]
+    fn the_house_pays_a_bonus_for_each_line_passed() {
+        let mut arena = staged(true);
+        // Passed 30 s and 60 s earlier in the run, busted before 90 s.
+        arena.markets[0].status = MarketStatus::Yes;
+        arena.markets[1].status = MarketStatus::Yes;
+        let bonus = LINE_BONUS[0] + LINE_BONUS[1];
+        let p = bust_with_house(&mut arena, u64::MAX / 2);
+        assert_eq!(p.runner, 3 + 25 + bonus);
+        assert_eq!(p.house_out, bonus);
+    }
+
+    #[test]
+    fn no_line_passed_means_no_bonus() {
+        let mut arena = staged(true);
+        let p = bust_with_house(&mut arena, u64::MAX / 2);
+        assert_eq!((p.runner, p.house_out), (3 + 25, 0));
+    }
+
+    #[test]
+    fn the_bonus_never_exceeds_what_the_house_holds() {
+        let mut arena = staged(true);
+        for m in &mut arena.markets {
+            m.status = MarketStatus::Yes;
+        }
+        let p = bust_with_house(&mut arena, 2_500_000);
+        assert_eq!((p.runner, p.house_out), (3 + 25 + 2_500_000, 2_500_000));
+        let mut broke = staged(true);
+        broke.markets[0].status = MarketStatus::Yes;
+        let p = bust_with_house(&mut broke, 0);
+        assert_eq!((p.runner, p.house_out), (3 + 25, 0));
     }
 
     #[test]
@@ -686,6 +749,7 @@ mod tests {
             entry_fee: 1,
             nitro_fee: 5,
             runner_available: 5,
+            house_available: 0,
         };
         let p = arena.advance(paid).unwrap();
         assert_eq!((p.runner_out, p.house_in), (0, 0));
@@ -709,6 +773,7 @@ mod tests {
             entry_fee: 1,
             nitro_fee: 5,
             runner_available: 4,
+            house_available: 0,
         };
         let p = arena.advance(broke).unwrap();
         assert_eq!(p.runner_out, 0);

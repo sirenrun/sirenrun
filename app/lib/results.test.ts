@@ -79,9 +79,9 @@ describe("run results", () => {
     const s = summarizeRun(arena(), [], terms);
     expect(s.lines.map((l) => `${l.seconds}:${l.status}`)).toEqual(["30:yes", "60:yes", "90:no"]);
     expect(s.driver.bondLost).toBe(0n);
-    // All three charges fired (nitroLeft 0): 1.5 in nitro.
+    // All three charges fired (nitroLeft 0): 1.5 in nitro. 30 s and 60 s passed: 4 bonus.
     expect(s.driver.nitro).toBe((3n * T) / 2n);
-    expect(s.driver.net).toBe(2n * T - T - (3n * T) / 2n);
+    expect(s.driver.net).toBe(2n * T + 4n * T - T - (3n * T) / 2n);
     expect(s.driver.address).toBe(shortAddress(RUNNER.toBase58()));
     expect(s.you).toBeNull();
   });
@@ -146,6 +146,13 @@ describe("run results", () => {
       terms,
     );
     expect(split.driver).toMatchObject({ bondToRide: T, bondToHouse: 3n * T });
+  });
+
+  it("adds the survival bonus for each line passed", () => {
+    // Default arena: 30 s and 60 s passed (1 + 3), busted before 90 s; 2 fees, 1 entry, 1.5 nitro.
+    const s = summarizeRun(arena(), [], terms);
+    expect(s.driver.bonus).toBe(4n * T);
+    expect(s.driver.net).toBe(2n * T + 4n * T - T - (3n * T) / 2n);
   });
 
   it("calls an aborted run even for everyone", () => {
