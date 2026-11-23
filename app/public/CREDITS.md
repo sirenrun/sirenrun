@@ -19,9 +19,10 @@ Third-party assets used by the SIRENRUN web app.
 
 ## Partner logos
 
-Shown unmodified on roadside billboards to credit the stack the game runs on. Each logo is a
-trademark of its owner and is used under that owner's brand guidelines.
+Shown unmodified on roadside billboards to credit the stack and community the game is built
+with. Each logo is a trademark of its owner and is used under that owner's brand guidelines.
 
-- `partners/solana.svg`: Solana logo, from the Solana Foundation's brand assets
+- `partners/solana-mark.svg`: Solana logo mark, from the Solana Foundation's brand assets
   (https://solana.com/branding).
-- `partners/magicblock.svg`: MagicBlock logo, from https://www.magicblock.xyz.
+- `partners/magicblock-mark.svg`: MagicBlock icon, from https://www.magicblock.xyz.
+- `partners/superteam-nepal.png`: Superteam Nepal logo, from https://np.superteam.fun.

@@ -1,47 +1,57 @@
+import { MAX_LIVE_TICKS, SPEED_MAX } from "@sirenrun/sim";
+import { Z_SCALE } from "./world";
+
 /**
- * Roadside billboards for the stack the game runs on. Pure layout, so a test can check the
- * spacing and that both logos show on both sides of the road.
+ * Roadside billboards for the stack and community the game is built with. Pure layout, so a
+ * test can check the spacing and that every logo shows on both sides of the road.
  */
 
-export type Partner = "solana" | "magicblock";
+export type Partner = "solana" | "magicblock" | "superteamNepal";
 
+export const PARTNERS: readonly Partner[] = ["solana", "magicblock", "superteamNepal"];
+
+/** Official files, shown unmodified. */
 export const PARTNER_LOGOS: Record<Partner, string> = {
-  solana: "/partners/solana.svg",
-  magicblock: "/partners/magicblock.svg",
+  solana: "/partners/solana-mark.svg",
+  magicblock: "/partners/magicblock-mark.svg",
+  superteamNepal: "/partners/superteam-nepal.png",
 };
 
 /** Neon frame per partner, from the scene palette. */
 export const PARTNER_FRAME: Record<Partner, string> = {
   solana: "#22e1ff",
   magicblock: "#ff2e88",
+  superteamNepal: "#ffb020",
 };
 
-/** Even, so each side still alternates logos when its billboards recycle. */
-export const BILLBOARDS_PER_SIDE = 4;
-/** One billboard per side every 120 m, the two sides offset by half that. */
-export const BILLBOARD_SPACING = 120;
-export const BILLBOARD_SPAN = BILLBOARDS_PER_SIDE * BILLBOARD_SPACING;
-/** Panel size in metres; the texture is drawn at the same aspect. */
-export const PANEL_W = 14;
-export const PANEL_H = 4.2;
+/** Panel size in metres: the two marks are square-ish, the Superteam lockup is wide. */
+export const PANEL_SIZE: Record<Partner, { w: number; h: number }> = {
+  solana: { w: 7, h: 6 },
+  magicblock: { w: 7, h: 6 },
+  superteamNepal: { w: 14, h: 4.2 },
+};
+
+/** Twelve boards in all, spread evenly over the longest possible run. */
+export const BILLBOARD_COUNT = 12;
+/** Metres of road a run can cover: top speed for every live tick (nitro runs are rare extras). */
+export const COURSE_M = SPEED_MAX * MAX_LIVE_TICKS * Z_SCALE;
+export const BILLBOARD_SPACING = COURSE_M / BILLBOARD_COUNT;
 
 export interface BillboardSlot {
   side: -1 | 1;
-  offset: number;
+  /** Metres from the start line. */
+  at: number;
   partner: Partner;
 }
 
+/**
+ * Fixed boards, not recycled: board i stands halfway into the i-th twelfth of the course, the
+ * sides alternate and the logos cycle, so every logo gets four boards on both sides.
+ */
 export function billboardLayout(): BillboardSlot[] {
-  const slots: BillboardSlot[] = [];
-  for (let i = 0; i < BILLBOARDS_PER_SIDE * 2; i += 1) {
-    const side = i % 2 === 0 ? -1 : 1;
-    const k = Math.floor(i / 2);
-    slots.push({
-      side,
-      offset: k * BILLBOARD_SPACING + (side === 1 ? BILLBOARD_SPACING / 2 : 0),
-      // Each side alternates, and the two sides start on different logos.
-      partner: (k + (side === 1 ? 1 : 0)) % 2 === 0 ? "solana" : "magicblock",
-    });
-  }
-  return slots;
+  return Array.from({ length: BILLBOARD_COUNT }, (_, i) => ({
+    side: i % 2 === 0 ? -1 : 1,
+    at: (i + 0.5) * BILLBOARD_SPACING,
+    partner: PARTNERS[i % PARTNERS.length] as Partner,
+  }));
 }

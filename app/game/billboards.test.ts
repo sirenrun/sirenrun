@@ -1,33 +1,31 @@
 import { describe, expect, it } from "vitest";
-import { BILLBOARD_SPACING, billboardLayout } from "./billboards";
+import { BILLBOARD_SPACING, COURSE_M, PARTNERS, billboardLayout } from "./billboards";
 import { BILLBOARD_X, PALM_MIN_X } from "./layout";
 
 describe("billboard layout", () => {
   const slots = billboardLayout();
 
-  it("puts both logos on both sides", () => {
-    for (const side of [-1, 1]) {
-      const partners = new Set(slots.filter((s) => s.side === side).map((s) => s.partner));
-      expect(partners).toEqual(new Set(["solana", "magicblock"]));
+  it("has exactly 12 boards, spaced evenly over the whole course", () => {
+    expect(slots).toHaveLength(12);
+    for (let i = 1; i < slots.length; i += 1) {
+      expect((slots[i]?.at ?? 0) - (slots[i - 1]?.at ?? 0)).toBeCloseTo(BILLBOARD_SPACING);
+    }
+    expect(slots[0]?.at).toBeGreaterThan(0);
+    expect(slots.at(-1)?.at).toBeLessThan(COURSE_M);
+  });
+
+  it("gives every logo four boards, on both sides", () => {
+    for (const partner of PARTNERS) {
+      const mine = slots.filter((s) => s.partner === partner);
+      expect(mine).toHaveLength(4);
+      expect(new Set(mine.map((s) => s.side))).toEqual(new Set([-1, 1]));
     }
   });
 
-  it("alternates logos along each side, including where the row recycles", () => {
-    for (const side of [-1, 1]) {
-      const row = slots
-        .filter((s) => s.side === side)
-        .sort((a, b) => a.offset - b.offset)
-        .map((s) => s.partner);
-      for (let i = 0; i < row.length; i += 1) {
-        expect(row[i]).not.toBe(row[(i + 1) % row.length]);
-      }
-    }
-  });
-
-  it("spaces billboards evenly along the road", () => {
-    const offsets = slots.map((s) => s.offset).sort((a, b) => a - b);
-    for (let i = 1; i < offsets.length; i += 1) {
-      expect((offsets[i] ?? 0) - (offsets[i - 1] ?? 0)).toBe(BILLBOARD_SPACING / 2);
+  it("alternates sides and never repeats a logo back to back", () => {
+    for (let i = 1; i < slots.length; i += 1) {
+      expect(slots[i]?.side).not.toBe(slots[i - 1]?.side);
+      expect(slots[i]?.partner).not.toBe(slots[i - 1]?.partner);
     }
   });
 

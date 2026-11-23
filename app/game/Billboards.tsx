@@ -1,30 +1,27 @@
 "use client";
 
-import { useFrame } from "@react-three/fiber";
-import { useEffect, useMemo, useRef } from "react";
-import { CanvasTexture, SRGBColorSpace, type Group } from "three";
+import { useEffect, useMemo } from "react";
+import { CanvasTexture, SRGBColorSpace } from "three";
 import {
-  BILLBOARD_SPAN,
-  PANEL_H,
-  PANEL_W,
+  PANEL_SIZE,
   PARTNER_FRAME,
   PARTNER_LOGOS,
+  PARTNERS,
   billboardLayout,
   type Partner,
 } from "./billboards";
-import { frame } from "./frame";
 import { BILLBOARD_X } from "./layout";
-import { recycledZ } from "./recycle";
-import { worldZ } from "./world";
 
-const TEX_W = 1024;
-const TEX_H = Math.round((TEX_W * PANEL_H) / PANEL_W);
+/** Texture pixels per metre of panel. */
+const TEX_PER_M = 96;
 const POST_H = 6;
 /** Panels turn toward the road so the driver reads them on approach, not edge-on. */
 const YAW = 0.42;
 
 /** A dark lit panel with a neon frame; the logo is drawn in once its SVG has loaded. */
 function panelTexture(partner: Partner): CanvasTexture {
+  const TEX_W = Math.round(PANEL_SIZE[partner].w * TEX_PER_M);
+  const TEX_H = Math.round(PANEL_SIZE[partner].h * TEX_PER_M);
   const canvas = document.createElement("canvas");
   canvas.width = TEX_W;
   canvas.height = TEX_H;
@@ -45,7 +42,7 @@ function panelTexture(partner: Partner): CanvasTexture {
     if (logo !== null && logo.naturalWidth > 0) {
       // Fit the logo inside the frame with margin, keeping its aspect.
       const maxW = TEX_W * 0.78;
-      const maxH = TEX_H * 0.5;
+      const maxH = TEX_H * 0.62;
       const scale = Math.min(maxW / logo.naturalWidth, maxH / logo.naturalHeight);
       const w = logo.naturalWidth * scale;
       const h = logo.naturalHeight * scale;
@@ -63,55 +60,48 @@ function panelTexture(partner: Partner): CanvasTexture {
 export function Billboards() {
   const slots = useMemo(() => billboardLayout(), []);
   const textures = useMemo(
-    () => ({ solana: panelTexture("solana"), magicblock: panelTexture("magicblock") }),
+    () =>
+      Object.fromEntries(PARTNERS.map((p) => [p, panelTexture(p)])) as Record<
+        Partner,
+        CanvasTexture
+      >,
     [],
   );
   useEffect(
     () => () => {
-      textures.solana.dispose();
-      textures.magicblock.dispose();
+      for (const p of PARTNERS) textures[p].dispose();
     },
     [textures],
   );
-  const groups = useRef<(Group | null)[]>([]);
-
-  useFrame(() => {
-    const carZ = worldZ(frame.distance);
-    slots.forEach((slot, i) => {
-      const g = groups.current[i];
-      if (g === null || g === undefined) return;
-      g.position.z = recycledZ(slot.offset, carZ, BILLBOARD_SPAN, 30);
-    });
-  });
-
   return (
     <>
-      {slots.map((slot, i) => (
-        <group
-          key={i}
-          ref={(g) => {
-            groups.current[i] = g;
-          }}
-          position={[slot.side * BILLBOARD_X, 0, 0]}
-          rotation={[0, -slot.side * YAW, 0]}
-        >
-          {[-1, 1].map((post) => (
-            <mesh key={post} position={[post * PANEL_W * 0.3, POST_H / 2, -0.2]}>
-              <boxGeometry args={[0.3, POST_H, 0.3]} />
-              <meshStandardMaterial color="#1a1426" roughness={0.6} metalness={0.5} />
+      {slots.map((slot, i) => {
+        const { w, h } = PANEL_SIZE[slot.partner];
+        return (
+          <group
+            key={i}
+            // Metres along the road map straight to world z: the car drives toward -z.
+            position={[slot.side * BILLBOARD_X, 0, -slot.at]}
+            rotation={[0, -slot.side * YAW, 0]}
+          >
+            {[-1, 1].map((post) => (
+              <mesh key={post} position={[post * w * 0.3, POST_H / 2, -0.2]}>
+                <boxGeometry args={[0.3, POST_H, 0.3]} />
+                <meshStandardMaterial color="#1a1426" roughness={0.6} metalness={0.5} />
+              </mesh>
+            ))}
+            <mesh position={[0, POST_H + h / 2, -0.35]}>
+              <boxGeometry args={[w + 0.3, h + 0.3, 0.25]} />
+              <meshStandardMaterial color="#120c1e" roughness={0.7} />
             </mesh>
-          ))}
-          <mesh position={[0, POST_H + PANEL_H / 2, -0.35]}>
-            <boxGeometry args={[PANEL_W + 0.3, PANEL_H + 0.3, 0.25]} />
-            <meshStandardMaterial color="#120c1e" roughness={0.7} />
-          </mesh>
-          <mesh position={[0, POST_H + PANEL_H / 2, -0.2]}>
-            <planeGeometry args={[PANEL_W, PANEL_H]} />
-            {/* Lit sign: unaffected by scene light, slightly hot so the frame blooms. */}
-            <meshBasicMaterial map={textures[slot.partner]} toneMapped={false} color="#e6e6e6" />
-          </mesh>
-        </group>
-      ))}
+            <mesh position={[0, POST_H + h / 2, -0.2]}>
+              <planeGeometry args={[w, h]} />
+              {/* Lit sign: unaffected by scene light, slightly hot so the frame blooms. */}
+              <meshBasicMaterial map={textures[slot.partner]} toneMapped={false} color="#e6e6e6" />
+            </mesh>
+          </group>
+        );
+      })}
     </>
   );
 }
