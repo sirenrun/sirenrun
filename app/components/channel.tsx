@@ -4,7 +4,9 @@ import dynamic from "next/dynamic";
 import { useEffect } from "react";
 import { Hud } from "../game/Hud";
 import { useArena } from "../stores/arena";
-import { DrivePanel, DriverControls } from "./drive-panel";
+import { useMarketFeed } from "../lib/use-market-feed";
+import { DrivePanel, DriverControls, useIsDriver } from "./drive-panel";
+import { DriverPanel } from "./driver-panel";
 import { GameAudio } from "./game-audio";
 import { SaveClip } from "./save-clip";
 import { MarketsPanel } from "./markets-panel";
@@ -27,7 +29,10 @@ export function Channel({ arena }: { arena: number }) {
   const status = useArena((s) => s.status);
   const error = useArena((s) => s.error);
 
+  const isDriver = useIsDriver();
+
   useEffect(() => connect(arena), [arena, connect]);
+  useMarketFeed(arena);
 
   return (
     <main className="relative flex h-[calc(100dvh-4rem)] w-full flex-col overflow-hidden lg:flex-row">
@@ -60,7 +65,7 @@ export function Channel({ arena }: { arena: number }) {
           </div>
         )}
       </div>
-      <MarketsPanel id={arena} />
+      {isDriver ? <DriverPanel /> : <MarketsPanel />}
     </main>
   );
 }

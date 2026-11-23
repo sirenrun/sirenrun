@@ -1,12 +1,14 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Hud } from "../game/Hud";
 import type { DemoOptions } from "../game/demo";
+import { useMarketFeed } from "../lib/use-market-feed";
 import { useArena } from "../stores/arena";
 import { GameAudio } from "./game-audio";
 import { SaveClip } from "./save-clip";
+import { DriverPanel } from "./driver-panel";
 import { MarketsPanel } from "./markets-panel";
 
 const Scene = dynamic(() => import("../game/Scene"), {
@@ -14,7 +16,10 @@ const Scene = dynamic(() => import("../game/Scene"), {
   loading: () => <div className="absolute inset-0 animate-pulse bg-white/[0.02]" aria-hidden />,
 });
 
-/** `?seed=`, `?skip=` (live ticks) and `?miss=` (0..1) pin a run, e.g. for screenshots. */
+/**
+ * `?seed=`, `?skip=` (live ticks) and `?miss=` (0..1) pin a run, e.g. for screenshots.
+ * `?view=driver` shows the driver's layout instead of the trading panel.
+ */
 function optionsFromUrl(): DemoOptions {
   const q = new URLSearchParams(window.location.search);
   const num = (key: string) => {
@@ -33,8 +38,13 @@ function optionsFromUrl(): DemoOptions {
 export function DemoChannel() {
   const demo = useArena((s) => s.demo);
   const status = useArena((s) => s.status);
+  const [driverView, setDriverView] = useState(false);
 
-  useEffect(() => demo(optionsFromUrl()), [demo]);
+  useEffect(() => {
+    setDriverView(new URLSearchParams(window.location.search).get("view") === "driver");
+    return demo(optionsFromUrl());
+  }, [demo]);
+  useMarketFeed(null);
 
   return (
     <main className="relative flex h-[calc(100dvh-4rem)] w-full flex-col overflow-hidden lg:flex-row">
@@ -48,7 +58,7 @@ export function DemoChannel() {
           <span className="rounded bg-black/50 px-2 py-1 text-muted">Bot driver, offline</span>
         </div>
       </div>
-      <MarketsPanel id={0} demo />
+      {driverView ? <DriverPanel /> : <MarketsPanel demo />}
     </main>
   );
 }

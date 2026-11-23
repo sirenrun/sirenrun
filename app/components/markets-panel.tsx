@@ -13,7 +13,7 @@ import {
   type Side,
 } from "@sirenrun/sdk";
 import { COOLDOWN_TICKS } from "@sirenrun/sim";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import {
   PRESETS,
   SIDE_LABEL,
@@ -32,19 +32,18 @@ import { useBalance } from "../stores/balance";
 import { useMarkets } from "../stores/markets";
 import { useSession } from "../stores/session";
 import { useUi } from "../stores/ui";
-import { useIsDriver } from "./drive-panel";
 
 /** Line colours, shared by the rows and the price chart. */
-const LINE_COLOURS = ["#22e1ff", "#ff2e88", "#ffb020"] as const;
+export const LINE_COLOURS = ["#22e1ff", "#ff2e88", "#ffb020"] as const;
 const ARROW = { up: "▲", down: "▼", flat: "" } as const;
 
 /** The arena as of the last poll. Prices change every tick; 4 renders a second is plenty. */
-function usePolledArena(): { arena: Arena | null; now: number } {
+export function usePolledArena(): { arena: Arena | null; now: number } {
   const now = useNow(250);
   return { arena: useArena.getState().latest, now };
 }
 
-function Chart({ history }: { history: PriceHistory }) {
+export function Chart({ history }: { history: PriceHistory }) {
   const points = history.points;
   if (points.length < 2) {
     return <div className="h-16 rounded bg-white/[0.03]" aria-hidden />;
@@ -203,7 +202,7 @@ function Positions({ arena }: { arena: Arena }) {
   );
 }
 
-function Ticker() {
+export function Ticker() {
   const ticker = useMarkets((s) => s.ticker);
   if (ticker.length === 0) return null;
   return (
@@ -225,9 +224,8 @@ function Ticker() {
  * the price chart, the viewer's positions (claimed automatically) and the trade ticker.
  * A right-hand column on wide screens, a bottom sheet for spectators on phones.
  */
-export function MarketsPanel({ id, demo = false }: { id: number; demo?: boolean }) {
+export function MarketsPanel({ demo = false }: { demo?: boolean }) {
   const { arena, now } = usePolledArena();
-  const watch = useMarkets((s) => s.watch);
   const history = useMarkets((s) => s.history);
   const error = useMarkets((s) => s.error);
   const { publicKey } = useWallet();
@@ -236,15 +234,8 @@ export function MarketsPanel({ id, demo = false }: { id: number; demo?: boolean 
   const { session, pending, start: startSession } = useSession();
   const { config, game, location } = useBalance();
   const setDrawer = useUi((s) => s.setDrawer);
-  const isDriver = useIsDriver();
   const [preset, setPreset] = useState<number>(PRESETS[1]);
   const [open, setOpen] = useState(false);
-
-  useEffect(() => watch(demo ? null : id), [demo, id, watch]);
-  const ensureConfig = useBalance((s) => s.ensureConfig);
-  useEffect(() => {
-    if (!demo) void ensureConfig();
-  }, [demo, ensureConfig]);
 
   const sessionLive = session !== null && isSessionLive(session, now / 1000);
   const blocker = tradeBlocker({
@@ -279,7 +270,7 @@ export function MarketsPanel({ id, demo = false }: { id: number; demo?: boolean 
 
   return (
     <aside
-      className={`relative z-20 flex max-h-[60%] shrink-0 flex-col border-t border-white/10 bg-bg lg:max-h-none lg:w-[22rem] lg:border-l lg:border-t-0 ${isDriver ? "hidden lg:flex" : ""}`}
+      className="relative z-20 flex max-h-[60%] shrink-0 flex-col border-t border-white/10 bg-bg lg:max-h-none lg:w-[22rem] lg:border-l lg:border-t-0"
       aria-label="Markets"
     >
       {/* Phone: a bar with the three prices that opens the full panel. */}

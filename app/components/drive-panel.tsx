@@ -4,6 +4,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { formatTokenAmount, isSessionLive } from "@sirenrun/sdk";
 import { useEffect } from "react";
+import { roleOf } from "../lib/role";
 import { useNow } from "../lib/use-now";
 import { useWalletSigner } from "../lib/use-wallet-signer";
 import { useArena } from "../stores/arena";
@@ -15,13 +16,9 @@ import { useUi } from "../stores/ui";
 /** True when the connected wallet drives the current, unfinished run. */
 export function useIsDriver(): boolean {
   const { publicKey } = useWallet();
-  const runner = useArena((s) => (s.latest?.nonce ? s.latest.runner.toBase58() : null));
-  const status = useArena((s) => s.status);
-  return (
-    publicKey !== null &&
-    runner === publicKey.toBase58() &&
-    (status === "staging" || status === "live")
-  );
+  const wallet = publicKey?.toBase58() ?? null;
+  // Selects a string so components re-render only when the role changes, not every tick.
+  return useArena((s) => roleOf(wallet, s.latest)) === "driver";
 }
 
 /** Keyboard and touch steering for the driver: ← → / A D change lanes, Space fires nitro. */
