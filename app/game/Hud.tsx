@@ -6,6 +6,7 @@ import type { Market } from "@sirenrun/sdk";
 import { shortAddress } from "../lib/results";
 import { prefersReducedMotion } from "./controls";
 import { useArena } from "../stores/arena";
+import { BUZZ_LINE, buzz } from "../lib/haptics";
 import { frame } from "./frame";
 import {
   RAIL_END,
@@ -158,6 +159,7 @@ export function Hud({ channel }: { channel: number }) {
         void el.offsetWidth;
         el.classList.add("hud-banner-in");
         setAnnouncement(`${lineLabel(line.line)} line crossed. RIDE pays.`);
+        buzz(BUZZ_LINE);
       }
 
       // BUSTED stamp with the final time.

@@ -2,6 +2,7 @@
 
 import { priceYes } from "@sirenrun/sdk";
 import Link from "next/link";
+import { LobbyLeaders } from "./lobby-leaders";
 import { useEffect } from "react";
 import { channelStatus } from "../lib/lobby";
 import { lineSeconds, percent } from "../lib/markets";
@@ -108,6 +109,7 @@ export function Lobby() {
         Open lines show the RIDE price: the market&apos;s chance the driver makes it. Settled
         positions on any channel are claimed for you while this page is open.
       </p>
+      <LobbyLeaders />
     </main>
   );
 }

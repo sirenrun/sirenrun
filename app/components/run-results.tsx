@@ -10,6 +10,7 @@ import { useArena } from "../stores/arena";
 import { useBalance } from "../stores/balance";
 import { useUi } from "../stores/ui";
 import { SaveClip } from "./save-clip";
+import { ShareRun } from "./share-run";
 
 const signed = (v: bigint) => `${v > 0n ? "+" : ""}${formatTokenAmount(v)}`;
 const toneOf = (v: bigint) => (v > 0n ? "text-up" : v < 0n ? "text-down" : "text-muted");
@@ -139,6 +140,12 @@ export function RunResults() {
           Watch next
         </Link>
         <SaveClip className="flex-1 rounded-md border border-white/25 py-2 text-center text-sm font-semibold hover:border-white/50 hover:bg-white/5" />
+        <ShareRun
+          summary={summary}
+          channel={(useArena.getState().id ?? 0) + 1}
+          driving={driving}
+          className="flex-1 rounded-md border border-white/25 py-2 text-center text-sm font-semibold hover:border-white/50 hover:bg-white/5"
+        />
         <button type="button" className="btn-primary flex-1" onClick={() => setSummary(null)}>
           Close
         </button>
