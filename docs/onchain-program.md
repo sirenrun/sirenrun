@@ -39,9 +39,9 @@ Seeds: `[b"config"]`
 | vault | Pubkey | token account owned by Config PDA |
 | house | Pubkey | wallet that owns the house `Balance` |
 | fee_bps | u16 | total trade fee, 200 = 2% |
-| runner_fee_bps | u16 | part of fee to driver, 150 = 1.5% |
+| runner_fee_bps | u16 | part of fee to driver, 200 = all of a 2% fee |
 | entry_fee | u64 | e.g. 0.5 tUSDC (500_000) |
-| bond | u64 | e.g. 10 tUSDC; also the cap on what BUST can win per run |
+| bond | u64 | e.g. 5 tUSDC; also the cap on what BUST can win per run |
 | liquidity | u64 | per market, e.g. 50 tUSDC |
 | max_buy | u64 | per trade, e.g. 50 tUSDC |
 | nitro_fee | u64 | charged per nitro charge fired, e.g. 0.5 tUSDC |
@@ -411,56 +411,68 @@ stores them in Postgres for wallet stats and analytics.
 ## Run economics
 
 Defaults (set by `scripts/src/init-devnet.ts`, changed on a live cluster with
-`scripts/src/update-config.ts`, which calls `update_config`): trade fee 2% (0.5% house,
-1.5% driver), entry 0.5, bond 10, liquidity 50 per market, max buy 50, nitro 0.5 per charge
-fired, opening RIDE prices 85% / 45% / 15% for the 30 / 60 / 90 s lines. tUSDC is treated as
-1 USD. A run keeps the terms it started with; a config change applies to the next run.
+`scripts/src/update-config.ts`, which calls `update_config`): trade fee 2%, all of it to the
+driver; entry 0.5; bond 5; liquidity 50 per market; max buy 50; nitro 0.25 per charge fired;
+opening RIDE prices 85% / 45% / 15% for the 30 / 60 / 90 s lines. tUSDC is treated as 1 USD.
+A run keeps its bond from the start; other config changes apply from the next tick.
 
-Why bond 10 and a 1.5% driver cut (simulated, 800 runs per setting, mixed driver skill,
-30 fans per run, with and without sharp traders who price every line fairly):
+### What a driver can earn, and why it cannot be farmed
 
-| Setting | Driver per run | Good driver | Volume per run | House per run |
-|---|---|---|---|---|
-| Bond 25, driver 1% (previous) | -19.1 | -12.6 | 325 | +9.4 |
-| Bond 10, driver 1% | -7.5 | -4.1 | 273 | +8.7 |
-| Bond 10, driver 1.5% (current) | -6.1 | -2.2 | 273 | +7.3 |
-| Bond 5, driver 1% | -3.5 | -1.0 | 256 | +8.0 |
+On a bust the bond must pay what BUST won on the lines the bust closed. If the house covered
+that instead, a driver could bet BUST from a second wallet and crash for a free profit. So
+the driver's income has to come from money that a second wallet cannot fake:
 
-With the survival bonus on top of the current terms (estimated from the pass rates in
-[game-design.md](game-design.md)): good drivers about +3.6 per run, average about -3.6, weak
-about -6.9, the house about +3.9. The bonus is the driver's income on quiet runs, since fees
-need volume; it rewards staying alive, which crashing on purpose cannot fake.
+- **The trade fee.** A second wallet pays 2% on its buys and the driver gets back at most
+  that 2%, so trading with yourself never makes money.
+- **The pass share** (`PASS_SHARE_BPS`, 50%). On each line the driver passes, the driver gets
+  half of what the house won on that line's market: `max(0, house_tokens(YES) - liquidity)`,
+  i.e. what BUST bettors lost net of what RIDE winners took. With zero trades the pool is
+  untouched, `house_tokens = liquidity` and the share is 0. A BUST buy of net `S` raises the
+  house's YES tokens by exactly `S`, so a second wallet's BUST bet returns the driver `S/2`
+  while losing `S` plus the fee: always a loss.
+- To keep refundable money out of the pass share, a line stops taking buys
+  `COOLDOWN_TICKS` (1.5 s) before it can pay RIDE (`LineClosing`). Buys shortly before a bust
+  are still refunded, as before.
 
-The driver must keep covering BUST winnings with the bond: if the house covered them, a
-driver could bet BUST from a second wallet and crash for a free profit. Before mainnet the
-bonus needs a guard against bots that drive perfectly (about 10 per run, every run): for
-example a daily cap per wallet, or paying it only on runs with outside traders.
+A fixed survival bonus paid by the house is not safe: with nobody trading, a good driver or
+a bot would net about +5 per run from the house.
 
-Nearly every run ends in a bust, so the bond, not the entry fee, is the driver's real cost.
-A smaller bond also caps BUST sooner (more "BUST is full" refusals, less volume), which is
-why it stops at 10 rather than 5.
+Simulated (600 to 800 runs per setting, mixed driver skill, fair opening prices; "busy" is
+30 fans plus sharp traders who price every line fairly, "quiet" is 10 fans):
+
+| Setting | Busy room: driver (good / avg / weak) | Quiet room: driver (good / avg / weak) | House, busy |
+|---|---|---|---|
+| Bond 10, driver 1.5% (previous) | -2.1 / -6.7 / -9.0 | | +5.9 |
+| Bond 10, driver 2%, pass share, nitro 0.25 | +0.4 / -4.7 / -7.5 | -2.8 / -6.1 / -7.6 | +4.9 |
+| **Bond 5, driver 2%, pass share, nitro 0.25 (current)** | **+3.2 / -0.7 / -3.1** | **-1.1 / -3.2 / -4.2** | **+6.3** |
+| Zero trades, current terms | -1.2 for everyone (entry and nitro) | | +1.2 |
+
+The pass share is small in practice (opening odds are fair, so on a line the driver passes
+the house usually loses); its job is to reward beating the doubters without being farmable.
+The bond is the real lever: the driver's cost is the forfeit, which grows with BUST demand up
+to the bond. Bond 5 caps BUST sooner: about 72% of BUST attempts in a busy room hit "BUST is
+full", against 69% at bond 10. House figures are noisy (single runs swing by about 100).
 
 ### The house
 
 The house is the Balance PDA of `Config.house` (on devnet the admin wallet), delegated to the
 rollup. It funds every run's three pools (3 x `liquidity`), so it is the counterparty to
-every trade, and it earns the entry fee, nitro, its part of the trade fee, any forfeit no
-RIDE holder takes, and the pools' remainder, and it pays the drivers' survival bonuses. It loses on a run when traders call it right
-against the opening prices. Under the current terms the model gives the house about
-+4 tUSDC per run on average with the survival bonus (2 to 4% of volume before it) but a
-loss on roughly half of all runs,
-from about -90 in a bad run to +230 in a good one, so it needs a buffer of many runs' pools.
-`start_run` fails with `HouseInsufficient` when the house cannot fund three pools.
+every trade. It earns the entry fee, nitro, any forfeit no RIDE holder takes and the pools'
+remainder, and pays the drivers' pass shares. It loses on a run when traders call it right
+against the opening prices: about half of all runs, from about -90 in a bad run to +230 in a
+good one, so it needs a buffer of many runs' pools. `start_run` fails with
+`HouseInsufficient` when the house cannot fund three pools, and the pass share is capped at
+the house balance so a tick never fails.
 
 Where the money goes:
 
 | Flow | Goes to |
 |---|---|
 | Entry fee | House |
-| Trade fee, 2% of each buy | 0.5% house, 1.5% driver (paid at settle) |
+| Trade fee, 2% of each buy | Driver (paid at settle) |
 | Nitro, per charge fired | House |
 | Bond, after the run | Driver, minus the forfeit |
-| Survival bonus, 1 / 3 / 6 for passing 30 / 60 / 90 s (`LINE_BONUS`) | Driver, from the house, at settle, capped at the house balance; included in `RunSettled.runner_paid` |
+| Pass share: half of what the house won on each line the driver passed (`PASS_SHARE_BPS`) | Driver, from the house, at settle, capped at the house balance; included in `RunSettled.runner_paid` |
 | Forfeit (what BUST won on the busted lines, at most the bond) | RIDE holders on those lines, pro rata to cost, up to their cost; any rest to the house |
 | Pool remainder at resolution | House (it provided the liquidity) |
 

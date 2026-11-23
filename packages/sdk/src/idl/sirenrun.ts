@@ -1795,6 +1795,11 @@ export type Sirenrun = {
       "code": 6020,
       "name": "arenaNotSettled",
       "msg": "Arena is not settled"
+    },
+    {
+      "code": 6021,
+      "name": "lineClosing",
+      "msg": "This line resolves in a moment; trading on it has closed"
     }
   ],
   "types": [

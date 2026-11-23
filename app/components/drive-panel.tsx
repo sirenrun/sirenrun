@@ -3,7 +3,6 @@
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { formatTokenAmount, isSessionLive } from "@sirenrun/sdk";
-import { LINE_BONUS } from "@sirenrun/sim";
 import { useEffect } from "react";
 import { roleOf } from "../lib/role";
 import { useNow } from "../lib/use-now";
@@ -152,9 +151,7 @@ export function DrivePanel() {
                 You earn
               </p>
               <p className="mt-0.5 tabular-nums">{config.runnerFeeBps / 100}% of every trade</p>
-              <p className="tabular-nums">
-                +{LINE_BONUS.map((b) => formatTokenAmount(BigInt(b))).join(" / ")} at 30 / 60 / 90 s
-              </p>
+              <p>Half of what BUST loses on lines you pass</p>
             </div>
             <div>
               <p className="text-[11px] font-semibold tracking-widest text-down uppercase">

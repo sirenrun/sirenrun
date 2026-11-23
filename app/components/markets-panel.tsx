@@ -105,7 +105,7 @@ function MarketRow(props: {
   const { arena, view, history, amount, canTrade, config, demo } = props;
   const { buy, buying } = useMarkets();
   const trend = trendOf(history, view.index);
-  // Buys this close to a line are refunded if it resolves right then (cooldown rule).
+  // The program stops taking buys COOLDOWN_TICKS before a line (LineClosing).
   const line = arena.markets[view.index]?.line ?? 0;
   const closing = view.open && arena.status === "live" && arena.sim.t >= line - COOLDOWN_TICKS;
   const button = (side: Side) => {
@@ -114,7 +114,7 @@ function MarketRow(props: {
     return (
       <button
         type="button"
-        disabled={!canTrade || !view.open || buying !== null}
+        disabled={!canTrade || !view.open || closing || buying !== null}
         onClick={() => void buy(view.index, side, amount)}
         className={`flex flex-1 flex-col items-center rounded-md border px-2 py-1.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${
           side === "yes"
@@ -162,9 +162,7 @@ function MarketRow(props: {
         </div>
       )}
       {closing && !demo && (
-        <p className="mt-1 text-[11px] text-amber">
-          Closing: buys now are refunded if it resolves.
-        </p>
+        <p className="mt-1 text-[11px] text-amber">Closed: this line resolves in a moment.</p>
       )}
     </li>
   );

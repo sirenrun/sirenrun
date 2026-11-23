@@ -111,7 +111,7 @@ export function RunResults() {
           <dt className="col-span-2 text-xs text-muted">
             Earned {formatTokenAmount(summary.driver.fees)} in trading fees
             {summary.driver.bonus > 0n &&
-              ` and a ${formatTokenAmount(summary.driver.bonus)} survival bonus`}
+              ` and a ${formatTokenAmount(summary.driver.bonus)} pass share (half of what BUST bettors lost on the lines you passed)`}
             . {bondText(summary.driver)}
             {summary.driver.nitro > 0n && ` Nitro cost ${formatTokenAmount(summary.driver.nitro)}.`}
           </dt>

@@ -188,6 +188,7 @@ fn balances_never_exceed_deposits() {
                         if [
                             SirenrunError::SeedNotReady,
                             SirenrunError::MarketClosed,
+                            SirenrunError::LineClosing,
                             SirenrunError::NoFreeEntry,
                             SirenrunError::InsufficientBalance,
                             SirenrunError::ArenaNotLive,
@@ -204,6 +205,7 @@ fn balances_never_exceed_deposits() {
                     nitro_fee: NITRO_FEE,
                     runner_available: players[runner].available,
                     house_available: house.available,
+                    liquidity: RUN_TERMS.liquidity,
                 })
                 .expect("advance");
             seen.nitro_paid += u32::from(effects.runner_out > 0);

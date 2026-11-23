@@ -43,10 +43,10 @@ analytics come from an indexer that stores the program's events.
    every trade. The driver cannot trade their own run.
 3. **Settle.** A line resolves RIDE the tick the run passes it, or BUST the tick the car is
    caught. Winning shares pay 1 tUSDC each and are claimed automatically. The driver earns
-   1.5% of every trade on their run and gets the 10 tUSDC bond back after it. On a bust, the
-   bond only covers what BUST bets won; that goes to the fans who bet RIDE on the busted
-   lines, or to the house if there were none. If nobody bet against the driver, they lose
-   nothing. See [Run economics](docs/onchain-program.md#run-economics).
+   the 2% fee on every trade on their run, plus half of what BUST bettors lost on each line
+   they pass, and gets the 5 tUSDC bond back after it. On a bust, the bond only covers what
+   BUST bets won; that goes to the fans who bet RIDE on the busted lines, or to the house if
+   there were none. If nobody bet against the driver, they lose nothing. See [Run economics](docs/onchain-program.md#run-economics).
 
 The simulation is deterministic integer code. The program runs it in Rust; the browser runs
 a TypeScript port of the same rules to draw the course ahead, and shared test vectors keep

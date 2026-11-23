@@ -1,7 +1,7 @@
 use anchor_lang::prelude::*;
 
 use super::Balance;
-use crate::constants::{LINES, LINE_BONUS, SEED_TIMEOUT_TICKS, SETTLE_TICKS, STAGING_TICKS};
+use crate::constants::{LINES, PASS_SHARE_BPS, SEED_TIMEOUT_TICKS, SETTLE_TICKS, STAGING_TICKS};
 use crate::errors::SirenrunError;
 use crate::market::{forfeit, open_pool, ride_back_bps};
 use crate::sim::{step, SimState};
@@ -191,8 +191,11 @@ pub struct TickTerms {
     pub nitro_fee: u64,
     /// The runner's spendable balance before this tick, to decide if a nitro can be paid.
     pub runner_available: u64,
-    /// The house's spendable balance before this tick: the most a survival bonus can pay.
+    /// The house's spendable balance before this tick: the most the pass share can pay.
     pub house_available: u64,
+    /// `Config.liquidity`: what the house seeded each market with, so what it won on a line
+    /// is its winning tokens minus this.
+    pub liquidity: u64,
 }
 
 /// Stake and liquidity for a new run, copied from `Config`.
@@ -413,16 +416,8 @@ impl Arena {
             .house_in
             .checked_add(taken)
             .ok_or(SirenrunError::MathOverflow)?;
-        // Survival bonus for the lines the driver passed, paid by the house. It rewards staying
-        // alive, which crashing on purpose cannot fake, and never exceeds what the house holds.
-        let bonus = self
-            .markets
-            .iter()
-            .zip(LINE_BONUS)
-            .filter(|(m, _)| m.status == MarketStatus::Yes)
-            .try_fold(0u64, |sum, (_, b)| sum.checked_add(b))
-            .ok_or(SirenrunError::MathOverflow)?
-            .min(terms.house_available);
+        // Pass share for the lines the driver passed, paid by the house, never more than it holds.
+        let bonus = self.pass_share(terms.liquidity)?.min(terms.house_available);
         effects.house_out = effects
             .house_out
             .checked_add(bonus)
@@ -434,6 +429,29 @@ impl Arena {
             .ok_or(SirenrunError::MathOverflow)?;
         self.finish();
         Ok(effects)
+    }
+
+    /// The driver's share of what the house won on the lines that paid RIDE: per line, its
+    /// winning tokens minus the liquidity it put in, floored at zero, times `PASS_SHARE_BPS`.
+    /// A passed line's reserves no longer change (buys need an open market), so this is the
+    /// same at settle as when the line resolved.
+    pub fn pass_share(&self, liquidity: u64) -> Result<u64> {
+        let mut won: u128 = 0;
+        for market in self
+            .markets
+            .iter()
+            .filter(|m| m.status == MarketStatus::Yes)
+        {
+            let tokens = market.house_tokens(true)?;
+            won = won
+                .checked_add(u128::from(tokens.saturating_sub(liquidity)))
+                .ok_or(SirenrunError::MathOverflow)?;
+        }
+        let share = won
+            .checked_mul(u128::from(PASS_SHARE_BPS))
+            .ok_or(SirenrunError::MathOverflow)?
+            / 10_000;
+        u64::try_from(share).map_err(|_| SirenrunError::MathOverflow.into())
     }
 
     fn finish(&mut self) {
@@ -470,6 +488,7 @@ mod tests {
             nitro_fee: 0,
             runner_available: 0,
             house_available: 0,
+            liquidity: 50,
         }
     }
 
@@ -588,36 +607,84 @@ mod tests {
     }
 
     #[test]
-    fn the_house_pays_a_bonus_for_each_line_passed() {
+    fn zero_trades_pay_no_pass_share() {
+        // Every market still holds exactly the liquidity the house seeded (50): it won nothing.
         let mut arena = staged(true);
-        // Passed 30 s and 60 s earlier in the run, busted before 90 s.
         arena.markets[0].status = MarketStatus::Yes;
         arena.markets[1].status = MarketStatus::Yes;
-        let bonus = LINE_BONUS[0] + LINE_BONUS[1];
-        let p = bust_with_house(&mut arena, u64::MAX / 2);
-        assert_eq!(p.runner, 3 + 25 + bonus);
-        assert_eq!(p.house_out, bonus);
-    }
-
-    #[test]
-    fn no_line_passed_means_no_bonus() {
-        let mut arena = staged(true);
         let p = bust_with_house(&mut arena, u64::MAX / 2);
         assert_eq!((p.runner, p.house_out), (3 + 25, 0));
     }
 
     #[test]
-    fn the_bonus_never_exceeds_what_the_house_holds() {
+    fn the_driver_gets_half_of_what_the_house_won_on_a_passed_line() {
         let mut arena = staged(true);
-        for m in &mut arena.markets {
-            m.status = MarketStatus::Yes;
+        // BUST money left the house 10 winning tokens up on the 30 s line.
+        arena.markets[0].status = MarketStatus::Yes;
+        arena.markets[0].yes_r = 60;
+        let p = bust_with_house(&mut arena, u64::MAX / 2);
+        assert_eq!((p.runner, p.house_out), (3 + 25 + 5, 5));
+    }
+
+    #[test]
+    fn a_line_the_house_lost_pays_nothing_and_does_not_cancel_another() {
+        let mut arena = staged(true);
+        // RIDE winners took 10 from the house on 30 s; BUST losers left it 20 up on 60 s.
+        arena.markets[0].status = MarketStatus::Yes;
+        arena.markets[0].yes_r = 40;
+        arena.markets[1].status = MarketStatus::Yes;
+        arena.markets[1].yes_r = 70;
+        assert_eq!(arena.pass_share(50).unwrap(), 10);
+    }
+
+    #[test]
+    fn lines_the_bust_closed_pay_no_pass_share() {
+        let mut arena = staged(true);
+        arena.markets[2].yes_r = 90;
+        let p = bust_with_house(&mut arena, u64::MAX / 2);
+        assert_eq!(p.house_out, 0);
+    }
+
+    #[test]
+    fn the_pass_share_never_exceeds_what_the_house_holds() {
+        let mut arena = staged(true);
+        arena.markets[0].status = MarketStatus::Yes;
+        arena.markets[0].yes_r = 1_050;
+        let p = bust_with_house(&mut arena, 300);
+        assert_eq!((p.runner, p.house_out), (3 + 25 + 300, 300));
+    }
+
+    #[test]
+    fn bust_money_from_the_drivers_own_wallet_always_loses() {
+        // A BUST buy of `net` adds exactly `net` to the pool's YES reserve, so the house's
+        // winnings on a passed line rise by `net` and the driver gets back half of it.
+        for (yes, no) in [
+            (50_000_000u64, 50_000_000),
+            (8_823_529, 50_000_000),
+            (50_000_000, 8_823_529),
+        ] {
+            for net in [1u64, 999, 1_000_000, 9_800_000, 49_000_000] {
+                let fill = crate::market::buy(yes, no, false, net).unwrap();
+                let before = Market {
+                    yes_r: yes,
+                    no_r: no,
+                    status: MarketStatus::Yes,
+                    ..Market::default()
+                };
+                let after = Market {
+                    yes_r: fill.yes,
+                    ..before
+                };
+                let gain = |m: Market| {
+                    let mut a = staged(true);
+                    a.markets = [m, Market::default(), Market::default()];
+                    a.pass_share(yes).unwrap()
+                };
+                assert_eq!(fill.yes - yes, net);
+                assert!(gain(after) - gain(before) <= net / 2 + 1);
+                assert!(gain(after) - gain(before) < net || net == 1);
+            }
         }
-        let p = bust_with_house(&mut arena, 2_500_000);
-        assert_eq!((p.runner, p.house_out), (3 + 25 + 2_500_000, 2_500_000));
-        let mut broke = staged(true);
-        broke.markets[0].status = MarketStatus::Yes;
-        let p = bust_with_house(&mut broke, 0);
-        assert_eq!((p.runner, p.house_out), (3 + 25, 0));
     }
 
     #[test]
@@ -750,6 +817,7 @@ mod tests {
             nitro_fee: 5,
             runner_available: 5,
             house_available: 0,
+            liquidity: 50,
         };
         let p = arena.advance(paid).unwrap();
         assert_eq!((p.runner_out, p.house_in), (0, 0));
@@ -774,6 +842,7 @@ mod tests {
             nitro_fee: 5,
             runner_available: 4,
             house_available: 0,
+            liquidity: 50,
         };
         let p = arena.advance(broke).unwrap();
         assert_eq!(p.runner_out, 0);

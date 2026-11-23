@@ -5,7 +5,7 @@ import {
   type MarketStatus,
   type PositionEntry,
 } from "@sirenrun/sdk";
-import { LINE_BONUS, NITRO_CHARGES } from "@sirenrun/sim";
+import { NITRO_CHARGES, PASS_SHARE_BPS } from "@sirenrun/sim";
 import { lineSeconds } from "./markets";
 
 /** `AbCd…WxYz`, for showing a wallet without its full length. */
@@ -35,9 +35,9 @@ export interface RunSummary {
     bondToHouse: bigint;
     /** Nitro fees paid, one per charge fired. */
     nitro: bigint;
-    /** Survival bonus from the house for the lines passed. */
+    /** Pass share: half of what the house won on the lines the driver passed. */
     bonus: bigint;
-    /** Fees plus bonus, minus the entry fee, the part of the bond lost and nitro. */
+    /** Fees plus pass share, minus the entry fee, the part of the bond lost and nitro. */
     net: bigint;
   };
   /** The viewer's result on this run, or null if they did not trade it. */
@@ -76,7 +76,7 @@ export function grossOf(cost: bigint, feeBps: number): bigint {
 export function summarizeRun(
   arena: Arena,
   positions: RunPositions,
-  terms: { feeBps: number; entryFee: bigint; nitroFee: bigint },
+  terms: { feeBps: number; entryFee: bigint; nitroFee: bigint; liquidity: bigint },
 ): RunSummary {
   const statuses = arena.markets.map((m) => m.status);
   const aborted = statuses.every((s) => s === "void");
@@ -94,14 +94,17 @@ export function summarizeRun(
   if (bondToRide > 0n && bondLost - bondToRide < DUST) bondToRide = bondLost;
   const bondToHouse = bondLost - bondToRide;
   const nitro = BigInt(NITRO_CHARGES - arena.sim.nitroLeft) * terms.nitroFee;
-  // The program caps the bonus at the house balance; the house holds far more, so the card
-  // shows the full amount.
-  const bonus = aborted
+  // Mirrors Arena::pass_share: per passed line, the house's winning tokens minus the
+  // liquidity it seeded, floored at zero, summed, then PASS_SHARE_BPS of that, rounded down
+  // once. The program also caps it at the house balance, which holds far more.
+  const won = aborted
     ? 0n
-    : arena.markets.reduce(
-        (sum, m, i) => sum + (m.status === "yes" ? BigInt(LINE_BONUS[i] ?? 0) : 0n),
-        0n,
-      );
+    : arena.markets.reduce((sum, m) => {
+        if (m.status !== "yes") return sum;
+        const tokens = m.yesR + m.houseYes;
+        return sum + (tokens > terms.liquidity ? tokens - terms.liquidity : 0n);
+      }, 0n);
+  const bonus = (won * BigInt(PASS_SHARE_BPS)) / 10_000n;
   const net = aborted ? 0n : fees + bonus - terms.entryFee - bondLost - nitro;
 
   let you: RunSummary["you"] = null;

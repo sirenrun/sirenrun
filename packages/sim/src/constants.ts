@@ -31,8 +31,8 @@ export const POLICE_ACCEL_NUM = 6;
 export const POLICE_ACCEL_DEN = 100;
 
 export const LINES = [300, 600, 900] as const;
-/** Survival bonus per line passed, in tUSDC base units, paid by the house at settle. */
-export const LINE_BONUS = [1_000_000, 3_000_000, 6_000_000] as const;
+/** Driver's share (bps) of what the house won on each line the driver passed. */
+export const PASS_SHARE_BPS = 5_000;
 
 export const MAX_ENTRIES = 8;
 export const ARENAS = 3;
