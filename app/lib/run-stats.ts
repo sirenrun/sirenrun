@@ -1,0 +1,101 @@
+import { mulBps, type Side } from "@sirenrun/sdk";
+
+/**
+ * Live totals for one run, tallied in the browser from `Trade` events. Nothing onchain stores
+ * trade history, so a viewer who joins mid-run only sees the trades since they joined;
+ * `complete` says whether these totals cover the whole run.
+ */
+export interface LineStats {
+  ride: bigint;
+  bust: bigint;
+  trades: number;
+}
+
+export interface RunStats {
+  nonce: number;
+  trades: number;
+  /** Amount spent by traders, fees included. */
+  volume: bigint;
+  /** The driver's cut of every trade. */
+  driverFee: bigint;
+  lines: LineStats[];
+  complete: boolean;
+  /** Event keys already counted; a websocket can deliver the same transaction twice. */
+  seen: readonly string[];
+}
+
+export interface FeeTerms {
+  feeBps: number;
+  runnerFeeBps: number;
+}
+
+const LINES = 3;
+const SEEN_LIMIT = 256;
+
+export function emptyStats(nonce: number, complete: boolean): RunStats {
+  return {
+    nonce,
+    trades: 0,
+    volume: 0n,
+    driverFee: 0n,
+    lines: Array.from({ length: LINES }, () => ({ ride: 0n, bust: 0n, trades: 0 })),
+    complete,
+    seen: [],
+  };
+}
+
+/**
+ * The amount a trader spent, from the `net` the event reports (amount minus the floored fee).
+ * Flooring maps a few neighbouring amounts to one `net`; the largest is the one with no
+ * rounding, which is what the whole-tUSDC presets produce, so that is the one returned.
+ */
+export function grossFromNet(net: bigint, feeBps: number): bigint {
+  const keep = 10_000n - BigInt(feeBps);
+  if (keep <= 0n) return net;
+  const guess = (net * 10_000n) / keep;
+  for (let a = guess + 2n; a >= guess - 2n && a >= 0n; a -= 1n) {
+    if (a - (mulBps(a, feeBps) ?? 0n) === net) return a;
+  }
+  return guess;
+}
+
+export function addTrade(
+  stats: RunStats,
+  key: string,
+  trade: { nonce: number; market: number; side: Side; net: bigint },
+  terms: FeeTerms,
+): RunStats {
+  // A trade for a newer run means we missed its start: begin a fresh, partial tally.
+  const base = trade.nonce > stats.nonce ? emptyStats(trade.nonce, false) : stats;
+  if (trade.nonce < base.nonce || base.seen.includes(key)) return stats;
+  const amount = grossFromNet(trade.net, terms.feeBps);
+  const lines = base.lines.map((line, i) =>
+    i !== trade.market
+      ? line
+      : {
+          ride: line.ride + (trade.side === "yes" ? amount : 0n),
+          bust: line.bust + (trade.side === "no" ? amount : 0n),
+          trades: line.trades + 1,
+        },
+  );
+  return {
+    ...base,
+    trades: base.trades + 1,
+    volume: base.volume + amount,
+    driverFee: base.driverFee + (mulBps(amount, terms.runnerFeeBps) ?? 0n),
+    lines,
+    seen: [...base.seen, key].slice(-SEEN_LIMIT),
+  };
+}
+
+/**
+ * Moves the tally to a newer run when the arena shows one. Trades need the seed, so a run
+ * first seen staging without it has had none yet and its totals will be complete.
+ */
+export function followRun(
+  stats: RunStats,
+  arena: { nonce: number; status: string; seedReady: boolean },
+): RunStats {
+  if (arena.nonce <= stats.nonce) return stats;
+  return emptyStats(arena.nonce, arena.status === "staging" && !arena.seedReady);
+}
