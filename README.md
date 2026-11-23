@@ -6,7 +6,7 @@
 </p>
 
 <p align="center">
-  <img src=".github/assets/run.gif" alt="A run on the Neon Key causeway: the police close in and box the car in at 1:39.7" width="480">
+  <img src=".github/assets/run.gif" alt="A run on the Neon Key causeway: the car passes the 30 s line and a Superteam Nepal billboard, crashes, and the police box it in at 0:39.1" width="480">
 </p>
 
 A getaway-driving game that runs onchain inside a MagicBlock Ephemeral Rollup.
@@ -18,7 +18,17 @@ think the driver makes the line, **BUST** if you think the cops get there first.
 Markets settle from the game state the moment a line is crossed or the car is caught.
 No oracle and no manual resolution.
 
-![Trading a run: the scene with the HUD on the left, the three lines with RIDE prices on the right](.github/assets/trading.jpg)
+![Watching a run: the scene with the HUD on the left, the three lines with RIDE prices on the right](.github/assets/trading.png)
+
+### Driver view and stats
+
+The driver sees the road, their controls and how the crowd is betting, with no trade
+buttons. Everyone else gets the trading panel. Wallet PnL, total trades and platform
+analytics come from an indexer that stores the program's events.
+
+| Driver view | Stats page |
+|---|---|
+| ![The driver's layout: the road with a slim crowd panel showing volume, trades, earnings and RIDE odds per line](.github/assets/driver.png) | ![The stats page: visitors, players, runs, trades, volume, payouts, daily charts and leaderboards](.github/assets/stats.png) |
 
 ## How a run works
 
@@ -79,7 +89,17 @@ flowchart LR
   VRF -- "vrf_callback_seed" --> ARENA
   ARENA -- "account updates (websocket)" --> UI
   SIM -. "course rows, interpolation" .-> UI
+  subgraph Stats["Stats (read only)"]
+    IDX["indexer: event worker"]
+    PG[("Postgres")]
+  end
+  ER -- "program events (Trade, Claimed, RunSettled, ...)" --> IDX
+  IDX --> PG
+  PG -- "/api/stats, /api/visit" --> UI
 ```
+
+The indexer only reads events; runs and markets settle onchain and the game works without
+it. Details in [docs/architecture.md](docs/architecture.md#stats-and-analytics).
 
 The client never waits on the network inside the render loop: arena snapshots arrive
 about ten times a second, and the scene interpolates between them. The run lifecycle as a
@@ -112,6 +132,9 @@ pnpm dev            # http://localhost:3000
 - To drive or trade, connect a devnet wallet. The onboarding walks through test USDC from
   the faucet, a deposit, and starting a session. The faucet needs `FAUCET_SECRET_KEY` in
   `app/.env.local` (see `.env.example`).
+- `/stats` and the wallet PnL need `DATABASE_URL` (Postgres) in `app/.env.local`, and the
+  indexer running: `pnpm --filter @sirenrun/indexer start` with the same variable in
+  `indexer/.env`. Without them the game still works and the stats show "unavailable".
 
 Program and tests need Rust, Anchor 1.2.2 and the Solana CLI 4.1.2 (versions and reasons in
 [docs/architecture.md](docs/architecture.md)):
@@ -130,7 +153,8 @@ pnpm -r typecheck && pnpm -r test      # sim parity, SDK, app
 | `programs/sirenrun` | Anchor program: instructions, accounts, the pure simulation and market math |
 | `packages/sim` | TypeScript port of the simulation, checked against shared vectors |
 | `packages/sdk` | Typed client: PDAs, instruction builders tagged base or rollup, subscriptions |
-| `app` | Next.js web client: landing, lobby, channel, demo |
+| `app` | Next.js web client: landing, lobby, channel, demo, stats, and the stats API routes |
+| `indexer` | Worker that stores program events in Postgres for PnL and analytics |
 | `scripts` | Devnet setup and the end-to-end smoke run |
 | `tests/magicsvm` | Integration tests with base layer and rollup in one process |
 
@@ -142,7 +166,7 @@ pnpm -r typecheck && pnpm -r test      # sim parity, SDK, app
 | [docs/game-design.md](docs/game-design.md) | Simulation rules, constants, balance targets |
 | [docs/onchain-program.md](docs/onchain-program.md) | Accounts, instructions, market math, invariants |
 | [docs/magicblock.md](docs/magicblock.md) | Delegation, VRF, cranks, session keys, local setup |
-| [docs/devnet.md](docs/devnet.md) | Addresses, setup, faucet, smoke run |
+| [docs/devnet.md](docs/devnet.md) | Addresses, setup, faucet, smoke run, stats indexer |
 
 ## Roadmap
 

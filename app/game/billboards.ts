@@ -14,7 +14,7 @@ export const PARTNERS: readonly Partner[] = ["solana", "magicblock", "superteamN
 export const PARTNER_LOGOS: Record<Partner, string> = {
   solana: "/partners/solana-mark.svg",
   magicblock: "/partners/magicblock-mark.svg",
-  superteamNepal: "/partners/superteam-nepal.png",
+  superteamNepal: "/partners/superteam-nepal.jpg",
 };
 
 /** Neon frame per partner, from the scene palette. */
@@ -24,11 +24,21 @@ export const PARTNER_FRAME: Record<Partner, string> = {
   superteamNepal: "#ffb020",
 };
 
-/** Panel size in metres: the two marks are square-ish, the Superteam lockup is wide. */
+/** Panel size in metres. */
 export const PANEL_SIZE: Record<Partner, { w: number; h: number }> = {
   solana: { w: 7, h: 6 },
   magicblock: { w: 7, h: 6 },
-  superteamNepal: { w: 14, h: 4.2 },
+  superteamNepal: { w: 6, h: 6 },
+};
+
+/**
+ * Logos with their own background fill the panel inside the frame; white marks sit centred on
+ * the dark panel with a margin.
+ */
+export const PARTNER_FILL: Record<Partner, boolean> = {
+  solana: false,
+  magicblock: false,
+  superteamNepal: true,
 };
 
 /** Twelve boards in all, spread evenly over the longest possible run. */
