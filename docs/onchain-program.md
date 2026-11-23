@@ -404,7 +404,8 @@ stores them in Postgres for wallet stats and analytics.
   delegate, `init_arena(0..2)` + delegate.
 - `faucet`: the app's "Get test USDC" button calls a Next.js route that mints 100 tUSDC
   to the user (admin key in a Vercel env var; devnet only; rate-limited by wallet).
-  This is the only server code, and it touches no game logic.
+  It touches no game logic. The other server code is the read-only stats side (the
+  `indexer/` worker and `app/api/stats`), which reads events and decides nothing.
 - `keeper-tick.ts`: fallback ticker, only if scheduled cranks turn out unusable.
 
 ## Run economics

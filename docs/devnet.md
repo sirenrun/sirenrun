@@ -80,3 +80,23 @@ and the local stack has no VRF oracle anyway, so full runs need devnet or MagicS
 
 The local ER can serve a stale copy of an account cached before `--reset` when the same
 keypair is reused; use fresh keypairs per local session.
+
+## Stats indexer
+
+The stats (wallet PnL, analytics page, visitor counts) come from `indexer/`, a worker that
+writes the program's ER events to Postgres. Put the database URL in `indexer/.env` and
+`app/.env.local` as `DATABASE_URL` (never commit it), then:
+
+```bash
+pnpm --filter @sirenrun/indexer migrate   # create tables (also runs on every start)
+pnpm --filter @sirenrun/indexer start     # follow events; backfills what it missed
+```
+
+Run it as an always-on process. On start it walks back from the last stored signature,
+at most `INDEXER_MAX_BACKFILL` transactions (default 6000, about 3 minutes of ticks on
+three live arenas), at roughly 30 transactions a second. Writes are idempotent, so
+restarting is always safe. Transactions from program builds before the current event
+layout are skipped. A slow first database connection is retried with backoff.
+
+To test the SQL, point `TEST_DATABASE_URL` at a throwaway database (the suite drops its
+tables) and run `pnpm --filter @sirenrun/indexer test`; without it that suite is skipped.
