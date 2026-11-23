@@ -28,6 +28,9 @@ pub struct RunStarted {
     pub arena: Pubkey,
     pub nonce: u32,
     pub runner: Pubkey,
+    /// Stake taken from the runner at the start, as `Config` set it for this run.
+    pub entry_fee: u64,
+    pub bond: u64,
 }
 
 #[vrf]
@@ -105,6 +108,8 @@ pub fn start_run<'info>(ctx: Context<'info, StartRun<'info>>) -> Result<()> {
         arena: arena.key(),
         nonce: arena.nonce,
         runner: arena.runner,
+        entry_fee: ctx.accounts.config.entry_fee,
+        bond: arena.bond,
     });
 
     ctx.accounts

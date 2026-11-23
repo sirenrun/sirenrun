@@ -14,6 +14,10 @@ pub struct Trade {
     pub shares: u64,
     pub yes_r: u64,
     pub no_r: u64,
+    /// The trader's wallet (not the session key), so an indexer can total PnL per wallet.
+    pub owner: Pubkey,
+    /// What the trader spent, fees included.
+    pub amount: u64,
 }
 
 #[derive(Accounts, Session)]
@@ -64,6 +68,8 @@ pub fn buy(ctx: Context<Buy>, market: u8, side: Side, amount: u64, min_shares: u
         shares: trade.fill.shares,
         yes_r: trade.fill.yes,
         no_r: trade.fill.no,
+        owner: ctx.accounts.trader_balance.owner,
+        amount,
     });
     Ok(())
 }

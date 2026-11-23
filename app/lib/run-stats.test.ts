@@ -1,33 +1,13 @@
-import { mulBps } from "@sirenrun/sdk";
 import { describe, expect, it } from "vitest";
-import { addTrade, emptyStats, followRun, grossFromNet } from "./run-stats";
+import { addTrade, emptyStats, followRun } from "./run-stats";
 
 const terms = { feeBps: 200, runnerFeeBps: 50 };
-const net = (amount: bigint, feeBps = terms.feeBps) => amount - (mulBps(amount, feeBps) ?? 0n);
-
-describe("grossFromNet", () => {
-  it("recovers whole and fractional tUSDC amounts exactly", () => {
-    for (const amount of [1_000_000n, 5_000_000n, 10_000_000n, 2_500_000n, 1_230_000n]) {
-      expect(grossFromNet(net(amount), terms.feeBps)).toBe(amount);
-    }
-  });
-
-  it("always returns an amount that produces the given net", () => {
-    for (const amount of [1n, 99n, 1_234_567n, 10_000_001n]) {
-      expect(net(grossFromNet(net(amount), terms.feeBps))).toBe(net(amount));
-    }
-  });
-
-  it("is the identity with no fee", () => {
-    expect(grossFromNet(777n, 0)).toBe(777n);
-  });
-});
 
 describe("addTrade", () => {
   it("tallies volume, trades, sides per line and the driver fee", () => {
     let s = emptyStats(4, true);
-    s = addTrade(s, "a:0", { nonce: 4, market: 0, side: "yes", net: net(5_000_000n) }, terms);
-    s = addTrade(s, "b:2", { nonce: 4, market: 2, side: "no", net: net(1_000_000n) }, terms);
+    s = addTrade(s, "a:0", { nonce: 4, market: 0, side: "yes", amount: 5_000_000n }, terms);
+    s = addTrade(s, "b:2", { nonce: 4, market: 2, side: "no", amount: 1_000_000n }, terms);
     expect(s.trades).toBe(2);
     expect(s.volume).toBe(6_000_000n);
     expect(s.driverFee).toBe(25_000n + 5_000n);
@@ -37,21 +17,21 @@ describe("addTrade", () => {
   });
 
   it("counts a repeated event once", () => {
-    const t = { nonce: 4, market: 1, side: "yes" as const, net: net(1_000_000n) };
+    const t = { nonce: 4, market: 1, side: "yes" as const, amount: 1_000_000n };
     const once = addTrade(emptyStats(4, true), "a:1", t, terms);
     expect(addTrade(once, "a:1", t, terms)).toBe(once);
   });
 
   it("ignores trades from an older run", () => {
     const s = emptyStats(5, true);
-    expect(addTrade(s, "x:0", { nonce: 4, market: 0, side: "no", net: 10n }, terms)).toBe(s);
+    expect(addTrade(s, "x:0", { nonce: 4, market: 0, side: "no", amount: 10n }, terms)).toBe(s);
   });
 
   it("starts a partial tally when a newer run's trade arrives first", () => {
     const s = addTrade(
       emptyStats(4, true),
       "x:0",
-      { nonce: 6, market: 0, side: "no", net: net(1_000_000n) },
+      { nonce: 6, market: 0, side: "no", amount: 1_000_000n },
       terms,
     );
     expect(s.nonce).toBe(6);
