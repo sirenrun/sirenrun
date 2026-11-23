@@ -19,6 +19,22 @@ const toneOf = (v: bigint) =>
  * The results card after a run: lines passed, the driver's take and the viewer's P/L. It stays
  * up after the channel goes idle, until it is closed or the next run starts.
  */
+/**
+ * Where the forfeited part of the bond went. It covers what BUST won on the lines the bust
+ * closed, then refunds RIDE holders on those lines; with no RIDE holders it stays with the house.
+ */
+function bondText(d: { bondLost: bigint; bondToRide: bigint; bondToHouse: bigint }): string {
+  if (d.bondLost === 0n) return "Bond returned in full.";
+  const lost = `${formatTokenAmount(d.bondLost)} of the bond covered BUST winnings`;
+  if (d.bondToHouse === 0n) {
+    return `${lost} and went back to fans who bet RIDE on you; the rest came back.`;
+  }
+  if (d.bondToRide === 0n) {
+    return `${lost}. Nobody bet RIDE on those lines, so it went to the house; the rest came back.`;
+  }
+  return `${lost}: ${formatTokenAmount(d.bondToRide)} went back to fans who bet RIDE on you and ${formatTokenAmount(d.bondToHouse)} to the house. The rest came back.`;
+}
+
 export function RunResults() {
   const { publicKey } = useWallet();
   const status = useArena((s) => s.status);
@@ -95,9 +111,7 @@ export function RunResults() {
           </dd>
           <dt className="col-span-2 text-xs text-muted">
             Earned {formatTokenAmount(summary.driver.fees)} in trading fees.{" "}
-            {summary.driver.bondLost === 0n
-              ? "Bond returned in full."
-              : `${formatTokenAmount(summary.driver.bondLost)} of the bond paid out BUST winnings (to the fans who backed you); the rest came back.`}
+            {bondText(summary.driver)}
             {summary.driver.nitro > 0n && ` Nitro cost ${formatTokenAmount(summary.driver.nitro)}.`}
           </dt>
           {summary.you !== null && (

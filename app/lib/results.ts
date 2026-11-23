@@ -29,6 +29,10 @@ export interface RunSummary {
     fees: bigint;
     /** Part of the bond that covered BUST winnings; the rest came back. */
     bondLost: bigint;
+    /** Of `bondLost`, what was refunded to RIDE holders on the busted lines. */
+    bondToRide: bigint;
+    /** Of `bondLost`, what went to the house because those lines had too few RIDE holders. */
+    bondToHouse: bigint;
     /** Nitro fees paid, one per charge fired. */
     nitro: bigint;
     /** Fees minus the entry fee, the part of the bond lost and nitro. */
@@ -76,6 +80,13 @@ export function summarizeRun(
   const aborted = statuses.every((s) => s === "void");
   const fees = arena.runnerFees;
   const bondLost = aborted ? 0n : bondForfeited(arena);
+  // Each busted line's share of the forfeit refunds its RIDE holders up to their cost
+  // (`ride_back_bps`); what no RIDE holder can take stays with the house.
+  const refunded = aborted
+    ? 0n
+    : arena.markets.reduce((sum, m) => sum + (m.rideCost * BigInt(m.rideBackBps)) / 10_000n, 0n);
+  const bondToRide = refunded > bondLost ? bondLost : refunded;
+  const bondToHouse = bondLost - bondToRide;
   const nitro = BigInt(NITRO_CHARGES - arena.sim.nitroLeft) * terms.nitroFee;
   const net = aborted ? 0n : fees - terms.entryFee - bondLost - nitro;
 
@@ -97,7 +108,15 @@ export function summarizeRun(
     t: arena.sim.t,
     aborted,
     lines: arena.markets.map((m) => ({ seconds: lineSeconds(m.line), status: m.status })),
-    driver: { address: shortAddress(arena.runner.toBase58()), fees, bondLost, nitro, net },
+    driver: {
+      address: shortAddress(arena.runner.toBase58()),
+      fees,
+      bondLost,
+      bondToRide,
+      bondToHouse,
+      nitro,
+      net,
+    },
     you,
   };
 }

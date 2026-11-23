@@ -12,6 +12,8 @@ const market = (
   status: Market["status"],
   resolvedTick = 0,
   noProfit = 0n,
+  rideCost = 0n,
+  rideBackBps = 0,
 ): Market => ({
   line,
   status,
@@ -21,8 +23,8 @@ const market = (
   houseYes: 0n,
   houseNo: 0n,
   noProfit,
-  rideCost: 0n,
-  rideBackBps: 0,
+  rideCost,
+  rideBackBps,
 });
 
 function arena(over: Partial<Arena> = {}): Arena {
@@ -106,6 +108,44 @@ describe("run results", () => {
       terms,
     );
     expect(capped.driver.bondLost).toBe(25n * T);
+  });
+
+  it("says where the forfeit went: RIDE holders first, the rest to the house", () => {
+    // 90 s owed BUST 4; RIDE paid 10 there and gets 40% back (4). All to RIDE.
+    const toRide = summarizeRun(
+      arena({
+        markets: [
+          market(300, "yes", 300),
+          market(600, "yes", 600),
+          market(900, "no", 640, 4n * T, 10n * T, 4_000),
+        ],
+      }),
+      [],
+      terms,
+    );
+    expect(toRide.driver).toMatchObject({ bondLost: 4n * T, bondToRide: 4n * T, bondToHouse: 0n });
+    // Same forfeit, nobody held RIDE: it all stays with the house (the run in the report).
+    const toHouse = summarizeRun(
+      arena({
+        markets: [market(300, "yes", 300), market(600, "yes", 600), market(900, "no", 640, 4n * T)],
+      }),
+      [],
+      terms,
+    );
+    expect(toHouse.driver).toMatchObject({ bondLost: 4n * T, bondToRide: 0n, bondToHouse: 4n * T });
+    // RIDE paid only 1 and is refunded in full; the other 3 goes to the house.
+    const split = summarizeRun(
+      arena({
+        markets: [
+          market(300, "yes", 300),
+          market(600, "yes", 600),
+          market(900, "no", 640, 4n * T, T, 10_000),
+        ],
+      }),
+      [],
+      terms,
+    );
+    expect(split.driver).toMatchObject({ bondToRide: T, bondToHouse: 3n * T });
   });
 
   it("calls an aborted run even for everyone", () => {
