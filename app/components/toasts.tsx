@@ -3,7 +3,7 @@
 import { useToasts } from "../stores/toast";
 
 const TONE = {
-  good: "border-neon-pink/40",
+  good: "border-up/50",
   bad: "border-amber/50",
   info: "border-white/15",
 } as const;

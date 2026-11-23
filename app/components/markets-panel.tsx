@@ -36,7 +36,8 @@ import { useUi } from "../stores/ui";
 import { RunStatsCard } from "./run-stats-card";
 
 /** Line colours, shared by the rows and the price chart. */
-export const LINE_COLOURS = ["#22e1ff", "#ff2e88", "#ffb020"] as const;
+/** Per-line identity colours. Green and pink are kept out: they mean RIDE/BUST and win/loss. */
+export const LINE_COLOURS = ["#22e1ff", "#a78bfa", "#ffb020"] as const;
 const ARROW = { up: "▲", down: "▼", flat: "" } as const;
 
 /** The arena as of the last poll. Prices change every tick; 4 renders a second is plenty. */
@@ -117,8 +118,8 @@ function MarketRow(props: {
         onClick={() => void buy(view.index, side, amount)}
         className={`flex flex-1 flex-col items-center rounded-md border px-2 py-1.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${
           side === "yes"
-            ? "border-neon-pink/50 bg-neon-pink/10 enabled:hover:bg-neon-pink/25 enabled:hover:shadow-[0_0_18px_-6px_var(--color-neon-pink)]"
-            : "border-neon-cyan/50 bg-neon-cyan/10 enabled:hover:bg-neon-cyan/25 enabled:hover:shadow-[0_0_18px_-6px_var(--color-neon-cyan)]"
+            ? "border-up/50 bg-up/10 enabled:hover:bg-up/25 enabled:hover:shadow-[0_0_18px_-6px_var(--color-up)]"
+            : "border-down/50 bg-down/10 enabled:hover:bg-down/25 enabled:hover:shadow-[0_0_18px_-6px_var(--color-down)]"
         }`}
       >
         <span>
@@ -143,16 +144,14 @@ function MarketRow(props: {
         </span>
         {view.result !== null ? (
           <span
-            className={`text-sm font-semibold ${view.status === "yes" ? "text-neon-pink" : view.status === "no" ? "text-neon-cyan" : "text-muted"}`}
+            className={`text-sm font-semibold ${view.status === "yes" ? "text-up" : view.status === "no" ? "text-down" : "text-muted"}`}
           >
             {view.result}
           </span>
         ) : (
           <span className="text-sm tabular-nums text-muted">
             RIDE {percent(view.ride)}{" "}
-            <span className={trend === "up" ? "text-neon-pink" : "text-neon-cyan"}>
-              {ARROW[trend]}
-            </span>
+            <span className={trend === "up" ? "text-up" : "text-down"}>{ARROW[trend]}</span>
           </span>
         )}
       </div>
@@ -177,7 +176,7 @@ function Positions({ arena }: { arena: Arena }) {
   if (rows.length === 0) return null;
   const tone = {
     open: "text-text",
-    won: "text-neon-pink",
+    won: "text-up",
     lost: "text-muted",
     refund: "text-amber",
     expired: "text-muted",
@@ -223,21 +222,19 @@ export function Ticker() {
       </div>
       {/* Money split between the two sides across the trades shown. */}
       <div className="mt-2 flex h-1.5 overflow-hidden rounded-full" aria-hidden>
-        <div className="bg-neon-pink" style={{ width: `${ridePct}%` }} />
-        <div className="flex-1 bg-neon-cyan" />
+        <div className="bg-up" style={{ width: `${ridePct}%` }} />
+        <div className="flex-1 bg-down" />
       </div>
       <div className="mt-1 flex justify-between text-[11px] tabular-nums">
-        <span className="text-neon-pink">RIDE {ridePct}%</span>
-        <span className="text-neon-cyan">BUST {100 - ridePct}%</span>
+        <span className="text-up">RIDE {ridePct}%</span>
+        <span className="text-down">BUST {100 - ridePct}%</span>
       </div>
       <ul className="mt-2 divide-y divide-white/5 text-sm tabular-nums" aria-live="polite">
         {ticker.map((t) => (
           <li key={t.key} className="flex items-center gap-2 py-1.5">
             <span
               className={`w-12 rounded px-1.5 py-0.5 text-center text-[11px] font-bold ${
-                t.side === "yes"
-                  ? "bg-neon-pink/15 text-neon-pink"
-                  : "bg-neon-cyan/15 text-neon-cyan"
+                t.side === "yes" ? "bg-up/15 text-up" : "bg-down/15 text-down"
               }`}
             >
               {SIDE_LABEL[t.side]}
