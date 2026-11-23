@@ -10,8 +10,11 @@ import { TICK_MS } from "@sirenrun/sim";
  * network rather than jumping, and blends between the snapshots on either side of it.
  */
 
-/** How far behind the newest tick to render, in ticks. One tick hides normal jitter. */
-export const RENDER_DELAY_TICKS = 1;
+/**
+ * How far behind the newest tick to render, in ticks. Two ticks (200 ms) ride out the gaps a
+ * weak wifi or mobile link puts between websocket updates; one tick froze the car on those.
+ */
+export const RENDER_DELAY_TICKS = 2;
 /** Further than this from the target, the clock jumps instead of easing (e.g. tab resumed). */
 const SNAP_TICKS = 8;
 /** Time constant of the drift correction. */
