@@ -41,8 +41,8 @@ export const PARTNER_FILL: Record<Partner, boolean> = {
   superteamNepal: true,
 };
 
-/** Twelve boards in all, spread evenly over the longest possible run. */
-export const BILLBOARD_COUNT = 12;
+/** Twenty boards in all, spread evenly over the longest possible run (one every 375 m). */
+export const BILLBOARD_COUNT = 20;
 /** Metres of road a run can cover: top speed for every live tick (nitro runs are rare extras). */
 export const COURSE_M = SPEED_MAX * MAX_LIVE_TICKS * Z_SCALE;
 export const BILLBOARD_SPACING = COURSE_M / BILLBOARD_COUNT;
@@ -55,8 +55,8 @@ export interface BillboardSlot {
 }
 
 /**
- * Fixed boards, not recycled: board i stands halfway into the i-th twelfth of the course, the
- * sides alternate and the logos cycle, so every logo gets four boards on both sides.
+ * Fixed boards, not recycled: board i stands halfway into the i-th twentieth of the course, the
+ * sides alternate and the logos cycle, so every logo gets six or seven boards on both sides.
  */
 export function billboardLayout(): BillboardSlot[] {
   return Array.from({ length: BILLBOARD_COUNT }, (_, i) => ({
