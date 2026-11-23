@@ -4,6 +4,7 @@ import { useEffect, useMemo } from "react";
 import { CanvasTexture, SRGBColorSpace } from "three";
 import {
   PANEL_SIZE,
+  PARTNER_FILL,
   PARTNER_FRAME,
   PARTNER_LOGOS,
   PARTNERS,
@@ -39,7 +40,26 @@ function panelTexture(partner: Partner): CanvasTexture {
     ctx.strokeStyle = PARTNER_FRAME[partner];
     ctx.lineWidth = 14;
     ctx.strokeRect(10, 10, TEX_W - 20, TEX_H - 20);
-    if (logo !== null && logo.naturalWidth > 0) {
+    if (logo !== null && logo.naturalWidth > 0 && PARTNER_FILL[partner]) {
+      // Full-bleed logo: cover the area inside the frame, cropping evenly if aspects differ.
+      const inset = 17;
+      const boxW = TEX_W - inset * 2;
+      const boxH = TEX_H - inset * 2;
+      const scale = Math.max(boxW / logo.naturalWidth, boxH / logo.naturalHeight);
+      const sw = boxW / scale;
+      const sh = boxH / scale;
+      ctx.drawImage(
+        logo,
+        (logo.naturalWidth - sw) / 2,
+        (logo.naturalHeight - sh) / 2,
+        sw,
+        sh,
+        inset,
+        inset,
+        boxW,
+        boxH,
+      );
+    } else if (logo !== null && logo.naturalWidth > 0) {
       // Fit the logo inside the frame with margin, keeping its aspect.
       const maxW = TEX_W * 0.78;
       const maxH = TEX_H * 0.62;

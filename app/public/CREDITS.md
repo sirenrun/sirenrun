@@ -25,4 +25,4 @@ with. Each logo is a trademark of its owner and is used under that owner's brand
 - `partners/solana-mark.svg`: Solana logo mark, from the Solana Foundation's brand assets
   (https://solana.com/branding).
 - `partners/magicblock-mark.svg`: MagicBlock icon, from https://www.magicblock.xyz.
-- `partners/superteam-nepal.png`: Superteam Nepal logo, from https://np.superteam.fun.
+- `partners/superteam-nepal.jpg`: Superteam Nepal logo mark, supplied by the project team.
