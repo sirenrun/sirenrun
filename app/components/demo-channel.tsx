@@ -1,7 +1,7 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { Hud } from "../game/Hud";
 import type { DemoOptions } from "../game/demo";
 import { useMarketFeed } from "../lib/use-market-feed";
@@ -34,16 +34,21 @@ function optionsFromUrl(): DemoOptions {
   };
 }
 
+const noSubscribe = () => () => {};
+
 /** An offline bot run in the real scene and HUD. Nothing here touches the chain. */
 export function DemoChannel() {
   const demo = useArena((s) => s.demo);
   const status = useArena((s) => s.status);
-  const [driverView, setDriverView] = useState(false);
+  // The URL does not change while the page is open, so there is nothing to subscribe to; the
+  // server render (and hydration) sees the trading layout.
+  const driverView = useSyncExternalStore(
+    noSubscribe,
+    () => new URLSearchParams(window.location.search).get("view") === "driver",
+    () => false,
+  );
 
-  useEffect(() => {
-    setDriverView(new URLSearchParams(window.location.search).get("view") === "driver");
-    return demo(optionsFromUrl());
-  }, [demo]);
+  useEffect(() => demo(optionsFromUrl()), [demo]);
   useMarketFeed(null);
 
   return (

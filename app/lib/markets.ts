@@ -1,5 +1,4 @@
 import {
-  formatTokenAmount,
   previewClaim,
   priceYes,
   type Arena,
