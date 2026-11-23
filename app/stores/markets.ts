@@ -21,6 +21,7 @@ import {
   appendHistory,
   friendlyError,
   lineSeconds,
+  pushTicker,
   tickerItem,
   type PriceHistory,
   type TickerItem,
@@ -97,12 +98,12 @@ export const useMarkets = create<MarketsState>((set, get) => {
       const stopEvents = subscribeEvents(chain().er, (event, signature) => {
         if (event.name !== "Trade" || !event.data.arena.equals(address)) return;
         const lines = useArena.getState().latest?.markets.map((m) => m.line) ?? [];
-        const item = tickerItem(signature, event.data, lines);
+        const item = tickerItem(signature, event.data, lines, Date.now());
         // Before the config loads, fees count as zero: volume reads slightly low, never high.
         const config = useBalance.getState().config;
         const terms = { feeBps: config?.feeBps ?? 0, runnerFeeBps: config?.runnerFeeBps ?? 0 };
         set({
-          ticker: [item, ...get().ticker.filter((t) => t.key !== item.key)].slice(0, TICKER_LENGTH),
+          ticker: pushTicker(get().ticker, item, TICKER_LENGTH),
           stats: addTrade(get().stats, item.key, event.data, terms),
         });
       });

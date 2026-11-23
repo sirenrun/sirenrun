@@ -175,23 +175,53 @@ function scaleBy(amount: bigint, p: number): bigint {
 
 export interface TickerItem {
   key: string;
-  text: string;
+  /** The run this trade belongs to; the feed only ever shows one run. */
+  nonce: number;
   side: Side;
+  /** Line length in seconds, or null if the line was not known when the trade arrived. */
+  seconds: number | null;
+  /** Amount after fees, as the event reports it. */
+  net: bigint;
+  /** `Date.now()` when the trade arrived, for "3s ago". */
+  at: number;
 }
 
-/** One line of the trade ticker: who bought what, never who (the event carries no trader). */
+/** One trade in the feed: what was bought on which line, never who (the event carries no trader). */
 export function tickerItem(
   signature: string,
-  trade: { market: number; side: Side; net: bigint },
+  trade: { nonce: number; market: number; side: Side; net: bigint },
   lines: number[],
+  at: number,
 ): TickerItem {
   const line = lines[trade.market];
-  const seconds = line === undefined ? "?" : String(lineSeconds(line));
   return {
     key: `${signature}:${trade.market}`,
-    text: `${SIDE_LABEL[trade.side]} ${seconds}s · ${formatTokenAmount(trade.net)} tUSDC`,
+    nonce: trade.nonce,
     side: trade.side,
+    seconds: line === undefined ? null : lineSeconds(line),
+    net: trade.net,
+    at,
   };
+}
+
+/**
+ * Adds a trade to the newest-first feed. A trade from a newer run clears the feed, so trades
+ * from different runs never mix; late trades from an older run are dropped.
+ */
+export function pushTicker(feed: TickerItem[], item: TickerItem, limit: number): TickerItem[] {
+  const current = feed[0]?.nonce;
+  if (current !== undefined && item.nonce < current) return feed;
+  const base = current !== undefined && item.nonce > current ? [] : feed;
+  if (base.some((t) => t.key === item.key)) return feed;
+  return [item, ...base].slice(0, limit);
+}
+
+/** "now", "12s", "3m": compact age for the feed. */
+export function ago(at: number, now: number): string {
+  const s = Math.max(0, Math.floor((now - at) / 1000));
+  if (s < 2) return "now";
+  if (s < 60) return `${s}s`;
+  return `${Math.floor(s / 60)}m`;
 }
 
 const FRIENDLY: Record<string, string> = {
