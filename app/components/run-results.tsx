@@ -12,8 +12,7 @@ import { useUi } from "../stores/ui";
 import { SaveClip } from "./save-clip";
 
 const signed = (v: bigint) => `${v > 0n ? "+" : ""}${formatTokenAmount(v)}`;
-const toneOf = (v: bigint) =>
-  v > 0n ? "text-neon-pink" : v < 0n ? "text-police-red" : "text-muted";
+const toneOf = (v: bigint) => (v > 0n ? "text-up" : v < 0n ? "text-down" : "text-muted");
 
 /**
  * The results card after a run: lines passed, the driver's take and the viewer's P/L. It stays
@@ -94,7 +93,7 @@ export function RunResults() {
           <li key={l.seconds} className="rounded-md bg-white/[0.04] py-1.5">
             <span className="block text-xs text-muted">{l.seconds}s</span>
             <span
-              className={`font-semibold ${l.status === "yes" ? "text-neon-pink" : l.status === "no" ? "text-neon-cyan" : "text-muted"}`}
+              className={`font-semibold ${l.status === "yes" ? "text-up" : l.status === "no" ? "text-down" : "text-muted"}`}
             >
               {l.status === "yes" ? "RIDE ✓" : l.status === "no" ? "BUST ✓" : "void"}
             </span>

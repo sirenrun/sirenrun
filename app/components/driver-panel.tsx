@@ -40,20 +40,20 @@ export function DriverPanel() {
                 </span>
                 <span className="text-sm font-semibold tabular-nums">
                   {v.open ? (
-                    <span className="text-neon-pink">RIDE {percent(v.ride)}</span>
+                    <span className="text-up">RIDE {percent(v.ride)}</span>
                   ) : v.status === "yes" ? (
-                    <span className="text-neon-pink">Made it</span>
+                    <span className="text-up">Made it</span>
                   ) : v.status === "no" ? (
-                    <span className="text-neon-cyan">Busted</span>
+                    <span className="text-down">Busted</span>
                   ) : (
                     <span className="text-muted">Void</span>
                   )}
                 </span>
               </div>
               {v.open && (
-                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-neon-cyan/30">
+                <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-down/30">
                   <div
-                    className="h-full bg-neon-pink transition-[width] duration-300"
+                    className="h-full bg-up transition-[width] duration-300"
                     style={{ width: percent(v.ride) }}
                   />
                 </div>

@@ -214,8 +214,8 @@ export function Hud({ channel }: { channel: number }) {
                 className="group absolute -top-1 -translate-x-1/2"
                 style={{ left: `${(line / RAIL_END) * 100}%` }}
               >
-                <div className="h-3.5 w-0.5 bg-text/60 group-data-[status=no]:bg-police-red group-data-[status=yes]:bg-neon-pink group-data-[status=void]:bg-muted" />
-                <div className="mt-1 -translate-x-1/3 text-xs font-semibold text-muted group-data-[status=yes]:text-neon-pink group-data-[status=no]:text-police-red">
+                <div className="h-3.5 w-0.5 bg-text/60 group-data-[status=no]:bg-down group-data-[status=yes]:bg-up group-data-[status=void]:bg-muted" />
+                <div className="mt-1 -translate-x-1/3 text-xs font-semibold text-muted group-data-[status=yes]:text-up group-data-[status=no]:text-down">
                   {lineLabel(line)}
                 </div>
               </div>
@@ -309,7 +309,7 @@ export function Hud({ channel }: { channel: number }) {
       {/* Centre: line crossed banner */}
       <div
         ref={bannerRef}
-        className="absolute inset-x-0 top-[22%] mx-auto hidden w-fit rounded-md bg-neon-pink/90 px-6 py-2 text-3xl font-extrabold italic text-white"
+        className="absolute inset-x-0 top-[22%] mx-auto hidden w-fit rounded-md bg-up/90 px-6 py-2 text-3xl font-extrabold italic text-bg"
       />
 
       {/* Centre: BUSTED stamp */}

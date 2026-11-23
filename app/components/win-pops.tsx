@@ -17,7 +17,7 @@ export function WinPops() {
     >
       {pops.map((p) => (
         <div key={p.id} className="win-pop flex flex-col items-center">
-          <span className="font-display text-6xl font-extrabold italic tabular-nums text-[#3dffa8] drop-shadow-[0_0_24px_rgba(61,255,168,0.55)] sm:text-7xl">
+          <span className="font-display text-6xl font-extrabold italic tabular-nums text-up drop-shadow-[0_0_24px_rgba(61,255,168,0.55)] sm:text-7xl">
             {p.amount}
           </span>
           <span className="mt-1 rounded bg-black/60 px-2 py-0.5 text-sm font-semibold text-text">

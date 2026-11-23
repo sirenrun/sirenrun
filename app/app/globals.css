@@ -9,6 +9,9 @@
   --color-amber: #ffb020;
   --color-police-red: #ff3b3b;
   --color-police-blue: #3b6bff;
+  /* Trading colours: up = RIDE, wins and gains; down = BUST, losses. Brand pink doubles as down. */
+  --color-up: #3dffa8;
+  --color-down: #ff2e88;
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-barlow), var(--font-inter), ui-sans-serif, sans-serif;
   --ease-ui: cubic-bezier(0.22, 1, 0.36, 1);

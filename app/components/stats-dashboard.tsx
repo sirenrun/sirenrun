@@ -9,7 +9,7 @@ import { DayBars } from "./day-bars";
 
 const REFRESH_MS = 30_000;
 
-const TONE = { up: "text-[#3dffa8]", down: "text-neon-pink", flat: "text-muted" } as const;
+const TONE = { up: "text-up", down: "text-down", flat: "text-muted" } as const;
 
 function Tile({ label, value, note }: { label: string; value: string; note?: string }) {
   return (
@@ -159,7 +159,7 @@ export function StatsDashboard() {
             />
             <DayBars
               title="Trading volume per day"
-              colour="#ff2e88"
+              colour="#ffb020"
               data={data.daily.map((d) => ({
                 day: d.day,
                 value: Number(BigInt(d.volume) / 10_000n),

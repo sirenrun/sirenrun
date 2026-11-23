@@ -7,7 +7,7 @@ import { formatUsd, pnlTone } from "../lib/money";
 import { fetchWalletStats, type WalletStats } from "../lib/stats-client";
 import { useArena } from "../stores/arena";
 
-const TONE = { up: "text-[#3dffa8]", down: "text-neon-pink", flat: "text-muted" } as const;
+const TONE = { up: "text-up", down: "text-down", flat: "text-muted" } as const;
 
 function Row({ label, value, tone }: { label: string; value: string; tone?: string }) {
   return (
