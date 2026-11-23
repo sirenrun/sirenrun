@@ -3,6 +3,7 @@
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
 import { AdditiveBlending, Euler, Matrix4, Quaternion, Vector3, type InstancedMesh } from "three";
+import { Billboards } from "./Billboards";
 import { frame } from "./frame";
 import { glowTexture } from "./glow";
 import { Guardrails } from "./Guardrails";
@@ -184,6 +185,7 @@ export function Roadside() {
       <Palms />
       <Guardrails />
       <Streetlights />
+      <Billboards />
     </>
   );
 }

@@ -17,3 +17,5 @@ export const LAMP_SPACING = 24;
 export const PALM_MIN_X = ROAD_HALF + 4;
 /** Guardrail posts repeat this often; every third one carries a reflector. */
 export const RAIL_POST_SPACING = 4;
+/** Billboards stand past the palms so they never cover the road or the cars on it. */
+export const BILLBOARD_X = PALM_MIN_X + 9;
