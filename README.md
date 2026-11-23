@@ -6,14 +6,15 @@
 </p>
 
 <p align="center">
-  <img src=".github/assets/run.gif" alt="A run on the Neon Key causeway: the car passes the 30 s line and a Superteam Nepal billboard, crashes, and the police box it in at 0:39.1" width="480">
+  <img src=".github/assets/run.gif" alt="A run on the Neon Key causeway: the car passes partner billboards and the 30 s line (RIDE pays, in green), crashes, and the police box it in at 0:39.1" width="480">
 </p>
 
 A getaway-driving game that runs onchain inside a MagicBlock Ephemeral Rollup.
 
 One player drives and tries to stay ahead of the police. Everyone else trades on how long
 the run lasts, with three markets per run: survives 30 s, 60 s, 90 s. Press **RIDE** if you
-think the driver makes the line, **BUST** if you think the cops get there first.
+think the driver makes the line, **BUST** if you think the cops get there first. As on other
+trading apps, RIDE (the long side), wins and gains are green; BUST and losses are pink.
 
 Markets settle from the game state the moment a line is crossed or the car is caught.
 No oracle and no manual resolution.
