@@ -2,7 +2,7 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
-import { Color, ShaderMaterial, type Mesh } from "three";
+import { Color, ShaderMaterial, Vector3, type Mesh } from "three";
 import { frame } from "./frame";
 import { FOG_FAR, FOG_NEAR, NEON } from "./palette";
 import { LAYERS } from "./skyline";
@@ -124,7 +124,9 @@ export function Water() {
           uGlow: { value: new Color(NEON.skyGlow) },
           uSun: { value: new Color(NEON.sunTop) },
           uFog: { value: new Color(NEON.fog) },
-          uCamera: { value: null },
+          // A real vector from the start: <Preload> may compile this material before the
+          // first frame sets the camera, and a null vec3 uniform crashes the upload.
+          uCamera: { value: new Vector3() },
           uCityA: { value: new Color("#ffcf8a") },
           uCityB: { value: new Color(NEON.pink) },
           uCityC: { value: new Color(NEON.cyan) },

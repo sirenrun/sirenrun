@@ -2,7 +2,7 @@
 
 import { useFrame } from "@react-three/fiber";
 import { useMemo, useRef } from "react";
-import { Color, ShaderMaterial, Vector4, type Mesh } from "three";
+import { Color, ShaderMaterial, Vector3, Vector4, type Mesh } from "three";
 import { frame } from "./frame";
 import { policeLights, reflections } from "./lights";
 import { FOG_FAR, FOG_NEAR, hot, NEON } from "./palette";
@@ -171,7 +171,9 @@ export function Road() {
           uFogColor: { value: new Color(NEON.fog) },
           uFogNear: { value: FOG_NEAR },
           uFogFar: { value: FOG_FAR },
-          uCamera: { value: null },
+          // A real vector from the start: <Preload> may compile this material before the
+          // first frame sets the camera, and a null vec3 uniform crashes the upload.
+          uCamera: { value: new Vector3() },
           uLampX: { value: LAMP_HEAD_X },
           uSun: { value: new Color(NEON.sunBottom).lerp(new Color(NEON.skyGlow), 0.5) },
           uTailColor: { value: hot(NEON.red, 1.1) },

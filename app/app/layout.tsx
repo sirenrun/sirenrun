@@ -29,7 +29,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       className={`${inter.variable} ${display.variable}`}
       data-scroll-behavior="smooth"
     >
-      <body className="font-sans antialiased">
+      {/* Extensions (e.g. ColorZilla) add attributes to <body> before React hydrates. This
+          silences only the attribute check on <body> itself, not its children. */}
+      <body className="font-sans antialiased" suppressHydrationWarning>
         <Providers>
           <Header />
           {children}

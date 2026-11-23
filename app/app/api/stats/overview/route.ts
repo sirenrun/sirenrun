@@ -14,8 +14,14 @@ export async function GET(): Promise<Response> {
   if (sql === null) return unavailable();
   try {
     const now = Date.now();
-    if (cached === null || now - cached.at > TTL_MS)
-      cached = { at: now, body: await overview(sql) };
+    if (cached === null || now - cached.at > TTL_MS) {
+      try {
+        cached = { at: now, body: await overview(sql) };
+      } catch (e) {
+        // A slow or dropped database connection: keep showing the last good numbers.
+        if (cached === null) throw e;
+      }
+    }
     return Response.json(cached.body, {
       headers: { "Cache-Control": "public, s-maxage=15, stale-while-revalidate=60" },
     });
