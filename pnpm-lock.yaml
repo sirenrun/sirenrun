@@ -131,6 +131,9 @@ importers:
       '@react-three/postprocessing':
         specifier: 'catalog:'
         version: 3.2.2(@react-three/fiber@9.8.2(@types/react@19.3.0)(react-dom@19.3.1(react@19.3.1))(react-native@0.88.1(@babel/core@7.29.13)(@types/react@19.3.0)(bufferutil@4.2.0)(react@19.3.1)(utf-8-validate@6.0.6))(react@19.3.1)(three@0.187.0))(@types/three@0.187.0)(postprocessing@6.39.6(three@0.187.0))(react@19.3.1)(three@0.187.0)
+      '@sirenrun/indexer':
+        specifier: workspace:*
+        version: link:../indexer
       '@sirenrun/sdk':
         specifier: workspace:*
         version: link:../packages/sdk

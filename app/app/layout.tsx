@@ -5,6 +5,8 @@ import { GameCursor } from "../components/game-cursor";
 import { Header } from "../components/header";
 import { Providers } from "../components/providers";
 import { Toasts } from "../components/toasts";
+import { VisitTracker } from "../components/visit-tracker";
+import { WinPops } from "../components/win-pops";
 import "./globals.css";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
@@ -32,6 +34,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
           <Header />
           {children}
           <Toasts />
+          <WinPops />
+          <VisitTracker />
           <GameCursor />
         </Providers>
       </body>

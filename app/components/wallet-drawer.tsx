@@ -11,6 +11,7 @@ import { useSession } from "../stores/session";
 import { useUi } from "../stores/ui";
 import { AmountForm } from "./amount-form";
 import { FaucetButton } from "./faucet-button";
+import { WalletStatsPanel } from "./wallet-stats";
 
 export function WalletDrawer() {
   const { drawerOpen, setDrawer } = useUi();
@@ -67,6 +68,11 @@ export function WalletDrawer() {
                 ? "On Solana. Deposit to move it into the game."
                 : "No game balance yet."}
           </p>
+        </section>
+
+        <section className="space-y-2 border-t border-white/5 pt-4">
+          <p className="text-sm font-medium">Your stats</p>
+          <WalletStatsPanel wallet={signer.publicKey.toBase58()} />
         </section>
 
         <section className="space-y-2">

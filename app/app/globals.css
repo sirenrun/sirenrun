@@ -249,3 +249,43 @@ body {
     transform: scale(1) rotate(-8deg);
   }
 }
+
+/* Payout burst: rises and fades. Reduced motion keeps it still and only fades. */
+@keyframes win-pop {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.85);
+  }
+  12% {
+    opacity: 1;
+    transform: translateY(0) scale(1.06);
+  }
+  22% {
+    transform: translateY(0) scale(1);
+  }
+  75% {
+    opacity: 1;
+    transform: translateY(-14px);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-36px);
+  }
+}
+.win-pop {
+  animation: win-pop 2.6s ease-out forwards;
+}
+@media (prefers-reduced-motion: reduce) {
+  .win-pop {
+    animation: win-pop-fade 2.6s linear forwards;
+  }
+  @keyframes win-pop-fade {
+    0%,
+    80% {
+      opacity: 1;
+    }
+    100% {
+      opacity: 0;
+    }
+  }
+}

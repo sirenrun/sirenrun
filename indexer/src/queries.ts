@@ -295,3 +295,20 @@ export async function recordVisit(sql: Sql, id: string, wallet: string | null): 
       on conflict (address) do update set last_seen = now()`;
   }
 }
+
+export interface RunTrade {
+  /** `signature:market`, the same key the app's live feed uses, so the two merge without doubles. */
+  key: string;
+  market: number;
+  side: "yes" | "no";
+  amount: string;
+}
+
+/** Every trade of one run so far, for a viewer who joins mid-run to rebuild exact totals. */
+export async function runTrades(sql: Sql, arena: number, nonce: number): Promise<RunTrade[]> {
+  const rows = await sql<RunTrade[]>`
+    select signature || ':' || market as key, market::int, side, amount::text
+    from trades where arena = ${arena} and nonce = ${nonce}
+    order by at limit 2000`;
+  return [...rows];
+}

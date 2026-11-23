@@ -84,3 +84,26 @@ export function followRun(
   if (arena.nonce <= stats.nonce) return stats;
   return emptyStats(arena.nonce, arena.status === "staging" && !arena.seedReady);
 }
+
+/**
+ * Folds a run's indexed trades into the live tally. Keys match the live feed's, so trades
+ * seen both ways count once. The result covers the whole run, so it is marked complete.
+ */
+export function mergeTrades(
+  stats: RunStats,
+  nonce: number,
+  trades: readonly { key: string; market: number; side: Side; amount: string }[],
+  terms: FeeTerms,
+): RunStats {
+  if (stats.nonce !== nonce) return stats;
+  let next = stats;
+  for (const t of trades) {
+    next = addTrade(
+      next,
+      t.key,
+      { nonce, market: t.market, side: t.side, amount: BigInt(t.amount) },
+      terms,
+    );
+  }
+  return { ...next, complete: true };
+}

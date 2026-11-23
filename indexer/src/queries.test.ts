@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, it } from "vitest";
 import { apply, connect, migrate, type Sql } from "./db.ts";
-import { overview, recordVisit, runTotals, walletStats } from "./queries.ts";
+import { overview, recordVisit, runTotals, runTrades, walletStats } from "./queries.ts";
 
 /**
  * Runs the real SQL against a throwaway database. Set TEST_DATABASE_URL to a database the
@@ -175,6 +175,13 @@ describe.skipIf(url === undefined)("queries", () => {
       { market: 0, ride: "5000000", bust: "0", trades: 1 },
       { market: 2, ride: "0", bust: "2000000", trades: 1 },
     ]);
+  });
+
+  it("lists one run's trades keyed like the live feed", async () => {
+    const trades = await runTrades(sql, 0, 1);
+    expect(trades).toHaveLength(2);
+    expect(trades).toContainEqual({ key: "t1:0", market: 0, side: "yes", amount: "5000000" });
+    expect(await runTrades(sql, 2, 9)).toEqual([]);
   });
 
   it("counts a repeat visit within 30 minutes once", async () => {

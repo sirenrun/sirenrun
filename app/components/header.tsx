@@ -146,6 +146,12 @@ export function Header() {
           >
             Channels
           </Link>
+          <Link
+            href="/stats"
+            className="hidden text-sm font-semibold text-muted hover:text-text sm:block"
+          >
+            Stats
+          </Link>
         </div>
         <div className="flex items-center gap-2 sm:gap-3">
           <FaucetButton className="hidden md:flex" floatNote />
