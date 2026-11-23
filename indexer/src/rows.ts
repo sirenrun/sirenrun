@@ -62,6 +62,30 @@ export type Write =
  * `arenaIds` maps an arena PDA (base58) to its id. Events for other arenas, and events the
  * stats do not need (seed, line crossed), map to null.
  */
+/** The all-zero key: what a field missing from an older event layout decodes to. */
+const ZERO_KEY = "11111111111111111111111111111111";
+
+/**
+ * True for events written by a program build before the current layout. Decoding such an
+ * event with the current IDL does not fail; the newer fields just come out as zeros, so they
+ * are recognised by those zeros. No real run has no runner, no real trade has no owner, and
+ * every real run posts a bond.
+ */
+export function isOldLayout(event: SirenrunEvent): boolean {
+  switch (event.name) {
+    case "Trade":
+      return event.data.owner.toBase58() === ZERO_KEY || event.data.amount === 0n;
+    case "RunSettled":
+      return event.data.runner.toBase58() === ZERO_KEY;
+    case "RunStarted":
+      return event.data.bond === 0n && event.data.entryFee === 0n;
+    case "NitroUsed":
+      return event.data.runner.toBase58() === ZERO_KEY;
+    default:
+      return false;
+  }
+}
+
 export function toWrite(
   event: SirenrunEvent,
   signature: string,
@@ -69,7 +93,7 @@ export function toWrite(
   arenaIds: ReadonlyMap<string, number>,
 ): Write | null {
   const arena = arenaIds.get(event.data.arena.toBase58());
-  if (arena === undefined) return null;
+  if (arena === undefined || isOldLayout(event)) return null;
   switch (event.name) {
     case "RunStarted":
       return {

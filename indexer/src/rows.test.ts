@@ -1,4 +1,4 @@
-import { Keypair } from "@solana/web3.js";
+import { Keypair, PublicKey } from "@solana/web3.js";
 import type { SirenrunEvent } from "@sirenrun/sdk";
 import { describe, expect, it } from "vitest";
 import { toWrite } from "./rows.ts";
@@ -104,6 +104,59 @@ describe("toWrite", () => {
       toWrite(
         { name: "Claimed", data: { owner: wallet, arena: other, nonce: 1, market: 0, paid: 1n } },
         "x",
+        at,
+        ids,
+      ),
+    ).toBeNull();
+  });
+
+  it("skips events from an older program build, whose new fields decode as zeros", () => {
+    const zero = new PublicKey(new Uint8Array(32));
+    expect(
+      toWrite(
+        {
+          name: "RunSettled",
+          data: {
+            arena,
+            nonce: 10,
+            t: 628,
+            outcomes: ["yes", "yes", "no"],
+            runner: zero,
+            runnerFees: 0n,
+            runnerPaid: 0n,
+          },
+        },
+        "old",
+        at,
+        ids,
+      ),
+    ).toBeNull();
+    expect(
+      toWrite(
+        {
+          name: "Trade",
+          data: {
+            arena,
+            nonce: 10,
+            market: 0,
+            side: "yes",
+            net: 1n,
+            shares: 1n,
+            yesR: 1n,
+            noR: 1n,
+            owner: zero,
+            amount: 0n,
+          },
+        },
+        "old",
+        at,
+        ids,
+      ),
+    ).toBeNull();
+    expect(
+      toWrite(
+        { name: "RunStarted", data: { arena, nonce: 10, runner: wallet, entryFee: 0n, bond: 0n } },
+        "old",
         at,
         ids,
       ),

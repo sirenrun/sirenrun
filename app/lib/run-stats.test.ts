@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { addTrade, emptyStats, followRun } from "./run-stats";
+import { addTrade, emptyStats, followRun, mergeTrades } from "./run-stats";
 
 const terms = { feeBps: 200, runnerFeeBps: 50 };
 
@@ -54,5 +54,29 @@ describe("followRun", () => {
   it("marks a run joined after trading opened as partial", () => {
     const s = followRun(emptyStats(-1, false), { nonce: 4, status: "live", seedReady: true });
     expect(s.complete).toBe(false);
+  });
+});
+
+describe("mergeTrades", () => {
+  it("adds indexed trades once, even if the live feed already counted some", () => {
+    let s = emptyStats(7, false);
+    s = addTrade(s, "a:0", { nonce: 7, market: 0, side: "yes", amount: 5_000_000n }, terms);
+    const merged = mergeTrades(
+      s,
+      7,
+      [
+        { key: "a:0", market: 0, side: "yes", amount: "5000000" },
+        { key: "b:1", market: 1, side: "no", amount: "2000000" },
+      ],
+      terms,
+    );
+    expect(merged.trades).toBe(2);
+    expect(merged.volume).toBe(7_000_000n);
+    expect(merged.complete).toBe(true);
+  });
+
+  it("ignores a response for a run that has already ended", () => {
+    const s = emptyStats(8, false);
+    expect(mergeTrades(s, 7, [{ key: "x:0", market: 0, side: "yes", amount: "1" }], terms)).toBe(s);
   });
 });

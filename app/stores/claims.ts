@@ -10,9 +10,11 @@ import {
 } from "@sirenrun/sdk";
 import { chain } from "../lib/chain";
 import { SIDE_LABEL, friendlyError, lineSeconds } from "../lib/markets";
+import { formatUsd } from "../lib/money";
 import { useBalance } from "./balance";
 import { useSession } from "./session";
 import { useToasts } from "./toast";
+import { useWinPops } from "./win-pop";
 
 /** Entries being claimed, keyed by slot and position, so each is sent once at a time. */
 const claiming = new Set<string>();
@@ -49,6 +51,7 @@ export function claimSettled(arena: Arena, onError?: (message: string) => void):
         const toasts = useToasts.getState();
         if (preview.kind === "win") {
           toasts.push(`${label} paid ${formatTokenAmount(preview.paid)} tUSDC`, "good");
+          useWinPops.getState().push(formatUsd(preview.paid, { sign: true }), label);
         } else if (preview.kind === "refund") {
           toasts.push(`${label} refunded ${formatTokenAmount(preview.paid)} tUSDC`);
         }

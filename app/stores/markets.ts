@@ -26,7 +26,8 @@ import {
   type PriceHistory,
   type TickerItem,
 } from "../lib/markets";
-import { addTrade, emptyStats, followRun, type RunStats } from "../lib/run-stats";
+import { addTrade, emptyStats, followRun, mergeTrades, type RunStats } from "../lib/run-stats";
+import { fetchRunTrades } from "../lib/stats-client";
 import { useArena } from "./arena";
 import { useBalance } from "./balance";
 import { claimSettled } from "./claims";
@@ -81,7 +82,22 @@ export const useMarkets = create<MarketsState>((set, get) => {
         const history = appendHistory(get().history, arena);
         if (history !== get().history) set({ history });
         const stats = followRun(get().stats, arena);
-        if (stats !== get().stats) set({ stats });
+        if (stats !== get().stats) {
+          set({ stats });
+          // Joined after trading opened: fill in the trades this browser missed.
+          if (!stats.complete && id !== null) {
+            const nonce = stats.nonce;
+            void fetchRunTrades(id, nonce).then((trades) => {
+              if (trades === null) return;
+              const config = useBalance.getState().config;
+              const terms = {
+                feeBps: config?.feeBps ?? 0,
+                runnerFeeBps: config?.runnerFeeBps ?? 0,
+              };
+              set({ stats: mergeTrades(get().stats, nonce, trades, terms) });
+            });
+          }
+        }
         if (id !== null) claimSettled(arena, (error) => set({ error }));
       };
       onArena(useArena.getState().latest);
