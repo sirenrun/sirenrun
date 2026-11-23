@@ -47,9 +47,9 @@ describe("Timeline", () => {
 });
 
 describe("PlaybackClock", () => {
-  it("renders one tick behind the newest snapshot", () => {
+  it("renders RENDER_DELAY_TICKS behind the newest snapshot", () => {
     expect(PlaybackClock.target(20, 1_000, 1_000)).toBe(20 - RENDER_DELAY_TICKS);
-    expect(PlaybackClock.target(20, 1_000, 1_050)).toBeCloseTo(19.5);
+    expect(PlaybackClock.target(20, 1_000, 1_050)).toBeCloseTo(20 - RENDER_DELAY_TICKS + 0.5);
     expect(PlaybackClock.target(20, 1_000, 5_000)).toBe(20);
   });
 
@@ -77,7 +77,7 @@ describe("PlaybackClock", () => {
   it("jumps when far behind, e.g. after the tab was hidden", () => {
     const clock = new PlaybackClock();
     clock.advance(16, 20, 0, 0);
-    expect(clock.advance(16, 200, 10_000, 10_000)).toBe(199);
+    expect(clock.advance(16, 200, 10_000, 10_000)).toBe(200 - RENDER_DELAY_TICKS);
   });
 
   it("never runs ahead of the newest snapshot", () => {
