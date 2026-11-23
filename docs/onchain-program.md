@@ -39,9 +39,9 @@ Seeds: `[b"config"]`
 | vault | Pubkey | token account owned by Config PDA |
 | house | Pubkey | wallet that owns the house `Balance` |
 | fee_bps | u16 | total trade fee, 200 = 2% |
-| runner_fee_bps | u16 | part of fee to driver, 100 = 1% |
+| runner_fee_bps | u16 | part of fee to driver, 150 = 1.5% |
 | entry_fee | u64 | e.g. 0.5 tUSDC (500_000) |
-| bond | u64 | e.g. 25 tUSDC; also the cap on what BUST can win per run |
+| bond | u64 | e.g. 10 tUSDC; also the cap on what BUST can win per run |
 | liquidity | u64 | per market, e.g. 50 tUSDC |
 | max_buy | u64 | per trade, e.g. 50 tUSDC |
 | nitro_fee | u64 | charged per nitro charge fired, e.g. 0.5 tUSDC |
@@ -410,17 +410,43 @@ stores them in Postgres for wallet stats and analytics.
 
 ## Run economics
 
-Defaults (set by `scripts/src/init-devnet.ts`, tunable with `update_config`): trade fee 2%
-(1% house, 1% driver), entry 0.5, bond 25, liquidity 50 per market, nitro 0.5 per charge
+Defaults (set by `scripts/src/init-devnet.ts`, changed on a live cluster with
+`scripts/src/update-config.ts`, which calls `update_config`): trade fee 2% (0.5% house,
+1.5% driver), entry 0.5, bond 10, liquidity 50 per market, max buy 50, nitro 0.5 per charge
 fired, opening RIDE prices 85% / 45% / 15% for the 30 / 60 / 90 s lines. tUSDC is treated as
-1 USD.
+1 USD. A run keeps the terms it started with; a config change applies to the next run.
+
+Why bond 10 and a 1.5% driver cut (simulated, 800 runs per setting, mixed driver skill,
+30 fans per run, with and without sharp traders who price every line fairly):
+
+| Setting | Driver per run | Good driver | Volume per run | House per run |
+|---|---|---|---|---|
+| Bond 25, driver 1% (previous) | -19.1 | -12.6 | 325 | +9.4 |
+| Bond 10, driver 1% | -7.5 | -4.1 | 273 | +8.7 |
+| Bond 10, driver 1.5% (current) | -6.1 | -2.2 | 273 | +7.3 |
+| Bond 5, driver 1% | -3.5 | -1.0 | 256 | +8.0 |
+
+Nearly every run ends in a bust, so the bond, not the entry fee, is the driver's real cost.
+A smaller bond also caps BUST sooner (more "BUST is full" refusals, less volume), which is
+why it stops at 10 rather than 5.
+
+### The house
+
+The house is the Balance PDA of `Config.house` (on devnet the admin wallet), delegated to the
+rollup. It funds every run's three pools (3 x `liquidity`), so it is the counterparty to
+every trade, and it earns the entry fee, nitro, its part of the trade fee, any forfeit no
+RIDE holder takes, and the pools' remainder. It loses on a run when traders call it right
+against the opening prices. Under the current terms the model gives the house about
++6 tUSDC per run on average (2 to 4% of volume) but a loss on roughly half of all runs,
+from about -90 in a bad run to +230 in a good one, so it needs a buffer of many runs' pools.
+`start_run` fails with `HouseInsufficient` when the house cannot fund three pools.
 
 Where the money goes:
 
 | Flow | Goes to |
 |---|---|
 | Entry fee | House |
-| Trade fee, 2% of each buy | 1% house, 1% driver (paid at settle) |
+| Trade fee, 2% of each buy | 0.5% house, 1.5% driver (paid at settle) |
 | Nitro, per charge fired | House |
 | Bond, after the run | Driver, minus the forfeit |
 | Forfeit (what BUST won on the busted lines, at most the bond) | RIDE holders on those lines, pro rata to cost, up to their cost; any rest to the house |

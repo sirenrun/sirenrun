@@ -119,7 +119,7 @@ export function StatsDashboard() {
             <Tile
               label="Driver earnings"
               value={formatUsdShort(data.driverEarnings)}
-              note="1% of every trade on their run"
+              note="Their cut of every trade on their run"
             />
             <Tile
               label="Biggest win"
