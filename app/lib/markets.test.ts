@@ -8,6 +8,8 @@ import {
   marketView,
   positionRows,
   tickerItem,
+  pushTicker,
+  ago,
   tradeBlocker,
   trendOf,
   type PriceHistory,
@@ -203,10 +205,38 @@ describe("positions", () => {
 });
 
 describe("ticker and errors", () => {
-  it("names the side and line, not the trader", () => {
-    const item = tickerItem("sig", { market: 1, side: "no", net: 4_200_000n }, [300, 600, 900]);
-    expect(item.text).toBe("BUST 60s · 4.2 tUSDC");
-    expect(item.key).toBe("sig:1");
+  it("records side, line, amount and run, not the trader", () => {
+    const item = tickerItem(
+      "sig",
+      { nonce: 4, market: 1, side: "no", net: 4_200_000n },
+      [300, 600, 900],
+      1_000,
+    );
+    expect(item).toEqual({
+      key: "sig:1",
+      nonce: 4,
+      side: "no",
+      seconds: 60,
+      net: 4_200_000n,
+      at: 1_000,
+    });
+  });
+
+  it("keeps one run in the feed: a newer run clears it, older trades are dropped", () => {
+    const t = (key: string, nonce: number) =>
+      tickerItem(key, { nonce, market: 0, side: "yes", net: 1n }, [300], 0);
+    let feed = pushTicker([], t("a", 3), 12);
+    feed = pushTicker(feed, t("b", 3), 12);
+    expect(feed.map((x) => x.key)).toEqual(["b:0", "a:0"]);
+    expect(pushTicker(feed, t("old", 2), 12)).toBe(feed);
+    expect(pushTicker(feed, t("b", 3), 12)).toBe(feed);
+    expect(pushTicker(feed, t("c", 4), 12).map((x) => x.key)).toEqual(["c:0"]);
+  });
+
+  it("shows trade age compactly", () => {
+    expect(ago(1_000, 1_500)).toBe("now");
+    expect(ago(0, 12_000)).toBe("12s");
+    expect(ago(0, 185_000)).toBe("3m");
   });
 
   it("turns program errors into plain sentences", () => {

@@ -17,6 +17,7 @@ import { useState } from "react";
 import {
   PRESETS,
   SIDE_LABEL,
+  ago,
   marketView,
   percent,
   positionRows,
@@ -203,16 +204,47 @@ function Positions({ arena }: { arena: Arena }) {
   );
 }
 
+/** The trades of one run, newest first: side badge, line, amount after fees, age. */
 export function Ticker() {
   const ticker = useMarkets((s) => s.ticker);
+  const live = useArena((s) => s.status === "staging" || s.status === "live");
+  const now = useNow(1_000);
   if (ticker.length === 0) return null;
+  const ride = ticker.filter((t) => t.side === "yes").reduce((sum, t) => sum + t.net, 0n);
+  const total = ticker.reduce((sum, t) => sum + t.net, 0n);
+  const ridePct = total === 0n ? 50 : Number((ride * 100n) / total);
   return (
-    <section>
-      <h3 className="text-xs font-semibold tracking-widest text-muted uppercase">Trades</h3>
-      <ul className="mt-2 space-y-1 text-sm tabular-nums" aria-live="polite">
+    <section aria-label="Trades">
+      <div className="flex items-baseline justify-between">
+        <h3 className="text-xs font-semibold tracking-widest text-muted uppercase">
+          Trades · {live ? "this run" : "last run"}
+        </h3>
+        <span className="text-xs tabular-nums text-muted">latest {ticker.length}</span>
+      </div>
+      {/* Money split between the two sides across the trades shown. */}
+      <div className="mt-2 flex h-1.5 overflow-hidden rounded-full" aria-hidden>
+        <div className="bg-neon-pink" style={{ width: `${ridePct}%` }} />
+        <div className="flex-1 bg-neon-cyan" />
+      </div>
+      <div className="mt-1 flex justify-between text-[11px] tabular-nums">
+        <span className="text-neon-pink">RIDE {ridePct}%</span>
+        <span className="text-neon-cyan">BUST {100 - ridePct}%</span>
+      </div>
+      <ul className="mt-2 divide-y divide-white/5 text-sm tabular-nums" aria-live="polite">
         {ticker.map((t) => (
-          <li key={t.key} className={t.side === "yes" ? "text-neon-pink" : "text-neon-cyan"}>
-            {t.text}
+          <li key={t.key} className="flex items-center gap-2 py-1.5">
+            <span
+              className={`w-12 rounded px-1.5 py-0.5 text-center text-[11px] font-bold ${
+                t.side === "yes"
+                  ? "bg-neon-pink/15 text-neon-pink"
+                  : "bg-neon-cyan/15 text-neon-cyan"
+              }`}
+            >
+              {SIDE_LABEL[t.side]}
+            </span>
+            <span className="text-muted">{t.seconds === null ? "line" : `${t.seconds}s line`}</span>
+            <span className="ml-auto font-semibold">{formatTokenAmount(t.net)}</span>
+            <span className="w-9 text-right text-[11px] text-muted">{ago(t.at, now)}</span>
           </li>
         ))}
       </ul>
