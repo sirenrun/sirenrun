@@ -7,6 +7,7 @@ import { useArena } from "../stores/arena";
 import { useMarketFeed } from "../lib/use-market-feed";
 import { DrivePanel, DriverControls, useIsDriver } from "./drive-panel";
 import { DriverPanel } from "./driver-panel";
+import { PositionsOverlay } from "./positions-overlay";
 import { GameAudio } from "./game-audio";
 import { SaveClip } from "./save-clip";
 import { MarketsPanel } from "./markets-panel";
@@ -39,6 +40,7 @@ export function Channel({ arena }: { arena: number }) {
       <div className="relative min-h-0 min-w-0 flex-1">
         <Scene className="absolute inset-0" record />
         {status !== null && status !== "idle" && <Hud channel={arena} />}
+        {!isDriver && <PositionsOverlay />}
         <DriverControls />
         <DrivePanel />
         <RunResults />

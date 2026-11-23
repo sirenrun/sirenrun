@@ -1,5 +1,6 @@
 import {
   bondForfeited,
+  formatTokenAmount,
   previewClaim,
   type Arena,
   type MarketStatus,
@@ -137,4 +138,26 @@ export function summarizeRun(
     },
     you,
   };
+}
+
+/**
+ * One line to share a finished run: the driver's time and result, or the viewer's trading
+ * result, or just the run. Amounts in tUSDC with a sign, like the results card.
+ */
+export function shareText(
+  summary: Pick<RunSummary, "t" | "aborted" | "driver" | "you">,
+  channel: number,
+  driving: boolean,
+  clock: (t: number) => string,
+): string {
+  const signed = (v: bigint) => `${v > 0n ? "+" : ""}${formatTokenAmount(v)}`;
+  const time = clock(summary.t);
+  if (summary.aborted) return `A SIRENRUN run on CH-${channel} was voided and refunded.`;
+  if (driving) {
+    return `I outran the police for ${time} on SIRENRUN CH-${channel} (${signed(summary.driver.net)} tUSDC). Ride or bust.`;
+  }
+  if (summary.you !== null) {
+    return `I traded a SIRENRUN getaway that lasted ${time} on CH-${channel} and made ${signed(summary.you.pnl)} tUSDC.`;
+  }
+  return `A SIRENRUN getaway just lasted ${time} on CH-${channel}.`;
 }

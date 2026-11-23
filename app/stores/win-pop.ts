@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { BUZZ_WIN, buzz } from "../lib/haptics";
 
 export interface WinPop {
   id: number;
@@ -22,6 +23,7 @@ export const useWinPops = create<WinPopState>((set, get) => ({
   pops: [],
   push: (amount, label) => {
     const id = nextId++;
+    buzz(BUZZ_WIN);
     set({ pops: [...get().pops, { id, amount, label }].slice(-MAX) });
     setTimeout(() => set({ pops: get().pops.filter((p) => p.id !== id) }), LIFETIME_MS);
   },

@@ -34,6 +34,7 @@ import { useMarkets } from "../stores/markets";
 import { useSession } from "../stores/session";
 import { useUi } from "../stores/ui";
 import { RunStatsCard } from "./run-stats-card";
+import { TradingGuide } from "./trading-guide";
 
 /** Line colours, shared by the rows and the price chart. */
 /** Per-line identity colours. Green and pink are kept out: they mean RIDE/BUST and win/loss. */
@@ -334,6 +335,7 @@ export function MarketsPanel({ demo = false }: { demo?: boolean }) {
           <h2 className="font-display text-2xl font-extrabold italic">Markets</h2>
           <span className="text-xs text-muted">RIDE = makes it · BUST = caught</span>
         </div>
+        <TradingGuide />
         {!demo && arena !== null && arena.status !== "idle" && <RunStatsCard driver={false} />}
         {arena !== null && arena.status !== "idle" && <Chart history={history} />}
         {arena?.status === "idle" && (

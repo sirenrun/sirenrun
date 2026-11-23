@@ -2,7 +2,7 @@ import type { Arena, Market, PositionEntry } from "@sirenrun/sdk";
 import { PublicKey } from "@solana/web3.js";
 import { describe, expect, it } from "vitest";
 import { channelStatus } from "./lobby";
-import { grossOf, rememberPositions, shortAddress, summarizeRun } from "./results";
+import { grossOf, rememberPositions, shareText, shortAddress, summarizeRun } from "./results";
 
 const RUNNER = new PublicKey("11111111111111111111111111111112");
 const T = 1_000_000n;
@@ -239,5 +239,30 @@ describe("lobby cards", () => {
       ).label,
     ).toBe("VOID");
     expect(channelStatus(null).label).toBe("…");
+  });
+});
+
+describe("share text", () => {
+  const clock = (t: number) => `0:${(t / 10).toFixed(1)}`;
+  const base = summarizeRun(arena(), [], terms);
+
+  it("speaks for the driver with their time and result", () => {
+    expect(shareText(base, 1, true, clock)).toBe(
+      "I outran the police for 0:64.0 on SIRENRUN CH-1 (-0.5 tUSDC). Ride or bust.",
+    );
+  });
+
+  it("speaks for a trader with their result", () => {
+    const withYou = { ...base, you: { spent: 10n * T, paid: 13n * T, pnl: 3n * T } };
+    expect(shareText(withYou, 2, false, clock)).toBe(
+      "I traded a SIRENRUN getaway that lasted 0:64.0 on CH-2 and made +3 tUSDC.",
+    );
+  });
+
+  it("describes the run for anyone else, and a voided run plainly", () => {
+    expect(shareText(base, 3, false, clock)).toBe("A SIRENRUN getaway just lasted 0:64.0 on CH-3.");
+    expect(shareText({ ...base, aborted: true }, 3, false, clock)).toBe(
+      "A SIRENRUN run on CH-3 was voided and refunded.",
+    );
   });
 });

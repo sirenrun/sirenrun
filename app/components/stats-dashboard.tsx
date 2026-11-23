@@ -2,6 +2,7 @@
 
 import { TICK_MS } from "@sirenrun/sim";
 import { useEffect, useState } from "react";
+import { plural } from "../lib/plural";
 import { formatUsd, formatUsdShort, pnlTone } from "../lib/money";
 import { shortAddress } from "../lib/results";
 import { fetchOverview, type Overview } from "../lib/stats-client";
@@ -21,7 +22,7 @@ function Tile({ label, value, note }: { label: string; value: string; note?: str
   );
 }
 
-function Board({
+export function Board({
   title,
   rows,
   empty,
@@ -175,7 +176,7 @@ export function StatsDashboard() {
               rows={data.topTraders.map((t) => ({
                 wallet: t.wallet,
                 pnl: t.pnl,
-                detail: `${t.trades} trades`,
+                detail: plural(t.trades, "trade"),
               }))}
             />
             <Board
@@ -184,7 +185,7 @@ export function StatsDashboard() {
               rows={data.topDrivers.map((d) => ({
                 wallet: d.wallet,
                 pnl: d.pnl,
-                detail: `${d.runs} runs · best ${((d.best * TICK_MS) / 1000).toFixed(1)}s`,
+                detail: `${plural(d.runs, "run")} · best ${((d.best * TICK_MS) / 1000).toFixed(1)}s`,
               }))}
             />
           </div>

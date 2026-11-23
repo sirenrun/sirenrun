@@ -30,7 +30,8 @@ export interface Overview {
 const DAYS = 14;
 
 export async function overview(sql: Sql): Promise<Overview> {
-  const [totals] = await sql<
+  // Independent reads, sent together: one network round trip instead of six.
+  const totalsQ = sql<
     {
       visitors: number;
       wallets: number;
@@ -57,7 +58,7 @@ export async function overview(sql: Sql): Promise<Overview> {
       (select coalesce(sum(paid), 0)::text from claims) as paid_out,
       (select coalesce(sum(runner_fees), 0)::text from runs) as driver_earnings`;
 
-  const [today] = await sql<{ visitors: number; trades: number; volume: string; runs: number }[]>`
+  const todayQ = sql<{ visitors: number; trades: number; volume: string; runs: number }[]>`
     select
       (select count(*)::int from visitors where last_seen >= date_trunc('day', now())) as visitors,
       (select count(*)::int from trades where at >= date_trunc('day', now())) as trades,
@@ -65,7 +66,7 @@ export async function overview(sql: Sql): Promise<Overview> {
         as volume,
       (select count(*)::int from runs where started_at >= date_trunc('day', now())) as runs`;
 
-  const daily = await sql<
+  const dailyQ = sql<
     { day: string; visitors: number; trades: number; volume: string; runs: number }[]
   >`
     with days as (
@@ -81,7 +82,7 @@ export async function overview(sql: Sql): Promise<Overview> {
       (select count(*)::int from runs r where date_trunc('day', r.started_at) = d.day) as runs
     from days d order by d.day`;
 
-  const topTraders = await sql<{ wallet: string; pnl: string; trades: number }[]>`
+  const tradersQ = sql<{ wallet: string; pnl: string; trades: number }[]>`
     select s.owner as wallet,
       (coalesce(c.paid, 0) - s.spent)::text as pnl, s.trades
     from (select owner, sum(amount) as spent, count(*)::int as trades from trades group by owner) s
@@ -89,7 +90,7 @@ export async function overview(sql: Sql): Promise<Overview> {
     order by coalesce(c.paid, 0) - s.spent desc
     limit 5`;
 
-  const topDrivers = await sql<{ wallet: string; pnl: string; runs: number; best: number }[]>`
+  const driversQ = sql<{ wallet: string; pnl: string; runs: number; best: number }[]>`
     select r.runner as wallet,
       sum(r.runner_paid - r.entry_fee - r.bond - coalesce(n.fee, 0))::text as pnl,
       count(*)::int as runs,
@@ -102,8 +103,17 @@ export async function overview(sql: Sql): Promise<Overview> {
     order by sum(r.runner_paid - r.entry_fee - r.bond - coalesce(n.fee, 0)) desc
     limit 5`;
 
-  const [win] = await sql<{ wallet: string; paid: string }[]>`
+  const winQ = sql<{ wallet: string; paid: string }[]>`
     select owner as wallet, paid::text from claims order by paid desc limit 1`;
+
+  const [[totals], [today], daily, topTraders, topDrivers, [win]] = await Promise.all([
+    totalsQ,
+    todayQ,
+    dailyQ,
+    tradersQ,
+    driversQ,
+    winQ,
+  ]);
 
   const t = totals ?? {
     visitors: 0,
