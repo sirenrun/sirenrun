@@ -25,6 +25,7 @@ import {
   type PriceHistory,
   type TickerItem,
 } from "../lib/markets";
+import { addTrade, emptyStats, followRun, type RunStats } from "../lib/run-stats";
 import { useArena } from "./arena";
 import { useBalance } from "./balance";
 import { claimSettled } from "./claims";
@@ -36,6 +37,8 @@ const TICKER_LENGTH = 12;
 interface MarketsState {
   history: PriceHistory;
   ticker: TickerItem[];
+  /** Volume, trade count and driver fee of the current run, from trades seen live. */
+  stats: RunStats;
   /** The buy in flight, if any: one at a time keeps the balance and slippage simple. */
   buying: { market: number; side: Side } | null;
   error: string | null;
@@ -61,15 +64,23 @@ export const useMarkets = create<MarketsState>((set, get) => {
   return {
     history: { nonce: -1, points: [] },
     ticker: [],
+    stats: emptyStats(-1, false),
     buying: null,
     error: null,
 
     watch: (id) => {
-      set({ history: { nonce: -1, points: [] }, ticker: [], error: null });
+      set({
+        history: { nonce: -1, points: [] },
+        ticker: [],
+        stats: emptyStats(-1, false),
+        error: null,
+      });
       const onArena = (arena: Arena | null) => {
         if (arena === null || (id !== null && arena.id !== id)) return;
         const history = appendHistory(get().history, arena);
         if (history !== get().history) set({ history });
+        const stats = followRun(get().stats, arena);
+        if (stats !== get().stats) set({ stats });
         if (id !== null) claimSettled(arena, (error) => set({ error }));
       };
       onArena(useArena.getState().latest);
@@ -87,8 +98,12 @@ export const useMarkets = create<MarketsState>((set, get) => {
         if (event.name !== "Trade" || !event.data.arena.equals(address)) return;
         const lines = useArena.getState().latest?.markets.map((m) => m.line) ?? [];
         const item = tickerItem(signature, event.data, lines);
+        // Before the config loads, fees count as zero: volume reads slightly low, never high.
+        const config = useBalance.getState().config;
+        const terms = { feeBps: config?.feeBps ?? 0, runnerFeeBps: config?.runnerFeeBps ?? 0 };
         set({
           ticker: [item, ...get().ticker.filter((t) => t.key !== item.key)].slice(0, TICKER_LENGTH),
+          stats: addTrade(get().stats, item.key, event.data, terms),
         });
       });
       return () => {

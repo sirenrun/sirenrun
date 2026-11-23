@@ -3,6 +3,7 @@
 import { marketView, percent } from "../lib/markets";
 import { useMarkets } from "../stores/markets";
 import { Chart, LINE_COLOURS, Ticker, usePolledArena } from "./markets-panel";
+import { RunStatsCard } from "./run-stats-card";
 
 /**
  * What the driver sees beside the road: how the crowd is betting on each line, as they drive.
@@ -24,6 +25,7 @@ export function DriverPanel() {
           <h2 className="font-display text-2xl font-extrabold italic">The crowd</h2>
           <p className="text-xs text-muted">Chance the crowd gives you to pass each line.</p>
         </div>
+        <RunStatsCard driver />
         <Chart history={history} />
         <ul className="space-y-3">
           {views.map((v) => (

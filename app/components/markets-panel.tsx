@@ -32,6 +32,7 @@ import { useBalance } from "../stores/balance";
 import { useMarkets } from "../stores/markets";
 import { useSession } from "../stores/session";
 import { useUi } from "../stores/ui";
+import { RunStatsCard } from "./run-stats-card";
 
 /** Line colours, shared by the rows and the price chart. */
 export const LINE_COLOURS = ["#22e1ff", "#ff2e88", "#ffb020"] as const;
@@ -298,6 +299,7 @@ export function MarketsPanel({ demo = false }: { demo?: boolean }) {
           <h2 className="font-display text-2xl font-extrabold italic">Markets</h2>
           <span className="text-xs text-muted">RIDE = makes it · BUST = caught</span>
         </div>
+        {!demo && arena !== null && arena.status !== "idle" && <RunStatsCard driver={false} />}
         {arena !== null && arena.status !== "idle" && <Chart history={history} />}
         {arena?.status === "idle" && (
           <h3 className="text-xs font-semibold tracking-widest text-muted uppercase">Last run</h3>
