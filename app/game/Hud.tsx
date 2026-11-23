@@ -196,7 +196,7 @@ export function Hud({ channel }: { channel: number }) {
         <div className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Time</div>
         <span
           ref={timeRef}
-          className="block text-5xl font-extrabold italic leading-none tabular-nums sm:text-6xl"
+          className="block text-5xl font-extrabold italic leading-none tabular-nums sm:text-6xl 2xl:text-7xl"
         >
           0:00.0
         </span>
@@ -244,13 +244,19 @@ export function Hud({ channel }: { channel: number }) {
       <div
         className={`absolute bottom-5 left-4 right-4 sm:right-auto sm:left-6 ${playing ? "" : "opacity-40"}`}
       >
-        <div className="flex items-baseline justify-between gap-6 sm:w-[28rem]">
+        <div className="flex items-baseline gap-3 sm:w-[28rem] sm:justify-between sm:gap-6 2xl:w-[34rem]">
           <span className="text-xs font-semibold uppercase tracking-[0.2em] text-muted">Gap</span>
-          <span ref={gapTextRef} className="text-2xl font-extrabold italic tabular-nums">
+          <span
+            ref={gapTextRef}
+            className="text-2xl font-extrabold italic tabular-nums 2xl:text-3xl"
+          >
             {GAP_MAX}
           </span>
         </div>
-        <div ref={gapRef} className="mt-1 h-3 overflow-hidden rounded-sm bg-white/10 sm:w-[28rem]">
+        <div
+          ref={gapRef}
+          className="mt-1 h-3 overflow-hidden rounded-sm bg-white/10 sm:w-[28rem] 2xl:w-[34rem]"
+        >
           <div ref={gapBarRef} className="h-full origin-left bg-neon-cyan" />
         </div>
         <div className="mt-3 flex items-center gap-3">
@@ -271,12 +277,12 @@ export function Hud({ channel }: { channel: number }) {
       {/* Bottom right: speed */}
       <div
         ref={speedBoxRef}
-        className="group absolute bottom-28 right-4 text-right sm:bottom-12 sm:right-6"
+        className="group absolute bottom-32 right-4 text-right sm:bottom-12 sm:right-6"
         aria-hidden
       >
         <span
           ref={speedRef}
-          className="block text-5xl font-extrabold italic leading-none tabular-nums transition-colors duration-150 group-data-[nitro]:text-amber sm:text-6xl"
+          className="block text-5xl font-extrabold italic leading-none tabular-nums transition-colors duration-150 group-data-[nitro]:text-amber sm:text-6xl 2xl:text-7xl"
         >
           0
         </span>

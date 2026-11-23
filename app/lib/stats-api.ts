@@ -27,3 +27,38 @@ export function parseRun(arena: string, nonce: string): { arena: number; nonce: 
   if (a >= ARENAS || n > 0xffff_ffff) return null;
   return { arena: a, nonce: n };
 }
+
+/**
+ * Fixed-window counter per key, in memory only. Limits how many visits one IP can report, so
+ * a script cannot inflate the visitor count. Nothing about the IP is stored or logged.
+ */
+export class WindowCounter {
+  private readonly hits = new Map<string, { start: number; count: number }>();
+  private readonly limit: number;
+  private readonly windowMs: number;
+
+  constructor(limit: number, windowMs: number) {
+    this.limit = limit;
+    this.windowMs = windowMs;
+  }
+
+  /** Counts a hit and says whether it is within the limit. */
+  allow(key: string, now: number): boolean {
+    const entry = this.hits.get(key);
+    if (entry === undefined || now - entry.start >= this.windowMs) {
+      this.hits.set(key, { start: now, count: 1 });
+      if (this.hits.size > 10_000) {
+        for (const [k, e] of this.hits) if (now - e.start >= this.windowMs) this.hits.delete(k);
+      }
+      return true;
+    }
+    entry.count += 1;
+    return entry.count <= this.limit;
+  }
+}
+
+/** The client IP from proxy headers (first hop), or a shared bucket when there is none. */
+export function clientIp(headers: Headers): string {
+  const forwarded = headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  return forwarded || headers.get("x-real-ip") || "unknown";
+}

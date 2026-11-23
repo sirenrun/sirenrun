@@ -1,6 +1,6 @@
 "use client";
 
-import { PerformanceMonitor } from "@react-three/drei";
+import { PerformanceMonitor, Preload } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { INVULN_TICKS, NITRO_BOOST, NITRO_TICKS, SPEED_MAX } from "@sirenrun/sim";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
@@ -25,6 +25,9 @@ import "./three-console";
 import { webglAvailable } from "./webgl";
 import { spring } from "./spring";
 import { metresPerSecond, worldX, worldZ } from "./world";
+
+/** Frame-rate changes in the first seconds after mount are loading, not the device. */
+const WARMUP_MS = 5_000;
 
 preloadCars();
 
@@ -214,6 +217,9 @@ function World() {
         <Obstacles />
         <PlayerCar />
         <Police />
+        {/* Compile every shader and upload every texture once the models are in, so nothing
+            (billboards, cruisers at the bust) compiles mid-run and stalls a frame. */}
+        <Preload all />
       </Suspense>
       <Sparks />
       <SpeedLines />
@@ -266,12 +272,41 @@ export default function Scene({
   useEffect(() => resetFrame(), []);
   const [available] = useState(webglAvailable);
   const [lost, setLost] = useState(false);
+  const [handheld] = useState(
+    () => typeof window !== "undefined" && window.matchMedia("(pointer: coarse)").matches,
+  );
   const [quality, setQuality] = useState(() =>
-    initialQuality(typeof window === "undefined" ? 1 : window.devicePixelRatio),
+    initialQuality(typeof window === "undefined" ? 1 : window.devicePixelRatio, handheld),
+  );
+  // When the monitor may act. A quality change resizes every buffer and recompiles the post
+  // shaders, a ~150 ms freeze, so it must not fire on load jank or bounce back mid-run.
+  const startedAt = useRef<number | null>(null);
+  // A change asked for mid-run, applied when the run ends. Real runs open with a 10 s
+  // countdown, so a slow device is usually stepped down before the car moves.
+  const pending = useRef<"decline" | "incline" | null>(null);
+  useEffect(
+    () =>
+      useArena.subscribe((s, prev) => {
+        const change = pending.current;
+        if (change === null || s.status === "live" || prev.status !== "live") return;
+        pending.current = null;
+        setQuality((q) => stepQuality(q, change, window.devicePixelRatio, handheld));
+      }),
+    [handheld],
   );
   if (!available || lost) return <NoWebgl lost={lost} />;
-  const step = (change: "decline" | "incline") =>
-    setQuality((q) => stepQuality(q, change, window.devicePixelRatio));
+  const step = (change: "decline" | "incline") => {
+    const now = performance.now();
+    startedAt.current ??= now;
+    // The first seconds are loading (models, shaders, textures), not the device's real speed.
+    if (now - startedAt.current < WARMUP_MS) return;
+    if (useArena.getState().status === "live") {
+      // A decline outranks a queued incline; never freeze the car mid-drive for either.
+      if (change === "decline" || pending.current === null) pending.current = change;
+      return;
+    }
+    setQuality((q) => stepQuality(q, change, window.devicePixelRatio, handheld));
+  };
   const { dpr, post } = qualityAt(quality);
   return (
     <Canvas
@@ -288,6 +323,9 @@ export default function Scene({
       }}
     >
       <PerformanceMonitor
+        onChange={() => {
+          startedAt.current ??= performance.now();
+        }}
         onDecline={() => step("decline")}
         onIncline={() => step("incline")}
         flipflops={4}

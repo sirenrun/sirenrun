@@ -87,7 +87,11 @@ export function summarizeRun(
   const refunded = aborted
     ? 0n
     : arena.markets.reduce((sum, m) => sum + (m.rideCost * BigInt(m.rideBackBps)) / 10_000n, 0n);
-  const bondToRide = refunded > bondLost ? bondLost : refunded;
+  // Refund shares round down to whole bps, which can leave a few millionths for the house;
+  // below one cent that is rounding, not a payout, so it counts as refunded.
+  const DUST = 10_000n;
+  let bondToRide = refunded > bondLost ? bondLost : refunded;
+  if (bondToRide > 0n && bondLost - bondToRide < DUST) bondToRide = bondLost;
   const bondToHouse = bondLost - bondToRide;
   const nitro = BigInt(NITRO_CHARGES - arena.sim.nitroLeft) * terms.nitroFee;
   // The program caps the bonus at the house balance; the house holds far more, so the card

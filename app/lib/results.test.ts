@@ -155,6 +155,26 @@ describe("run results", () => {
     expect(s.driver.net).toBe(2n * T + 4n * T - T - (3n * T) / 2n);
   });
 
+  it("treats sub-cent rounding left for the house as refunded to RIDE", () => {
+    // Forfeit 1.445996; RIDE paid 2.0 and gets 7229 bps back: 1.4458, leaving 0.000196.
+    const s = summarizeRun(
+      arena({
+        markets: [
+          market(300, "no", 640, 1_445_996n, 2n * T, 7_229),
+          market(600, "no", 640),
+          market(900, "no", 640),
+        ],
+      }),
+      [],
+      terms,
+    );
+    expect(s.driver).toMatchObject({
+      bondLost: 1_445_996n,
+      bondToRide: 1_445_996n,
+      bondToHouse: 0n,
+    });
+  });
+
   it("calls an aborted run even for everyone", () => {
     const s = summarizeRun(
       arena({ markets: [market(300, "void"), market(600, "void"), market(900, "void")] }),

@@ -138,28 +138,47 @@ export function DrivePanel() {
   }
 
   return (
-    <div className="absolute inset-x-4 bottom-28 mx-auto max-w-sm rounded-xl border border-white/10 bg-bg/85 p-5 backdrop-blur sm:bottom-auto sm:top-1/3">
+    <div className="absolute inset-x-4 bottom-24 mx-auto max-h-[calc(100%-7rem)] max-w-sm overflow-y-auto overscroll-contain rounded-xl border border-white/10 bg-bg/85 p-5 backdrop-blur sm:bottom-auto sm:top-1/2 sm:-translate-y-1/2">
       <h2 className="font-display text-3xl font-extrabold italic">Take the wheel</h2>
       <p className="mt-1 text-sm text-muted">
         Outrun the police for as long as you can. Spectators trade on whether you pass 30, 60 and 90
         seconds.
       </p>
       {config !== null && (
-        <dl className="mt-3 grid grid-cols-2 gap-y-1 text-sm">
-          <dt className="text-muted">Entry fee</dt>
-          <dd className="text-right tabular-nums">{formatTokenAmount(config.entryFee)} tUSDC</dd>
-          <dt className="text-muted">Bond (held)</dt>
-          <dd className="text-right tabular-nums">{formatTokenAmount(config.bond)} tUSDC</dd>
-          <dt className="text-muted">Nitro, per boost used</dt>
-          <dd className="text-right tabular-nums">{formatTokenAmount(config.nitroFee)} tUSDC</dd>
-          <dt className="col-span-2 mt-1 text-xs text-muted">
-            The bond comes back after the run. If you get busted, it only covers what BUST bets won
-            on your run, and that goes to the fans who backed you, so if nobody bet against you, you
-            lose nothing. You earn {config.runnerFeeBps / 100}% of every trade on your run, plus a
-            survival bonus of {LINE_BONUS.map((b) => formatTokenAmount(BigInt(b))).join(" / ")}{" "}
-            tUSDC for passing 30 / 60 / 90 s.
-          </dt>
-        </dl>
+        <>
+          <div className="mt-3 grid grid-cols-2 gap-3 text-sm">
+            <div>
+              <p className="text-[11px] font-semibold tracking-widest text-up uppercase">
+                You earn
+              </p>
+              <p className="mt-0.5 tabular-nums">{config.runnerFeeBps / 100}% of every trade</p>
+              <p className="tabular-nums">
+                +{LINE_BONUS.map((b) => formatTokenAmount(BigInt(b))).join(" / ")} at 30 / 60 / 90 s
+              </p>
+            </div>
+            <div>
+              <p className="text-[11px] font-semibold tracking-widest text-down uppercase">
+                You pay
+              </p>
+              <p className="mt-0.5 tabular-nums">{formatTokenAmount(config.entryFee)} entry</p>
+              <p className="tabular-nums">{formatTokenAmount(config.nitroFee)} per nitro used</p>
+            </div>
+          </div>
+          <p className="mt-3 text-sm tabular-nums">
+            {formatTokenAmount(config.bond)} tUSDC bond, held during the run and returned after it.
+          </p>
+          <details className="mt-1 text-xs text-muted">
+            <summary className="cursor-pointer select-none hover:text-text">
+              How the bond works
+            </summary>
+            <p className="mt-1">
+              If you get busted, the bond pays what BUST bets won on the lines you missed, never
+              more. That goes to fans who bet RIDE on those lines, or to the house if there were
+              none; the rest comes back. If nobody bet against you, you lose nothing. This stops a
+              driver from betting BUST and crashing on purpose.
+            </p>
+          </details>
+        </>
       )}
       <div className="mt-4">{action}</div>
       {error !== null && (
