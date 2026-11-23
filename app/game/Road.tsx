@@ -89,7 +89,8 @@ const fragment = /* glsl */ `
 
     // Wet surface: reflects the sunset more as the angle flattens toward the horizon.
     float wet = smoothstep(8.0, 140.0, depth);
-    color = mix(color, uReflect, wet * 0.55 * onRoad);
+    // Kept low: a strong pink sheen hides the lane lines and the cars ahead.
+    color = mix(color, uReflect, wet * 0.3 * onRoad);
 
     // Warm pools under the streetlights on both edges.
     float lampZ = (fract(z / uLampSpacing + 0.5) - 0.5) * uLampSpacing;
@@ -101,7 +102,7 @@ const fragment = /* glsl */ `
     vec2 p = vec2(x, z);
     float across = (x - uCamera.x) / (0.35 + depth * 0.011);
     float shimmer = 0.6 + 0.4 * sin(z * 0.8 + hash(vec2(floor(z * 0.4), 3.0)) * 6.28);
-    color += uSun * exp(-across * across) * smoothstep(12.0, 160.0, depth) * shimmer * 0.4 * onRoad;
+    color += uSun * exp(-across * across) * smoothstep(12.0, 160.0, depth) * shimmer * 0.22 * onRoad;
     // Each streetlight (both edges, the next two ahead of this point) smears toward the camera.
     float lamps = 0.0;
     for (int k = 0; k < 2; k++) {
@@ -123,9 +124,9 @@ const fragment = /* glsl */ `
     float lanes = 0.0;
     for (int i = 1; i < 5; i++) {
       float lx = -uHalf + float(i) * uLane;
-      lanes = max(lanes, band(x - lx, 0.14) * dash);
+      lanes = max(lanes, band(x - lx, 0.18) * dash);
     }
-    color = mix(color, uLine, lanes * onRoad * 0.85);
+    color = mix(color, uLine, lanes * onRoad * 0.95);
 
     // Neon edges, with a soft bleed onto the wet asphalt.
     float left = band(x + uHalf, 0.18);
@@ -137,7 +138,7 @@ const fragment = /* glsl */ `
     color += uCyan * 0.35 * exp(-abs(x - uHalf) * 1.6) * onRoad;
 
     // Shoulders: dark kerb beyond the neon.
-    color = mix(color, uAsphalt * 0.45, (1.0 - onRoad) * (1.0 - max(left, right)));
+    color = mix(color, uAsphalt * 0.3, (1.0 - onRoad) * (1.0 - max(left, right)));
 
     float fog = smoothstep(uFogNear, uFogFar, depth);
     gl_FragColor = vec4(mix(color, uFogColor, fog), 1.0);

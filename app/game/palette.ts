@@ -9,8 +9,9 @@ export const NEON = {
   sunTop: "#ffd66b",
   sunBottom: "#ff2e88",
   fog: "#3a1050",
-  asphalt: "#16121f",
-  laneLine: "#d9d2ff",
+  /** Cool slate, lighter than the water and kerbs so the road reads as its own surface. */
+  asphalt: "#363a50",
+  laneLine: "#f6f4ff",
   pink: "#ff2e88",
   cyan: "#22e1ff",
   amber: "#ffb020",
@@ -23,7 +24,7 @@ export const NEON = {
 } as const;
 
 /** Fog distances: rows are 25 m apart, so obstacles read about 12 rows (6 s at top speed) out. */
-export const FOG_NEAR = 70;
+export const FOG_NEAR = 100;
 export const FOG_FAR = 380;
 
 /**
