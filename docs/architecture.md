@@ -24,9 +24,15 @@ Program-side crates were compile-tested together (see [magicblock.md](magicblock
 | Tests | `cargo test` (sim, market, account sizes), MagicSVM 0.3.0 integration tests in `tests/magicsvm/` (instructions against base + ER in one process), `vitest` 5 for TS packages | MagicSVM runs in CI with no validators; the local stack is for manual checks. |
 | CI | GitHub Actions | Build and unit tests on every PR. |
 
-**Not used in MVP:** Socket.IO / custom WebSocket server, database, indexer, BOLT ECS.
-The ER's own websocket (`onAccountChange`) is the real-time feed. A server would add a
-trust point. (Socket.IO can come later for chat/presence.)
+**Not used:** Socket.IO / custom WebSocket server, BOLT ECS. The ER's own websocket
+(`onAccountChange`) is the real-time feed for the game and markets.
+
+**Indexer + Postgres (stats only):** `indexer/` is a small Node worker that follows the
+program's events on the ER and stores runs, trades, claims and nitro fees in Postgres
+(Neon), with `postgres` 3.4.5 as the client. It powers wallet PnL, the analytics page and
+visitor counts. It decides nothing: runs and markets settle onchain, and the game works
+with the indexer down (the stats panels show "unavailable"). See
+[Stats and analytics](#stats-and-analytics).
 
 ## Repo layout
 
@@ -57,6 +63,7 @@ sirenrun/
 │  ├─ stores/{arena.ts, session.ts, balance.ts}
 │  └─ lib/{subscribe.ts, clip.ts, audio.ts}
 ├─ scripts/  # init-devnet.ts, create-mint.ts, seed-house.ts, keeper-tick.ts (fallback)
+├─ indexer/  # stats worker: ER events -> Postgres; queries.ts is the app's read side
 └─ tests/magicsvm/   # Rust integration tests: program .so on base + ER in one process
 ```
 
@@ -165,7 +172,9 @@ sequenceDiagram
   undelegate) for its wallet, never withdrawals, and expires after an hour.
 - `stores/balance.ts` follows the wallet's tUSDC and its game balance, reading the Balance
   from the base layer or the ER depending on who owns the PDA on the base layer.
-- `app/api/faucet` is the only server route (devnet test tokens, see [devnet.md](devnet.md)).
+- Server routes: `app/api/faucet` (devnet test tokens, see [devnet.md](devnet.md)) and the
+  read-only stats routes under `app/api/stats` plus `app/api/visit` (see below). None of
+  them touch game logic.
 
 ## Real-time data flow
 
@@ -176,6 +185,29 @@ sequenceDiagram
 4. Trade ticker: diff reserves between consecutive snapshots → derive "someone bought
    X of side Y". Wallet attribution needs tx data; MVP shows anonymous ticker, or
    fetches the latest signatures on the ER for the arena every second (stretch).
+
+## Stats and analytics
+
+```
+ER program logs ──> indexer/src/main.ts ──> Postgres ──> app/api/stats/* ──> UI
+ (Trade, Claimed,     live onLogs +          runs, trades,   overview, wallet,   /stats page,
+  RunStarted,         backfill from the      claims, nitros, run totals          wallet drawer,
+  RunSettled,         last stored signature  visitors,                           run card
+  NitroUsed)          (idempotent writes)    wallets
+```
+
+- **Events, not accounts.** Nothing onchain stores history; the events carry who traded,
+  amounts and the driver's payout ([onchain-program.md](onchain-program.md#events-emit-logs-only-nothing-stored)).
+- **Idempotent.** Trades and claims are keyed by signature, runs by `(arena, nonce)`, so a
+  restart's backfill can overlap the live feed safely.
+- **Visitors.** The browser keeps a random id in `localStorage` and posts it to
+  `/api/visit` once per page load, with the wallet address when one is connected. No IP,
+  user agent or cookie is stored. A return within 30 minutes is the same visit.
+- **PnL.** Trader: claims paid minus amounts spent (open positions count as spent until
+  claimed). Driver, per settled run: `runner_paid - entry_fee - bond - nitro fees`.
+- **Running it.** `pnpm --filter @sirenrun/indexer start` with `DATABASE_URL` set. It must run
+  as an always-on process (Railway, Fly, Render or a VM); serverless hosts cannot hold the
+  websocket. Schema: `indexer/src/schema.ts`, applied on every start.
 
 ## Where each MagicBlock feature is used
 

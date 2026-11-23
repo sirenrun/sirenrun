@@ -1,0 +1,27 @@
+{
+  "name": "@sirenrun/indexer",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./queries": "./src/queries.ts",
+    "./db": "./src/db.ts"
+  },
+  "scripts": {
+    "start": "node --env-file-if-exists=.env src/main.ts",
+    "migrate": "node --env-file-if-exists=.env src/migrate.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@sirenrun/sdk": "workspace:*",
+    "@sirenrun/sim": "workspace:*",
+    "@solana/web3.js": "catalog:",
+    "postgres": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}
