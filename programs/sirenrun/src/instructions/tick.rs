@@ -69,6 +69,7 @@ pub fn tick(ctx: Context<Tick>, nonce: u32) -> Result<()> {
         entry_fee: config.entry_fee,
         nitro_fee: config.nitro_fee,
         runner_available: ctx.accounts.runner_balance.available,
+        house_available: ctx.accounts.house_balance.available,
     })?;
 
     effects.apply(

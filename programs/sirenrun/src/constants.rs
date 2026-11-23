@@ -31,6 +31,9 @@ pub const POLICE_ACCEL_NUM: u32 = 6;
 pub const POLICE_ACCEL_DEN: u32 = 100;
 
 pub const LINES: [u32; 3] = [300, 600, 900];
+/// Survival bonus the house pays the driver at settle for each line passed, in tUSDC base
+/// units (1 / 3 / 6 tUSDC). Paid only up to what the house holds, so a tick never fails.
+pub const LINE_BONUS: [u64; 3] = [1_000_000, 3_000_000, 6_000_000];
 
 pub const MAX_ENTRIES: usize = 8;
 pub const ARENAS: u8 = 3;

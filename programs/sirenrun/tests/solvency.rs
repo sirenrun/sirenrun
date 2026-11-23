@@ -203,6 +203,7 @@ fn balances_never_exceed_deposits() {
                     entry_fee: RUN_TERMS.entry_fee,
                     nitro_fee: NITRO_FEE,
                     runner_available: players[runner].available,
+                    house_available: house.available,
                 })
                 .expect("advance");
             seen.nitro_paid += u32::from(effects.runner_out > 0);
