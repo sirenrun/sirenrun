@@ -202,12 +202,37 @@ ER program logs ──> indexer/src/main.ts ──> Postgres ──> app/api/sta
   restart's backfill can overlap the live feed safely.
 - **Visitors.** The browser keeps a random id in `localStorage` and posts it to
   `/api/visit` once per page load, with the wallet address when one is connected. No IP,
-  user agent or cookie is stored. A return within 30 minutes is the same visit.
+  user agent or cookie is stored. A return within 30 minutes is the same visit. The route
+  accepts at most 20 reports per IP per 10 minutes (counted in memory only), so a script
+  cannot pad the count.
+- **Serving.** `overview` sends its independent queries together, and
+  `/api/stats/overview` keeps the result in memory for 15 s, so the stats page and the
+  lobby leaderboards share one database read (about 3 ms on a hit instead of seconds).
+  Wallet stats and run trades are not cached.
+- **Where it shows.** `/stats` (analytics), the lobby leaderboards, "Your stats" in the
+  wallet drawer, and exact run totals for viewers who join mid-run.
 - **PnL.** Trader: claims paid minus amounts spent (open positions count as spent until
   claimed). Driver, per settled run: `runner_paid - entry_fee - bond - nitro fees`.
 - **Running it.** `pnpm --filter @sirenrun/indexer start` with `DATABASE_URL` set. It must run
   as an always-on process (Railway, Fly, Render or a VM); serverless hosts cannot hold the
   websocket. Schema: `indexer/src/schema.ts`, applied on every start.
+
+## Rendering rules
+
+Each of these once caused a visible freeze mid-run; keep them:
+
+- **Never toggle a light's `visible`.** Adding or removing a light changes the scene's light
+  count, which recompiles every lit material at once. Fade it with `intensity = 0` instead
+  (the police light in `game/Cars.tsx`).
+- **No quality changes while driving.** Adaptive quality (`game/quality.ts`,
+  `PerformanceMonitor` in `game/Scene.tsx`) ignores the first 5 s after mount (loading) and
+  holds any change asked for during a live run until the run ends; a resolution change
+  rebuilds the post-processing buffers and shaders. Touch devices start at 1.25x pixel ratio
+  and never go higher.
+- **Compile up front.** `<Preload all />` compiles every shader and uploads every texture
+  once the models load, so nothing compiles the first time it comes into view.
+- **The render loop never awaits the network** and reads stores with `getState()`, not
+  React state.
 
 ## Where each MagicBlock feature is used
 

@@ -246,6 +246,9 @@ Checks:
 - `arena.status ∈ {Staging, Live}`, `arena.seed_ready` (else `SeedNotReady`),
   `markets[m].status == open`. Requiring the seed means a run that aborts for lack of VRF
   has no trades, so its VOID markets owe nobody anything.
+- `arena.sim.t + COOLDOWN_TICKS < markets[m].line`, else `LineClosing`: a line stops taking
+  buys 1.5 s before it can pay RIDE, so no refundable money sits in a passed line's pool
+  (see the pass share under Run economics).
 - `trader_balance.owner != arena.runner` (driver can't trade own run from main wallet).
 - `amount <= config.max_buy`, `trader_balance.available >= amount`.
 - A free entry slot exists, or an entry with the same `(arena_id, nonce, market, side)`.
@@ -265,7 +268,7 @@ trader.available -= amount
 house.available  += fee - runner_fee
 arena.runner_fees += runner_fee
 entry: shares += , cost += net, tick = arena.sim.t   // merge resets tick (stricter)
-emit!(Trade { arena, nonce, market, side, net, shares, yes_r, no_r })
+emit!(Trade { arena, nonce, market, side, net, shares, yes_r, no_r, owner, amount })
 ```
 
 ### `claim` (ER)
@@ -293,8 +296,9 @@ elif entry.side == YES and ride_back_bps > 0:
     house.available  -= back              // the house received the forfeit at the bust
 clear entry
 ```
-`COOLDOWN_TICKS = 15` (1.5 s). The client calls `claim` automatically as soon as it sees a
-market resolve.
+`COOLDOWN_TICKS = 15` (1.5 s). Since a line closes to buys `COOLDOWN_TICKS` before it can
+pay RIDE, this refund only happens when a bust (or a void) resolves a market right after a
+buy. The client calls `claim` automatically as soon as it sees a market resolve.
 
 ## FPMM (fixed product market maker)
 
@@ -362,7 +366,7 @@ version to the unit: after all claims, the vault equals the sum of all balances.
 `ArenaBusy, ArenaNotLive, MarketClosed, InsufficientBalance, HouseInsufficient,
 TooLarge, Slippage, NoInterestCapReached, RunnerCannotTrade, NoFreeEntry, NotResolved,
 ResultExpired, InvalidLane, Unauthorized, MathOverflow, SeedNotReady, InvalidConfig,
-InvalidArena, NoEntry, BalanceInUse, ArenaNotSettled`.
+InvalidArena, NoEntry, BalanceInUse, ArenaNotSettled, LineClosing`.
 
 Codes are `6000 + position`, so new variants are appended, never inserted. (`TickTooSoon`
 was removed before any deployment, together with `last_tick_slot`.)

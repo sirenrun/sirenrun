@@ -27,6 +27,10 @@ The driver sees the road, their controls and how the crowd is betting, with no t
 buttons. Everyone else gets the trading panel. Wallet PnL, total trades and platform
 analytics come from an indexer that stores the program's events.
 
+Watchers see their open positions over the road, get a first-visit guide with a live
+example payout, and can share a run's result; phones buzz when a line pays or a position
+wins. The lobby shows driver and trader leaderboards.
+
 | Driver view | Stats page |
 |---|---|
 | ![The driver's layout: the road with a slim crowd panel showing volume, trades, earnings and RIDE odds per line](.github/assets/driver.png) | ![The stats page: visitors, players, runs, trades, volume, payouts, daily charts and leaderboards](.github/assets/stats.png) |
