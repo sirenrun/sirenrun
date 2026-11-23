@@ -44,31 +44,16 @@ export function emptyStats(nonce: number, complete: boolean): RunStats {
   };
 }
 
-/**
- * The amount a trader spent, from the `net` the event reports (amount minus the floored fee).
- * Flooring maps a few neighbouring amounts to one `net`; the largest is the one with no
- * rounding, which is what the whole-tUSDC presets produce, so that is the one returned.
- */
-export function grossFromNet(net: bigint, feeBps: number): bigint {
-  const keep = 10_000n - BigInt(feeBps);
-  if (keep <= 0n) return net;
-  const guess = (net * 10_000n) / keep;
-  for (let a = guess + 2n; a >= guess - 2n && a >= 0n; a -= 1n) {
-    if (a - (mulBps(a, feeBps) ?? 0n) === net) return a;
-  }
-  return guess;
-}
-
 export function addTrade(
   stats: RunStats,
   key: string,
-  trade: { nonce: number; market: number; side: Side; net: bigint },
+  trade: { nonce: number; market: number; side: Side; amount: bigint },
   terms: FeeTerms,
 ): RunStats {
   // A trade for a newer run means we missed its start: begin a fresh, partial tally.
   const base = trade.nonce > stats.nonce ? emptyStats(trade.nonce, false) : stats;
   if (trade.nonce < base.nonce || base.seen.includes(key)) return stats;
-  const amount = grossFromNet(trade.net, terms.feeBps);
+  const { amount } = trade;
   const lines = base.lines.map((line, i) =>
     i !== trade.market
       ? line

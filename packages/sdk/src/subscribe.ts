@@ -7,7 +7,10 @@ import { arenaPda } from "./pdas.ts";
 import type { Side } from "./price.ts";
 
 export type SirenrunEvent =
-  | { name: "RunStarted"; data: { arena: PublicKey; nonce: number; runner: PublicKey } }
+  | {
+      name: "RunStarted";
+      data: { arena: PublicKey; nonce: number; runner: PublicKey; entryFee: bigint; bond: bigint };
+    }
   | { name: "SeedSet"; data: { arena: PublicKey; nonce: number } }
   | {
       name: "Trade";
@@ -20,12 +23,30 @@ export type SirenrunEvent =
         shares: bigint;
         yesR: bigint;
         noR: bigint;
+        /** The trader's wallet. */
+        owner: PublicKey;
+        /** Spent, fees included. */
+        amount: bigint;
       };
     }
   | { name: "LineCrossed"; data: { arena: PublicKey; nonce: number; market: number; t: number } }
   | {
       name: "RunSettled";
-      data: { arena: PublicKey; nonce: number; t: number; outcomes: MarketStatus[] };
+      data: {
+        arena: PublicKey;
+        nonce: number;
+        t: number;
+        outcomes: MarketStatus[];
+        runner: PublicKey;
+        /** The driver's cut of the run's trades. */
+        runnerFees: bigint;
+        /** Everything credited to the driver at the end (fees, returned bond, or a refund). */
+        runnerPaid: bigint;
+      };
+    }
+  | {
+      name: "NitroUsed";
+      data: { arena: PublicKey; nonce: number; runner: PublicKey; fee: bigint };
     }
   | {
       name: "Claimed";
@@ -40,7 +61,16 @@ const key = (v: unknown): PublicKey => v as PublicKey;
 function toEvent(name: string, d: Raw): SirenrunEvent | null {
   switch (name) {
     case "RunStarted":
-      return { name, data: { arena: key(d.arena), nonce: num(d.nonce), runner: key(d.runner) } };
+      return {
+        name,
+        data: {
+          arena: key(d.arena),
+          nonce: num(d.nonce),
+          runner: key(d.runner),
+          entryFee: big(d.entry_fee),
+          bond: big(d.bond),
+        },
+      };
     case "SeedSet":
       return { name, data: { arena: key(d.arena), nonce: num(d.nonce) } };
     case "Trade":
@@ -55,6 +85,8 @@ function toEvent(name: string, d: Raw): SirenrunEvent | null {
           shares: big(d.shares),
           yesR: big(d.yes_r),
           noR: big(d.no_r),
+          owner: key(d.owner),
+          amount: big(d.amount),
         },
       };
     case "LineCrossed":
@@ -70,6 +102,19 @@ function toEvent(name: string, d: Raw): SirenrunEvent | null {
           nonce: num(d.nonce),
           t: num(d.t),
           outcomes: [0, 1, 2].map((m) => outcomeAt(num(d.outcomes), m)),
+          runner: key(d.runner),
+          runnerFees: big(d.runner_fees),
+          runnerPaid: big(d.runner_paid),
+        },
+      };
+    case "NitroUsed":
+      return {
+        name,
+        data: {
+          arena: key(d.arena),
+          nonce: num(d.nonce),
+          runner: key(d.runner),
+          fee: big(d.fee),
         },
       };
     case "Claimed":

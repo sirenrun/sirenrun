@@ -18,7 +18,9 @@ use ephemeral_rollups_sdk::vrf::consts::{
 use serde_json::{json, Value};
 use session_keys::SessionTokenV2;
 use sirenrun::constants::{LINES, MAX_ENTRIES};
-use sirenrun::instructions::{Claimed, LineCrossed, RunSettled, RunStarted, SeedSet, Trade};
+use sirenrun::instructions::{
+    Claimed, LineCrossed, NitroUsed, RunSettled, RunStarted, SeedSet, Trade,
+};
 use sirenrun::sim::SimState;
 use sirenrun::state::{
     Arena, ArenaStatus, Balance, ConfigParams, Market, MarketStatus, PositionEntry, RunResult,
@@ -519,10 +521,18 @@ fn events() -> Value {
             RunStarted {
                 arena,
                 nonce: 7,
-                runner
+                runner,
+                entry_fee: 1_000_000,
+                bond: 25_000_000,
             }
             .data(),
-            json!({ "arena": arena.to_string(), "nonce": 7, "runner": runner.to_string() }),
+            json!({
+                "arena": arena.to_string(),
+                "nonce": 7,
+                "runner": runner.to_string(),
+                "entryFee": "1000000",
+                "bond": "25000000",
+            }),
         ),
         event(
             "SeedSet",
@@ -540,6 +550,8 @@ fn events() -> Value {
                 shares: 9_123_456,
                 yes_r: u64::MAX,
                 no_r: 54_900_000,
+                owner: runner,
+                amount: 5_000_000,
             }
             .data(),
             json!({
@@ -551,6 +563,8 @@ fn events() -> Value {
                 "shares": "9123456",
                 "yesR": u64::MAX.to_string(),
                 "noR": "54900000",
+                "owner": runner.to_string(),
+                "amount": "5000000",
             }),
         ),
         event(
@@ -571,6 +585,9 @@ fn events() -> Value {
                 nonce: 7,
                 t: 451,
                 outcomes: 0b10_10_01,
+                runner,
+                runner_fees: 120_000,
+                runner_paid: 19_120_000,
             }
             .data(),
             json!({
@@ -578,6 +595,25 @@ fn events() -> Value {
                 "nonce": 7,
                 "t": 451,
                 "outcomes": ["yes", "no", "no"],
+                "runner": runner.to_string(),
+                "runnerFees": "120000",
+                "runnerPaid": "19120000",
+            }),
+        ),
+        event(
+            "NitroUsed",
+            NitroUsed {
+                arena,
+                nonce: 7,
+                runner,
+                fee: 500_000,
+            }
+            .data(),
+            json!({
+                "arena": arena.to_string(),
+                "nonce": 7,
+                "runner": runner.to_string(),
+                "fee": "500000",
             }),
         ),
         event(

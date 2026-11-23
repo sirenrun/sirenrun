@@ -271,10 +271,12 @@
     {
       "fields": {
         "arena": "2tRiPD6dbwchUBbte1X434Dy4NMNus1Xj4NwGgXSbpep",
+        "bond": "25000000",
+        "entryFee": "1000000",
         "nonce": 7,
         "runner": "CktRuQ2mttgRGkXJtyksdKHjUdc2C4TgDzyB98oEzy8"
       },
-      "hex": "ccd322f0fdc2297a1c084077fd3dee8248d61639f28dbdebbba57a624732dd6e8df9161d072d800d070000000303030303030303030303030303030303030303030303030303030303030303",
+      "hex": "ccd322f0fdc2297a1c084077fd3dee8248d61639f28dbdebbba57a624732dd6e8df9161d072d800d07000000030303030303030303030303030303030303030303030303030303030303030340420f000000000040787d0100000000",
       "name": "RunStarted"
     },
     {
@@ -287,16 +289,18 @@
     },
     {
       "fields": {
+        "amount": "5000000",
         "arena": "2tRiPD6dbwchUBbte1X434Dy4NMNus1Xj4NwGgXSbpep",
         "market": 1,
         "net": "4900000",
         "noR": "54900000",
         "nonce": 7,
+        "owner": "CktRuQ2mttgRGkXJtyksdKHjUdc2C4TgDzyB98oEzy8",
         "shares": "9123456",
         "side": "no",
         "yesR": "18446744073709551615"
       },
-      "hex": "18feda98fd2b12511c084077fd3dee8248d61639f28dbdebbba57a624732dd6e8df9161d072d800d070000000101a0c44a000000000080368b0000000000ffffffffffffffff20b5450300000000",
+      "hex": "18feda98fd2b12511c084077fd3dee8248d61639f28dbdebbba57a624732dd6e8df9161d072d800d070000000101a0c44a000000000080368b0000000000ffffffffffffffff20b54503000000000303030303030303030303030303030303030303030303030303030303030303404b4c0000000000",
       "name": "Trade"
     },
     {
@@ -318,10 +322,23 @@
           "no",
           "no"
         ],
+        "runner": "CktRuQ2mttgRGkXJtyksdKHjUdc2C4TgDzyB98oEzy8",
+        "runnerFees": "120000",
+        "runnerPaid": "19120000",
         "t": 451
       },
-      "hex": "0b14123ab0ee371b1c084077fd3dee8248d61639f28dbdebbba57a624732dd6e8df9161d072d800d07000000c301000029",
+      "hex": "0b14123ab0ee371b1c084077fd3dee8248d61639f28dbdebbba57a624732dd6e8df9161d072d800d07000000c3010000290303030303030303030303030303030303030303030303030303030303030303c0d401000000000080bf230100000000",
       "name": "RunSettled"
+    },
+    {
+      "fields": {
+        "arena": "2tRiPD6dbwchUBbte1X434Dy4NMNus1Xj4NwGgXSbpep",
+        "fee": "500000",
+        "nonce": 7,
+        "runner": "CktRuQ2mttgRGkXJtyksdKHjUdc2C4TgDzyB98oEzy8"
+      },
+      "hex": "d4baa824163542f51c084077fd3dee8248d61639f28dbdebbba57a624732dd6e8df9161d072d800d07000000030303030303030303030303030303030303030303030303030303030303030320a1070000000000",
+      "name": "NitroUsed"
     },
     {
       "fields": {

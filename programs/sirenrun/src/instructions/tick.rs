@@ -26,6 +26,20 @@ pub struct RunSettled {
     pub nonce: u32,
     pub t: u32,
     pub outcomes: u8,
+    pub runner: Pubkey,
+    /// The driver's cut of the run's trades.
+    pub runner_fees: u64,
+    /// Everything credited to the driver at the end: fees plus the bond left after a bust, or
+    /// the full entry fee and bond when the run was refunded for a missing seed.
+    pub runner_paid: u64,
+}
+
+#[event]
+pub struct NitroUsed {
+    pub arena: Pubkey,
+    pub nonce: u32,
+    pub runner: Pubkey,
+    pub fee: u64,
 }
 
 #[derive(Accounts)]
@@ -63,6 +77,14 @@ pub fn tick(ctx: Context<Tick>, nonce: u32) -> Result<()> {
     )?;
 
     let arena = &ctx.accounts.arena;
+    if effects.runner_out > 0 {
+        emit!(NitroUsed {
+            arena: arena.key(),
+            nonce,
+            runner: arena.runner,
+            fee: effects.runner_out,
+        });
+    }
     for market in (0..MARKETS as u8).filter(|m| effects.crossed & (1 << m) != 0) {
         emit!(LineCrossed {
             arena: arena.key(),
@@ -77,6 +99,9 @@ pub fn tick(ctx: Context<Tick>, nonce: u32) -> Result<()> {
             nonce,
             t: arena.sim.t,
             outcomes: arena.outcomes(),
+            runner: arena.runner,
+            runner_fees: arena.runner_fees,
+            runner_paid: effects.runner,
         });
     }
     Ok(())

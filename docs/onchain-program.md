@@ -372,10 +372,30 @@ was removed before any deployment, together with `last_tick_slot`.)
 
 ## Events (`emit!`): logs only, nothing stored
 
-`RunStarted { arena, nonce, runner }`, `SeedSet { arena, nonce }`,
-`Trade { … }`, `LineCrossed { arena, nonce, market, t }`,
-`RunSettled { arena, nonce, t, outcomes }`, `Claimed { owner, nonce, market, paid }`.
-The client uses them for the ticker and toasts.
+Events carry what the client and the indexer need to show a feed and total money per wallet;
+no account stores trade history. Amounts are tUSDC base units (6 decimals).
+
+| Event | Fields | Emitted by |
+|---|---|---|
+| `RunStarted` | `arena, nonce, runner, entry_fee, bond` | `start_run` |
+| `SeedSet` | `arena, nonce` | `vrf_callback_seed` |
+| `Trade` | `arena, nonce, market, side, net, shares, yes_r, no_r, owner, amount` | `buy` |
+| `NitroUsed` | `arena, nonce, runner, fee` | `tick`, when a nitro charge fires and is paid |
+| `LineCrossed` | `arena, nonce, market, t` | `tick` |
+| `RunSettled` | `arena, nonce, t, outcomes, runner, runner_fees, runner_paid` | `tick`, once per run |
+| `Claimed` | `owner, arena, nonce, market, paid` | `claim` |
+
+- `Trade.owner` is the trader's wallet, not the session key. `amount` is what they spent, fees
+  included; `net = amount - fee` is what went into the pool.
+- `RunSettled.runner_paid` is everything credited to the driver at the end: `runner_fees`
+  plus the bond left after a bust (or the whole bond when the run survived). For a run
+  refunded because the seed never arrived, every outcome is `void` and `runner_paid` is the
+  entry fee plus the bond.
+- Driver PnL for a run: `runner_paid - entry_fee - bond - sum(NitroUsed.fee)`.
+- Trader PnL: `sum(Claimed.paid) - sum(Trade.amount)` over the trader's wallet.
+
+The client uses them for the trade feed, run stats and toasts; the indexer (`indexer/`)
+stores them in Postgres for wallet stats and analytics.
 
 ## Admin scripts (`scripts/`)
 
