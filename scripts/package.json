@@ -9,7 +9,8 @@
     "init-devnet": "node src/init-devnet.ts",
     "smoke": "node src/devnet-smoke.ts",
     "set-faucet": "node src/set-faucet.ts",
-    "recover-arena": "node src/recover-arena.ts"
+    "recover-arena": "node src/recover-arena.ts",
+    "update-config": "node src/update-config.ts"
   },
   "dependencies": {
     "@sirenrun/sdk": "workspace:*",
