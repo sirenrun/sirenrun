@@ -9,7 +9,9 @@ export async function generateMetadata({
   params: Promise<{ id: string }>;
 }): Promise<Metadata> {
   const { id } = await params;
-  return { title: `CH-${id} · SIRENRUN` };
+  const channel = Number(id);
+  const valid = Number.isInteger(channel) && channel >= 1 && channel <= ARENAS;
+  return { title: valid ? `CH-${channel} · SIRENRUN` : "Not found · SIRENRUN" };
 }
 
 /** Channels are numbered from 1 in the URL; arenas from 0 onchain. */

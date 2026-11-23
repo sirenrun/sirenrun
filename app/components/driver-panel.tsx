@@ -10,14 +10,14 @@ import { RunStatsCard } from "./run-stats-card";
  * No trade buttons; a driver cannot trade their own run. Hidden on phones, where the road
  * needs the whole screen.
  */
-export function DriverPanel() {
+export function DriverPanel({ demo = false }: { demo?: boolean }) {
   const { arena } = usePolledArena();
   const history = useMarkets((s) => s.history);
   const views = arena?.markets.map(marketView) ?? [];
 
   return (
     <aside
-      className="relative z-20 hidden shrink-0 flex-col border-l border-white/10 bg-bg lg:flex lg:w-[18rem]"
+      className="relative z-20 hidden shrink-0 flex-col border-l border-white/10 bg-bg lg:flex lg:w-[18rem] 2xl:w-[22rem]"
       aria-label="Crowd"
     >
       <div className="flex-1 space-y-4 overflow-y-auto overscroll-contain p-4">
@@ -25,7 +25,7 @@ export function DriverPanel() {
           <h2 className="font-display text-2xl font-extrabold italic">The crowd</h2>
           <p className="text-xs text-muted">Chance the crowd gives you to pass each line.</p>
         </div>
-        <RunStatsCard driver />
+        {!demo && <RunStatsCard driver />}
         <Chart history={history} />
         <ul className="space-y-3">
           {views.map((v) => (

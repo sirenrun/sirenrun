@@ -63,7 +63,7 @@ export function DemoChannel() {
           <span className="rounded bg-black/50 px-2 py-1 text-muted">Bot driver, offline</span>
         </div>
       </div>
-      {driverView ? <DriverPanel /> : <MarketsPanel demo />}
+      {driverView ? <DriverPanel demo /> : <MarketsPanel demo />}
     </main>
   );
 }

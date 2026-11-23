@@ -300,7 +300,7 @@ export function MarketsPanel({ demo = false }: { demo?: boolean }) {
 
   return (
     <aside
-      className="relative z-20 flex max-h-[60%] shrink-0 flex-col border-t border-white/10 bg-bg lg:max-h-none lg:w-[22rem] lg:border-l lg:border-t-0"
+      className="relative z-20 flex max-h-[60%] shrink-0 flex-col border-t border-white/10 bg-bg lg:max-h-none lg:w-[22rem] lg:border-l lg:border-t-0 2xl:w-[26rem]"
       aria-label="Markets"
     >
       {/* Phone: a bar with the three prices that opens the full panel. */}
@@ -315,7 +315,15 @@ export function MarketsPanel({ demo = false }: { demo?: boolean }) {
           {views.map((v) => (
             <span key={v.index}>
               {v.seconds}s{" "}
-              {v.open ? percent(v.ride) : v.status === "yes" ? "✓" : v.status === "no" ? "✗" : "–"}
+              {v.open ? (
+                <span className="text-up">{percent(v.ride)}</span>
+              ) : v.status === "yes" ? (
+                <span className="font-semibold text-up">RIDE</span>
+              ) : v.status === "no" ? (
+                <span className="font-semibold text-down">BUST</span>
+              ) : (
+                "void"
+              )}
             </span>
           ))}
           <span aria-hidden>{open ? "▾" : "▴"}</span>
