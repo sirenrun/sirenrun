@@ -21,19 +21,21 @@ No oracle and no manual resolution.
 
 ![Watching a run: the scene with the HUD on the left, the three lines with RIDE prices on the right](.github/assets/trading.png)
 
-### Driver view and stats
+### Driver, trader and stats
 
 The driver sees the road, their controls and how the crowd is betting, with no trade
-buttons. Everyone else gets the trading panel. Wallet PnL, total trades and platform
-analytics come from an indexer that stores the program's events.
+buttons. Everyone else gets the trading panel: RIDE/BUST with live "pays" quotes, amount
+presets and a Connect wallet prompt before they deposit. Wallet PnL, total trades and
+platform analytics come from an indexer that stores the program's events.
 
 Watchers see their open positions over the road, get a first-visit guide with a live
 example payout, and can share a run's result; phones buzz when a line pays or a position
-wins. The lobby shows driver and trader leaderboards.
+wins. The lobby shows driver and trader leaderboards. Preview the layouts offline at
+`/demo?view=driver` and `/demo?view=trader`.
 
-| Driver view | Stats page |
-|---|---|
-| ![The driver's layout: the road with a slim crowd panel showing volume, trades, earnings and RIDE odds per line](.github/assets/driver.png) | ![The stats page: visitors, players, runs, trades, volume, payouts, daily charts and leaderboards](.github/assets/stats.png) |
+| Driver view | Trader view | Stats page |
+|---|---|---|
+| ![The driver's layout: the road with a slim crowd panel showing volume, trades, earnings and RIDE odds per line](.github/assets/driver.png) | ![The trader's layout: RIDE and BUST buttons with payout quotes, amount presets, the first-visit guide and Connect wallet](.github/assets/trader.png) | ![The stats page: visitors, players, runs, trades, volume, payouts, daily charts and leaderboards](.github/assets/stats.png) |
 
 ## How a run works
 
@@ -133,8 +135,9 @@ pnpm install
 pnpm dev            # http://localhost:3000
 ```
 
-- `/` plays an offline attract run, `/demo` an offline run with read-only markets, and
-  `/lobby` lists the three devnet channels.
+- `/` plays an offline attract run, `/demo` an offline run with read-only markets
+  (`?view=driver` / `?view=trader` for those layouts), and `/lobby` lists the three
+  devnet channels.
 - To drive or trade, connect a devnet wallet. The onboarding walks through test USDC from
   the faucet, a deposit, and starting a session. The faucet needs `FAUCET_SECRET_KEY` in
   `app/.env.local` (see `.env.example`).

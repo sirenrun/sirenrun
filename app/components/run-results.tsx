@@ -22,17 +22,17 @@ const toneOf = (v: bigint) => (v > 0n ? "text-up" : v < 0n ? "text-down" : "text
 /**
  * Where the forfeited part of the bond went. It covers what BUST won on the lines the bust
  * closed, then refunds RIDE holders on those lines; with no RIDE holders it stays with the house.
+ * `bondToRide` is only the most RIDE holders can take: a RIDE position refunded in full for
+ * changing in the last 1.5 s before its line resolved takes none, and that share stays with
+ * the house. The arena cannot tell which positions those were, so the text says "up to".
  */
-function bondText(d: { bondLost: bigint; bondToRide: bigint; bondToHouse: bigint }): string {
+function bondText(d: { bondLost: bigint; bondToRide: bigint }): string {
   if (d.bondLost === 0n) return "Bond returned in full.";
   const lost = `${formatTokenAmount(d.bondLost)} of the bond covered BUST winnings`;
-  if (d.bondToHouse === 0n) {
-    return `${lost} and went back to fans who bet RIDE on you; the rest came back.`;
-  }
   if (d.bondToRide === 0n) {
     return `${lost}. Nobody bet RIDE on those lines, so it went to the house; the rest came back.`;
   }
-  return `${lost}: ${formatTokenAmount(d.bondToRide)} went back to fans who bet RIDE on you and ${formatTokenAmount(d.bondToHouse)} to the house. The rest came back.`;
+  return `${lost}. Fans who bet RIDE on those lines get up to ${formatTokenAmount(d.bondToRide)} of it back; the house keeps what they don't. The rest of the bond came back.`;
 }
 
 export function RunResults() {
@@ -91,7 +91,7 @@ export function RunResults() {
       )}
       <ul className="mt-3 grid grid-cols-3 gap-2 text-center text-sm">
         {summary.lines.map((l) => (
-          <li key={l.seconds} className="rounded-md bg-white/[0.04] py-1.5">
+          <li key={l.seconds} className="rounded-md bg-white/4 py-1.5">
             <span className="block text-xs text-muted">{l.seconds}s</span>
             <span
               className={`font-semibold ${l.status === "yes" ? "text-up" : l.status === "no" ? "text-down" : "text-muted"}`}

@@ -6,6 +6,7 @@ import { Hud } from "../game/Hud";
 import type { DemoOptions } from "../game/demo";
 import { useMarketFeed } from "../lib/use-market-feed";
 import { useArena } from "../stores/arena";
+import { useBalance } from "../stores/balance";
 import { GameAudio } from "./game-audio";
 import { SaveClip } from "./save-clip";
 import { DriverPanel } from "./driver-panel";
@@ -18,7 +19,8 @@ const Scene = dynamic(() => import("../game/Scene"), {
 
 /**
  * `?seed=`, `?skip=` (live ticks) and `?miss=` (0..1) pin a run, e.g. for screenshots.
- * `?view=driver` shows the driver's layout instead of the trading panel.
+ * `?view=driver` shows the driver's layout; `?view=trader` the full trading panel a visitor
+ * sees before connecting a wallet (live fee terms, real quotes on the demo's pools).
  */
 function optionsFromUrl(): DemoOptions {
   const q = new URLSearchParams(window.location.search);
@@ -42,13 +44,18 @@ export function DemoChannel() {
   const status = useArena((s) => s.status);
   // The URL does not change while the page is open, so there is nothing to subscribe to; the
   // server render (and hydration) sees the trading layout.
-  const driverView = useSyncExternalStore(
+  const view = useSyncExternalStore(
     noSubscribe,
-    () => new URLSearchParams(window.location.search).get("view") === "driver",
-    () => false,
+    () => new URLSearchParams(window.location.search).get("view"),
+    () => null,
   );
+  const ensureConfig = useBalance((s) => s.ensureConfig);
 
   useEffect(() => demo(optionsFromUrl()), [demo]);
+  // The trader preview quotes real payouts, so it needs the devnet fee terms.
+  useEffect(() => {
+    if (view === "trader") void ensureConfig();
+  }, [view, ensureConfig]);
   useMarketFeed(null);
 
   return (
@@ -63,7 +70,13 @@ export function DemoChannel() {
           <span className="rounded bg-black/50 px-2 py-1 text-muted">Bot driver, offline</span>
         </div>
       </div>
-      {driverView ? <DriverPanel demo /> : <MarketsPanel demo />}
+      {view === "driver" ? (
+        <DriverPanel demo />
+      ) : view === "trader" ? (
+        <MarketsPanel preview />
+      ) : (
+        <MarketsPanel demo />
+      )}
     </main>
   );
 }

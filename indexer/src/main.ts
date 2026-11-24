@@ -106,7 +106,8 @@ async function retry<T>(what: string, fn: () => Promise<T>, attempts = 6): Promi
 async function main() {
   const sql = connect(process.env.DATABASE_URL);
   await retry("database connect", () => migrate(sql));
-  const region = process.env.SIRENRUN_ER_REGION ?? "as";
+  // Same variable as the app and scripts, so all three follow the region the accounts live in.
+  const region = process.env.SIRENRUN_ER_REGION ?? process.env.NEXT_PUBLIC_ER_REGION ?? "as";
   if (!isErRegion(region)) throw new Error(`unsupported SIRENRUN_ER_REGION "${region}"`);
   const { er } = createConnections({ cluster: "devnet", region });
   log(`indexer: program ${PROGRAM_ID.toBase58()}, ER region ${region}`);
