@@ -1,11 +1,15 @@
 import {
   previewClaim,
   priceYes,
+  quoteBuy,
   type Arena,
   type Balance,
+  type BuyTerms,
   type EntrySide,
   type Market,
   type MarketStatus,
+  type Pool,
+  type RunCap,
   type Side,
 } from "@sirenrun/sdk";
 import { TICK_MS } from "@sirenrun/sim";
@@ -21,6 +25,26 @@ export const PRESETS = [1, 5, 10] as const;
 export const SLIPPAGE_BPS = 200;
 
 export const lineSeconds = (line: number) => Math.round((line * TICK_MS) / 1000);
+
+/** BUST room is offered in whole cents of tUSDC (6 decimals). */
+const CENT = 10_000n;
+
+/**
+ * The largest BUST buy, in whole cents, that still fits under the run's BUST cap (what BUST
+ * can win across the open lines is at most the driver's bond), or 0n when not even a cent
+ * fits. Winnings grow with the amount, so a binary search finds the edge.
+ */
+export function bustRoom(terms: BuyTerms, pool: Pool, cap: RunCap, upTo: bigint): bigint {
+  const fits = (amount: bigint) => quoteBuy(terms, pool, cap, "no", amount).ok;
+  let lo = 0n;
+  let hi = upTo / CENT;
+  while (lo < hi) {
+    const mid = (lo + hi + 1n) / 2n;
+    if (fits(mid * CENT)) lo = mid;
+    else hi = mid - 1n;
+  }
+  return lo * CENT;
+}
 
 /** YES prices of the three lines at one live tick. Client-side only; nothing stores this. */
 export interface PricePoint {

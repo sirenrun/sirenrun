@@ -1,8 +1,9 @@
-import type { Arena, Balance, Market, PositionEntry } from "@sirenrun/sdk";
+import { quoteBuy, type Arena, type Balance, type Market, type PositionEntry } from "@sirenrun/sdk";
 import { PublicKey } from "@solana/web3.js";
 import { describe, expect, it } from "vitest";
 import {
   appendHistory,
+  bustRoom,
   friendlyError,
   lineSeconds,
   marketView,
@@ -243,5 +244,30 @@ describe("ticker and errors", () => {
     expect(friendlyError("Slippage", "x")).toMatch(/price moved/);
     expect(friendlyError("Unknown", "x")).toBe("Unknown");
     expect(friendlyError(undefined, "fallback")).toBe("fallback");
+  });
+});
+
+describe("BUST room under the bond cap", () => {
+  const terms = { feeBps: 200, runnerFeeBps: 200, maxBuy: 50n * T };
+  // The 30 s line opened at RIDE 85% with 50 tUSDC of liquidity, as on devnet.
+  const pool = { yesR: 8_823_529n, noR: 50n * T };
+  const cap = { bond: 5n * T, noProfit: 0n, otherNoProfit: 0n };
+  const fits = (amount: bigint, c = cap) => quoteBuy(terms, pool, c, "no", amount).ok;
+
+  it("offers the largest whole-cent buy that fits when the preset does not", () => {
+    expect(fits(10n * T)).toBe(false);
+    const room = bustRoom(terms, pool, cap, 10n * T);
+    expect(room).toBeGreaterThan(0n);
+    expect(room % 10_000n).toBe(0n);
+    expect(fits(room)).toBe(true);
+    expect(fits(room + 10_000n)).toBe(false);
+  });
+
+  it("never offers more than asked", () => {
+    expect(bustRoom(terms, pool, cap, 10_000n)).toBe(10_000n);
+  });
+
+  it("is zero once BUST on the open lines already wins the whole bond", () => {
+    expect(bustRoom(terms, pool, { ...cap, otherNoProfit: 5n * T }, 10n * T)).toBe(0n);
   });
 });

@@ -18,6 +18,7 @@ import {
   PRESETS,
   SIDE_LABEL,
   ago,
+  bustRoom,
   marketView,
   percent,
   positionRows,
@@ -50,7 +51,7 @@ export function usePolledArena(): { arena: Arena | null; now: number } {
 export function Chart({ history }: { history: PriceHistory }) {
   const points = history.points;
   if (points.length < 2) {
-    return <div className="h-16 rounded bg-white/[0.03]" aria-hidden />;
+    return <div className="h-16 rounded bg-white/3" aria-hidden />;
   }
   const first = points[0]?.t ?? 0;
   const span = Math.max(1, (points[points.length - 1]?.t ?? 1) - first);
@@ -58,7 +59,7 @@ export function Chart({ history }: { history: PriceHistory }) {
     <svg
       viewBox="0 0 100 40"
       preserveAspectRatio="none"
-      className="h-16 w-full rounded bg-white/[0.03]"
+      className="h-16 w-full rounded bg-white/3"
       aria-hidden
     >
       <line x1="0" x2="100" y1="20" y2="20" stroke="white" strokeOpacity="0.08" strokeWidth="0.5" />
@@ -81,17 +82,36 @@ export function Chart({ history }: { history: PriceHistory }) {
   );
 }
 
-function payout(config: Config | null, arena: Arena, view: MarketView, side: Side, amount: bigint) {
+/**
+ * What one click buys. A BUST buy over the run's cap shrinks to the room left, so a full
+ * line says so up front instead of failing after the click.
+ */
+type Offer =
+  | { kind: "buy"; amount: bigint; pays: string; capped: boolean }
+  | { kind: "full" }
+  | { kind: "none" };
+
+function offer(
+  config: Config | null,
+  arena: Arena,
+  view: MarketView,
+  side: Side,
+  amount: bigint,
+): Offer {
   const pool = arena.markets[view.index];
-  if (config === null || pool === undefined) return null;
-  const q = quoteBuy(
-    { feeBps: config.feeBps, runnerFeeBps: config.runnerFeeBps, maxBuy: config.maxBuy },
-    pool,
-    runCap(arena, view.index),
-    side,
-    amount,
-  );
-  return q.ok ? formatTokenAmount(q.quote.shares) : null;
+  if (config === null || pool === undefined || !view.open) return { kind: "none" };
+  const terms = { feeBps: config.feeBps, runnerFeeBps: config.runnerFeeBps, maxBuy: config.maxBuy };
+  const cap = runCap(arena, view.index);
+  const q = quoteBuy(terms, pool, cap, side, amount);
+  if (q.ok) {
+    return { kind: "buy", amount, pays: formatTokenAmount(q.quote.shares), capped: false };
+  }
+  if (q.error !== "NoInterestCapReached") return { kind: "none" };
+  const room = bustRoom(terms, pool, cap, amount);
+  const fit = room > 0n ? quoteBuy(terms, pool, cap, side, room) : null;
+  return fit?.ok
+    ? { kind: "buy", amount: room, pays: formatTokenAmount(fit.quote.shares), capped: true }
+    : { kind: "full" };
 }
 
 function MarketRow(props: {
@@ -111,12 +131,19 @@ function MarketRow(props: {
   const closing = view.open && arena.status === "live" && arena.sim.t >= line - COOLDOWN_TICKS;
   const button = (side: Side) => {
     const busy = buying?.market === view.index && buying.side === side;
-    const pays = view.open ? payout(config, arena, view, side, amount) : null;
+    const deal = offer(config, arena, view, side, amount);
     return (
       <button
         type="button"
-        disabled={!canTrade || !view.open || closing || buying !== null}
-        onClick={() => void buy(view.index, side, amount)}
+        disabled={!canTrade || !view.open || closing || buying !== null || deal.kind === "full"}
+        onClick={() => deal.kind === "buy" && void buy(view.index, side, deal.amount)}
+        title={
+          deal.kind === "full"
+            ? "BUST is full on this run: the driver's bond caps what BUST can win."
+            : deal.kind === "buy" && deal.capped
+              ? `Only ${formatTokenAmount(deal.amount)} tUSDC of BUST fits under the driver's bond.`
+              : undefined
+        }
         className={`flex flex-1 flex-col items-center rounded-md border px-2 py-1.5 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-40 ${
           side === "yes"
             ? "border-up/50 bg-up/10 enabled:hover:bg-up/25 enabled:hover:shadow-[0_0_18px_-6px_var(--color-up)]"
@@ -129,15 +156,20 @@ function MarketRow(props: {
             {percent(side === "yes" ? view.ride : 1 - view.ride)}
           </span>
         </span>
-        {pays !== null && (
-          <span className="text-[11px] font-normal tabular-nums text-muted">pays {pays}</span>
+        {deal.kind === "buy" && (
+          <span className="text-[11px] font-normal tabular-nums text-muted">
+            {deal.capped ? `max ${formatTokenAmount(deal.amount)} · ` : ""}pays {deal.pays}
+          </span>
+        )}
+        {deal.kind === "full" && (
+          <span className="text-[11px] font-normal text-muted">full: bond cap</span>
         )}
       </button>
     );
   };
 
   return (
-    <li className="rounded-lg border border-white/10 bg-white/[0.02] p-3">
+    <li className="rounded-lg border border-white/10 bg-white/2 p-3">
       <div className="flex items-baseline justify-between">
         <span className="flex items-center gap-2 font-display text-xl font-extrabold italic">
           <span className="h-2 w-2 rounded-full" style={{ background: LINE_COLOURS[view.index] }} />
@@ -308,7 +340,7 @@ export function MarketsPanel({
 
   return (
     <aside
-      className="relative z-20 flex max-h-[60%] shrink-0 flex-col border-t border-white/10 bg-bg lg:max-h-none lg:w-[22rem] lg:border-l lg:border-t-0 2xl:w-[26rem]"
+      className="relative z-20 flex max-h-[60%] shrink-0 flex-col border-t border-white/10 bg-bg lg:max-h-none lg:w-88 lg:border-l lg:border-t-0 2xl:w-104"
       aria-label="Markets"
     >
       {/* Phone: a bar with the three prices that opens the full panel. */}
