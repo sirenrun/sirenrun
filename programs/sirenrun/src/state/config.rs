@@ -1,6 +1,7 @@
 use anchor_lang::prelude::*;
 
 use super::MARKETS;
+use crate::constants::MAX_BOND_MULTIPLE;
 use crate::errors::SirenrunError;
 
 pub const CONFIG_SEED: &[u8] = b"config";
@@ -71,6 +72,16 @@ impl ConfigParams {
 impl Config {
     pub const SPACE: usize = 8 + Self::INIT_SPACE;
 
+    /// The bond a driver may post: at least `bond`, at most `MAX_BOND_MULTIPLE` times it.
+    pub fn check_bond(&self, bond: u64) -> Result<()> {
+        let max = self
+            .bond
+            .checked_mul(MAX_BOND_MULTIPLE)
+            .ok_or(SirenrunError::MathOverflow)?;
+        require!(bond >= self.bond && bond <= max, SirenrunError::InvalidBond);
+        Ok(())
+    }
+
     pub fn apply(&mut self, params: &ConfigParams) {
         self.house = params.house;
         self.fee_bps = params.fee_bps;
@@ -108,6 +119,38 @@ mod tests {
     fn space_matches_spec() {
         assert_eq!(Config::SPACE, 189);
         assert_eq!(Config::SPACE, CONFIG_V1_SPACE + 1);
+    }
+
+    fn config(bond: u64) -> Config {
+        let p = params();
+        Config {
+            admin: Pubkey::new_unique(),
+            mint: Pubkey::new_unique(),
+            vault: Pubkey::new_unique(),
+            house: p.house,
+            fee_bps: p.fee_bps,
+            runner_fee_bps: p.runner_fee_bps,
+            entry_fee: p.entry_fee,
+            bond,
+            liquidity: p.liquidity,
+            max_buy: p.max_buy,
+            nitro_fee: p.nitro_fee,
+            open_bps: p.open_bps,
+            bump: 0,
+            vault_bump: 0,
+            min_tick_slots: p.min_tick_slots,
+        }
+    }
+
+    #[test]
+    fn a_driver_bond_is_between_the_minimum_and_ten_times_it() {
+        let c = config(5_000_000);
+        assert!(c.check_bond(5_000_000).is_ok());
+        assert!(c.check_bond(25_000_000).is_ok());
+        assert!(c.check_bond(50_000_000).is_ok());
+        assert!(c.check_bond(4_999_999).is_err());
+        assert!(c.check_bond(50_000_001).is_err());
+        assert!(config(u64::MAX).check_bond(u64::MAX).is_err());
     }
 
     #[test]

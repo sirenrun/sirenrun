@@ -3,7 +3,8 @@
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useWalletModal } from "@solana/wallet-adapter-react-ui";
 import { formatTokenAmount, isSessionLive } from "@sirenrun/sdk";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
+import { bondOptions } from "../lib/bond";
 import { roleOf } from "../lib/role";
 import { useNow } from "../lib/use-now";
 import { useWalletSigner } from "../lib/use-wallet-signer";
@@ -91,9 +92,13 @@ export function DrivePanel() {
   const setDrawer = useUi((s) => s.setDrawer);
   const now = useNow(15_000);
   const resultsOpen = useUi((s) => s.resultsOpen);
+  // Null until the driver picks: then the minimum, whatever Config says it is now.
+  const [picked, setPicked] = useState<bigint | null>(null);
 
   if (status !== "idle" || resultsOpen) return null;
-  const stake = config === null ? null : config.entryFee + config.bond;
+  const options = config === null ? [] : bondOptions(config.bond);
+  const bond = picked !== null && options.includes(picked) ? picked : (options[0] ?? null);
+  const stake = config === null || bond === null ? null : config.entryFee + bond;
   const available = game?.available ?? 0n;
   const sessionLive = session !== null && isSessionLive(session, now / 1000);
 
@@ -128,8 +133,8 @@ export function DrivePanel() {
       <button
         type="button"
         className="btn-primary w-full text-base"
-        disabled={starting}
-        onClick={() => void start()}
+        disabled={starting || bond === null}
+        onClick={() => bond !== null && void start(bond)}
       >
         {starting ? "Starting…" : "Drive"}
       </button>
@@ -161,9 +166,31 @@ export function DrivePanel() {
               <p className="tabular-nums">{formatTokenAmount(config.nitroFee)} per nitro used</p>
             </div>
           </div>
-          <p className="mt-3 text-sm tabular-nums">
-            {formatTokenAmount(config.bond)} tUSDC bond, held during the run and returned after it.
-          </p>
+          <div className="mt-3">
+            <p className="text-sm">Your bond, held during the run and returned after it</p>
+            <div className="mt-1.5 flex gap-2" role="radiogroup" aria-label="Bond">
+              {options.map((b) => (
+                <button
+                  key={b.toString()}
+                  type="button"
+                  role="radio"
+                  aria-checked={bond === b}
+                  onClick={() => setPicked(b)}
+                  className={`flex-1 rounded-md border py-1.5 text-sm font-semibold tabular-nums ${
+                    bond === b
+                      ? "border-white/60 bg-white/10"
+                      : "border-white/15 text-muted hover:border-white/35"
+                  }`}
+                >
+                  {formatTokenAmount(b)}
+                </button>
+              ))}
+            </div>
+            <p className="mt-1.5 text-xs text-muted">
+              A bigger bond leaves more room for BUST bets, so more trades and more fees for you,
+              and puts more at risk if you get busted.
+            </p>
+          </div>
           <details className="mt-1 text-xs text-muted">
             <summary className="cursor-pointer select-none hover:text-text">
               How the bond works

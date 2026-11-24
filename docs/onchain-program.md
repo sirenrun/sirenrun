@@ -41,7 +41,7 @@ Seeds: `[b"config"]`
 | fee_bps | u16 | total trade fee, 200 = 2% |
 | runner_fee_bps | u16 | part of fee to driver, 200 = all of a 2% fee |
 | entry_fee | u64 | e.g. 0.5 tUSDC (500_000) |
-| bond | u64 | e.g. 5 tUSDC; also the cap on what BUST can win per run |
+| bond | u64 | minimum bond, e.g. 5 tUSDC; the driver picks up to `MAX_BOND_MULTIPLE` (10) times it at `start_run` |
 | liquidity | u64 | per market, e.g. 50 tUSDC |
 | max_buy | u64 | per trade, e.g. 50 tUSDC |
 | nitro_fee | u64 | charged per nitro charge fired, e.g. 0.5 tUSDC |
@@ -82,7 +82,7 @@ Seeds: `[b"arena", &[id]]`
 | seed_ready | bool | |
 | seed | u64 | |
 | sim | RunSim | 27 bytes: borsh copy of `sim::SimState` (the fields in [game-design.md](game-design.md) minus `seed`, plus `nitro_pressed`) |
-| bond | u64 | bond held for this run |
+| bond | u64 | bond the driver posted for this run; also the cap on what BUST can win in it |
 | runner_fees | u64 | accrued driver fee share |
 | markets | [Market; 3] | |
 | results | [RunResult; 16] | ring of finished runs |
@@ -115,7 +115,7 @@ Legend: **B** = base layer, **ER** = ephemeral rollup, **S** = signer may be a s
 | 7 | `undelegate_balance()` | ER | user (S) | Commit + undelegate Balance (before withdraw/deposit) |
 | 8 | `init_arena(id)` | B | admin | Create Arena with lines [300, 600, 900] |
 | 9 | `delegate_arena(id)` | B | admin | Delegate Arena |
-| 10 | `start_run()` | ER | driver (S) | Begin staging, request VRF, schedule crank |
+| 10 | `start_run(bond)` | ER | driver (S) | Begin staging with the driver's bond, request VRF, schedule crank |
 | 11 | `vrf_callback_seed(randomness, nonce)` | ER | VRF program only | Store seed |
 | 12 | `tick()` | ER | anyone (the crank) | Advance staging, sim, markets, settlement; rate-limited by `min_tick_slots` |
 | 13 | `set_input(target_lane, nitro)` | ER | driver (S) | Steering |
@@ -159,8 +159,13 @@ Accounts: `signer`, `session_token` (opt), `runner_balance` (mut), `house_balanc
 `caller_seed` = `[id, nonce LE (4), slot LE (8), 0…]`; `callback_args` = `nonce` LE, so
 the callback receives `(randomness, nonce)`.
 
-Checks, in order: signer authorized for `runner_balance`; `arena.status == Idle`
-(`ArenaBusy`); `house_balance.available >= 3 * liquidity` (`HouseInsufficient`);
+Args: `bond`, the driver's choice. A bigger bond lets more BUST money in, since BUST
+winnings across the open lines are capped at it, and puts more at risk on a bust; the app
+offers 1, 2, 5 and 10 times the minimum.
+
+Checks, in order: signer authorized for `runner_balance`;
+`config.bond <= bond <= MAX_BOND_MULTIPLE * config.bond` (`InvalidBond`, `Config::check_bond`);
+`arena.status == Idle` (`ArenaBusy`); `house_balance.available >= 3 * liquidity` (`HouseInsufficient`);
 `runner_balance.available >= entry_fee + bond` (`InsufficientBalance`). The arena reset
 lives in `Arena::begin`.
 
@@ -377,7 +382,7 @@ version to the unit: after all claims, the vault equals the sum of all balances.
 `ArenaBusy, ArenaNotLive, MarketClosed, InsufficientBalance, HouseInsufficient,
 TooLarge, Slippage, NoInterestCapReached, RunnerCannotTrade, NoFreeEntry, NotResolved,
 ResultExpired, InvalidLane, Unauthorized, MathOverflow, SeedNotReady, InvalidConfig,
-InvalidArena, NoEntry, BalanceInUse, ArenaNotSettled, LineClosing`.
+InvalidArena, NoEntry, BalanceInUse, ArenaNotSettled, LineClosing, InvalidBond`.
 
 Codes are `6000 + position`, so new variants are appended, never inserted. (`TickTooSoon`
 was removed before any deployment, together with `last_tick_slot`.)
@@ -467,6 +472,9 @@ the house usually loses); its job is to reward beating the doubters without bein
 The bond is the real lever: the driver's cost is the forfeit, which grows with BUST demand up
 to the bond. Bond 5 caps BUST sooner: about 72% of BUST attempts in a busy room hit "BUST is
 full", against 69% at bond 10. House figures are noisy (single runs swing by about 100).
+The table is for the minimum bond. Since the driver picks the bond (5 to 50 on devnet), a
+driver expecting a busy room can post more to let more BUST in and earn more fees, at the
+cost of a bigger forfeit on a bust.
 
 ### The house
 

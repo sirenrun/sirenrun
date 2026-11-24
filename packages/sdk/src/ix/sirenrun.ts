@@ -180,10 +180,12 @@ export function startRunIx(a: {
   id: number;
   /** `endpoints(...).oracleQueue`: the ephemeral queue on devnet, the test queue locally. */
   oracleQueue: PublicKey;
+  /** The driver's bond, from `Config.bond` up to `MAX_BOND_MULTIPLE` times it. */
+  bond: bigint;
 }) {
   return er(
     "start_run",
-    {},
+    { bond: u64(a.bond) },
     {
       ...signedBy(a.auth),
       runner_balance: balancePda(a.runner).address,

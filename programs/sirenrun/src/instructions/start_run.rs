@@ -60,16 +60,18 @@ pub struct StartRun<'info> {
     pub magic_program: Program<'info, MagicProgram>,
 }
 
-pub fn start_run<'info>(ctx: Context<'info, StartRun<'info>>) -> Result<()> {
+/// `bond` is the driver's choice within `Config::check_bond`.
+pub fn start_run<'info>(ctx: Context<'info, StartRun<'info>>, bond: u64) -> Result<()> {
     let accounts = &ctx.accounts;
     authorize(
         &**accounts,
         accounts.runner_balance.owner == accounts.signer.key(),
     )?;
     let config = &ctx.accounts.config;
+    config.check_bond(bond)?;
     let terms = RunTerms {
         entry_fee: config.entry_fee,
-        bond: config.bond,
+        bond,
         liquidity: config.liquidity,
         open_bps: config.open_bps,
     };

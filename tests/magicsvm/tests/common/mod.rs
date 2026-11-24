@@ -505,8 +505,19 @@ impl World {
         runner: &Pubkey,
         id: u8,
     ) -> Result<(), TransactionError> {
+        let bond = self.params().bond;
+        self.start_run_with_bond(signer, runner, id, bond)
+    }
+
+    pub fn start_run_with_bond(
+        &mut self,
+        signer: &Keypair,
+        runner: &Pubkey,
+        id: u8,
+        bond: u64,
+    ) -> Result<(), TransactionError> {
         let ix = ix(
-            instruction::StartRun {},
+            instruction::StartRun { bond },
             accounts::StartRun {
                 signer: key(signer),
                 session_token: None,

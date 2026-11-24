@@ -41,3 +41,6 @@ pub const MAX_ENTRIES: usize = 8;
 pub const ARENAS: u8 = 3;
 pub const SEED_TIMEOUT_TICKS: u32 = 50;
 pub const COOLDOWN_TICKS: u32 = 15;
+/// A driver picks a bond between `Config.bond` and this many times it. A bigger bond lets
+/// more BUST money in (BUST winnings are capped at the bond) and puts more at risk on a bust.
+pub const MAX_BOND_MULTIPLE: u64 = 10;

@@ -1236,7 +1236,12 @@ export type Sirenrun = {
           "address": "11111111111111111111111111111111"
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "bond",
+          "type": "u64"
+        }
+      ]
     },
     {
       "name": "tick",
@@ -1843,6 +1848,11 @@ export type Sirenrun = {
       "code": 6021,
       "name": "lineClosing",
       "msg": "This line resolves in a moment; trading on it has closed"
+    },
+    {
+      "code": 6022,
+      "name": "invalidBond",
+      "msg": "Bond is outside the allowed range"
     }
   ],
   "types": [

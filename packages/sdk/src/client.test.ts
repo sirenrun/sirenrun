@@ -98,6 +98,7 @@ const builders: Record<string, (a: Args) => LayerInstruction<"base" | "er">> = {
       house: key(a.house),
       id: num(a.id),
       oracleQueue: key(a.oracleQueue),
+      bond: big(a.bond),
     }),
   setInput: (a) =>
     setInputIx({

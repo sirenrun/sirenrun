@@ -59,8 +59,8 @@ pub mod sirenrun {
         instructions::delegate_arena(ctx, id)
     }
 
-    pub fn start_run<'info>(ctx: Context<'info, StartRun<'info>>) -> Result<()> {
-        instructions::start_run(ctx)
+    pub fn start_run<'info>(ctx: Context<'info, StartRun<'info>>, bond: u64) -> Result<()> {
+        instructions::start_run(ctx, bond)
     }
 
     pub fn vrf_callback_seed(

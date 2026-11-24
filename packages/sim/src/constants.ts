@@ -38,3 +38,5 @@ export const MAX_ENTRIES = 8;
 export const ARENAS = 3;
 export const SEED_TIMEOUT_TICKS = 50;
 export const COOLDOWN_TICKS = 15;
+/** A driver's bond is between `Config.bond` and this many times it. */
+export const MAX_BOND_MULTIPLE = 10;
