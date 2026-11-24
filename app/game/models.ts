@@ -114,8 +114,8 @@ function playerAtlas(atlas: Texture) {
     ctx.drawImage(atlas.image as HTMLImageElement, 0, 0);
     const r = swatchRect(SWATCH.paint, w, h);
     const g = ctx.createLinearGradient(0, r.y, 0, r.y + r.h);
-    g.addColorStop(0, "#ff5aa5");
-    g.addColorStop(1, new Color(NEON.pink).multiplyScalar(0.8).getStyle());
+    g.addColorStop(0, "#ff7ab8");
+    g.addColorStop(1, new Color(NEON.pink).multiplyScalar(0.95).getStyle());
     ctx.fillStyle = g;
     ctx.fillRect(r.x, r.y, r.w, r.h);
   });
@@ -146,15 +146,23 @@ function lampMask(atlas: Texture) {
 /** Lamp brightness: well past the bloom threshold so tail lights read through the fog. */
 export const LAMP_INTENSITY = 5;
 
+/**
+ * Body lift against the slate road: MeshStandard + Neutral tone mapping otherwise reads the
+ * atlas paints as near-black silhouettes, player and traffic alike. Lamps stay on the emissive
+ * map, so this only lifts the paint the camera sees.
+ */
+const BODY_LIFT = new Color("#ffffff").multiplyScalar(1.35);
+
 function carMaterial(map: Texture, lamps: Texture) {
   return new MeshStandardMaterial({
     map,
+    color: BODY_LIFT,
     emissive: "#ffffff",
     emissiveMap: lamps,
     emissiveIntensity: LAMP_INTENSITY,
-    // Rough enough that the police strobe and streetlights do not blow out white panels.
-    roughness: 0.62,
-    metalness: 0.1,
+    // A bit glossier than matte so the sunset key light catches the rears the camera faces.
+    roughness: 0.48,
+    metalness: 0.12,
   });
 }
 

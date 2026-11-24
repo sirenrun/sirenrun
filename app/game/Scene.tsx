@@ -204,11 +204,11 @@ function World() {
     <>
       <fog attach="fog" args={[NEON.fog, FOG_NEAR, FOG_FAR]} />
       {/* Warm sunset fill from ahead, violet sky light, dark ground bounce. */}
-      <hemisphereLight args={["#9a72e0", "#1c1028", 1.3]} />
+      <hemisphereLight args={["#9a72e0", "#1c1028", 1.45]} />
       {/* Key light from behind the camera: the faces the player sees (car rears) are lit. */}
-      <directionalLight position={[8, 16, 30]} intensity={1.4} color="#ffd2e8" />
-      <directionalLight position={[0, 6, -40]} intensity={0.5} color={NEON.skyGlow} />
-      <ambientLight intensity={0.25} color="#ff9ad5" />
+      <directionalLight position={[8, 16, 30]} intensity={1.75} color="#ffd2e8" />
+      <directionalLight position={[0, 6, -40]} intensity={0.55} color={NEON.skyGlow} />
+      <ambientLight intensity={0.38} color="#ff9ad5" />
       <Sky />
       <Roadside />
       <Road />

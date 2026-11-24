@@ -163,11 +163,12 @@ export function Obstacles() {
     <>
       <instancedMesh ref={bodies} args={[undefined, undefined, MAX]} frustumCulled={false}>
         <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial roughness={0.35} metalness={0.4} />
+        {/* Less metal than before: metal has no diffuse, so the barriers went dark on the road. */}
+        <meshStandardMaterial roughness={0.28} metalness={0.35} />
       </instancedMesh>
       <instancedMesh ref={tops} args={[undefined, undefined, MAX]} frustumCulled={false}>
         <boxGeometry args={[1, 1, 1]} />
-        <meshStandardMaterial roughness={0.15} metalness={0.8} />
+        <meshStandardMaterial roughness={0.12} metalness={0.75} />
       </instancedMesh>
       <instancedMesh ref={lights} args={[undefined, undefined, MAX * 2]} frustumCulled={false}>
         <boxGeometry args={[1, 1, 1]} />
