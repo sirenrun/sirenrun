@@ -30,9 +30,12 @@ export interface RunSummary {
     fees: bigint;
     /** Part of the bond that covered BUST winnings; the rest came back. */
     bondLost: bigint;
-    /** Of `bondLost`, what was refunded to RIDE holders on the busted lines. */
+    /**
+     * Of `bondLost`, the most RIDE holders on the busted lines can take back. A RIDE position
+     * refunded in full by the late-trade rule takes none of it, so the real figure can be lower.
+     */
     bondToRide: bigint;
-    /** Of `bondLost`, what went to the house because those lines had too few RIDE holders. */
+    /** Of `bondLost`, what goes to the house for sure: `bondLost - bondToRide`. */
     bondToHouse: bigint;
     /** Nitro fees paid, one per charge fired. */
     nitro: bigint;
