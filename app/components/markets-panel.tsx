@@ -252,8 +252,17 @@ export function Ticker() {
  * The three lines of the current run: RIDE/BUST prices, one-click buys with the session key,
  * the price chart, the viewer's positions (claimed automatically) and the trade ticker.
  * A right-hand column on wide screens, a bottom sheet for spectators on phones.
+ *
+ * `preview` shows the full trading panel (buttons, presets, quotes) over the offline demo, as
+ * a first-time visitor sees it before connecting a wallet; nothing per-wallet is shown.
  */
-export function MarketsPanel({ demo = false }: { demo?: boolean }) {
+export function MarketsPanel({
+  demo = false,
+  preview = false,
+}: {
+  demo?: boolean;
+  preview?: boolean;
+}) {
   const { arena, now } = usePolledArena();
   const history = useMarkets((s) => s.history);
   const error = useMarkets((s) => s.error);
@@ -336,7 +345,9 @@ export function MarketsPanel({ demo = false }: { demo?: boolean }) {
           <span className="text-xs text-muted">RIDE = makes it · BUST = caught</span>
         </div>
         <TradingGuide />
-        {!demo && arena !== null && arena.status !== "idle" && <RunStatsCard driver={false} />}
+        {!demo && !preview && arena !== null && arena.status !== "idle" && (
+          <RunStatsCard driver={false} />
+        )}
         {arena !== null && arena.status !== "idle" && <Chart history={history} />}
         {arena?.status === "idle" && (
           <h3 className="text-xs font-semibold tracking-widest text-muted uppercase">Last run</h3>
@@ -350,7 +361,7 @@ export function MarketsPanel({ demo = false }: { demo?: boolean }) {
                 view={v}
                 history={history}
                 amount={amount}
-                canTrade={!demo && blocker === null}
+                canTrade={!demo && !preview && blocker === null}
                 demo={demo}
                 config={config}
               />
@@ -395,7 +406,7 @@ export function MarketsPanel({ demo = false }: { demo?: boolean }) {
             {error}
           </p>
         )}
-        {!demo && arena !== null && <Positions arena={arena} />}
+        {!demo && !preview && arena !== null && <Positions arena={arena} />}
         <Ticker />
         {!demo && config !== null && (
           <p className="text-[11px] text-muted">
