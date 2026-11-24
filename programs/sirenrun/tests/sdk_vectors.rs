@@ -81,6 +81,7 @@ fn sample_config() -> Config {
         open_bps: [8_500, 4_500, 1_500],
         bump: 254,
         vault_bump: 253,
+        min_tick_slots: 8,
     }
 }
 
@@ -100,6 +101,7 @@ fn config_fields(c: &Config) -> Value {
         "openBps": c.open_bps,
         "bump": c.bump,
         "vaultBump": c.vault_bump,
+        "minTickSlots": c.min_tick_slots,
     })
 }
 
@@ -195,7 +197,7 @@ fn sample_arena() -> Arena {
         id: 2,
         bump: 250,
         status: ArenaStatus::Live,
-        phase_ticks: 77,
+        phase_ticks: (0xab << 8) | 77,
         nonce: 6,
         runner: key(4),
         seed_ready: true,
@@ -277,7 +279,7 @@ fn arena_fields(a: &Arena) -> Value {
         "id": a.id,
         "bump": a.bump,
         "status": status,
-        "phaseTicks": a.phase_ticks,
+        "phaseTicks": a.phase(),
         "nonce": a.nonce,
         "runner": a.runner.to_string(),
         "seedReady": a.seed_ready,

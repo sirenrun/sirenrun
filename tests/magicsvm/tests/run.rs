@@ -5,9 +5,7 @@ use sirenrun::constants::LINES;
 use sirenrun::errors::SirenrunError;
 use sirenrun::market::open_pool;
 use sirenrun::sim::{step, SimState};
-use sirenrun::state::{ArenaStatus, MarketStatus, RunSim};
-
-const CONSTRAINT_ADDRESS: u32 = 2012;
+use sirenrun::state::{ArenaStatus, ConfigParams, MarketStatus, RunSim};
 
 #[test]
 fn init_arena_is_admin_only_and_bounded() {
@@ -167,18 +165,19 @@ fn crank_drives_a_full_run_that_matches_the_pure_sim() {
 }
 
 #[test]
-fn tick_only_accepts_the_crank_and_old_cranks_do_not_double_tick() {
+fn spamming_tick_cannot_speed_a_run_up_and_old_cranks_do_not_double_tick() {
     let mut world = World::ready();
     world.ready_for_runs(80 * TUSDC);
     let user = world.user.insecure_clone();
     let runner = key(&user);
     let stranger = world.stranger();
 
+    // start_run counts as a tick, so the countdown cannot be rushed from the first slot.
     world.start_run(&user, &runner, 0).expect("first run");
-    assert_eq!(
-        custom_code(world.tick_directly(&stranger, 0, 1)),
-        CONSTRAINT_ADDRESS
-    );
+    world
+        .tick_directly(&stranger, 0, 1)
+        .expect("tick is open to anyone");
+    assert_eq!(world.arena(Ephemeral, 0).phase(), 0);
 
     world.drive_with_bot(&user);
     world.start_run(&user, &runner, 0).expect("second run");
@@ -188,14 +187,36 @@ fn tick_only_accepts_the_crank_and_old_cranks_do_not_double_tick() {
     let t0 = world.arena(Ephemeral, 0).sim.t;
     for _ in 0..40 {
         world.advance_slot();
+        // A stranger ticks after every slot, on top of both runs' cranks.
+        world.tick_directly(&stranger, 0, 2).expect("spam tick");
     }
     let arena = world.arena(Ephemeral, 0);
     assert_eq!(arena.nonce, 2);
     assert_eq!(
         arena.sim.t - t0,
         20,
-        "one tick per 100 ms despite the first run's crank"
+        "one tick per 100 ms despite the spam and the first run's crank"
     );
+}
+
+#[test]
+fn without_the_guard_spam_would_speed_the_run_up() {
+    let mut world = World::ready();
+    let admin = world.admin.insecure_clone();
+    let params = ConfigParams {
+        min_tick_slots: 0,
+        ..world.params()
+    };
+    world.update_config(&admin, params).expect("guard off");
+    world.ready_for_runs(40 * TUSDC);
+    let user = world.user.insecure_clone();
+    let (runner, stranger) = (key(&user), world.stranger());
+
+    world.start_run(&user, &runner, 0).expect("start_run");
+    for _ in 0..10 {
+        world.tick_directly(&stranger, 0, 1).expect("spam tick");
+    }
+    assert_eq!(world.arena(Ephemeral, 0).phase(), 10);
 }
 
 #[test]

@@ -32,9 +32,9 @@ session-keys = { version = "=3.1.1", features = ["no-entrypoint"] }
 
 Why these and not newer or older:
 
-- **SDK 0.18.x** supports MagicBlock validator 1.x and 2.0. Only devnet-us runs 2.0; Asia,
-  EU and the rest run 1.x. SDK 0.20.x is the 2.0-only line, and its `#[vrf]` macro does not
-  compile. A bare `cargo add ephemeral-rollups-sdk` or `npm i @magicblock-labs/ephemeral-rollups-sdk`
+- **SDK 0.18.x** supports MagicBlock validator 1.x and 2.0. Since 2026-11-24 the public
+  devnet ERs (Asia, EU, US) all report `core 2.0.4`. SDK 0.20.x is the 2.0-only line, and
+  its `#[vrf]` macro does not compile, so we stay on 0.18. A bare `cargo add ephemeral-rollups-sdk` or `npm i @magicblock-labs/ephemeral-rollups-sdk`
   installs 0.20, so always pin the version (npm dist-tag `legacy` = 0.18.0).
 - **Anchor 1.2.2** with the crates above passes `cargo check` with `#[ephemeral]`,
   `#[delegate]`, `#[vrf]`, `#[vrf_callback]` and a `Session` context (2026-11-20). With
@@ -49,17 +49,18 @@ Why these and not newer or older:
 |---|---|---|
 | Solana devnet RPC | `https://api.devnet.solana.com` (or `https://rpc.magicblock.app/devnet`) | |
 | Magic Router | `https://devnet-router.magicblock.app` | |
-| ER Asia (1.x) | `https://devnet-as.magicblock.app` | `MAS1Dt9qreoRMQ14YQuhg8UTZMMzDdKhmkZMECCzk57` |
-| ER EU (1.x) | `https://devnet-eu.magicblock.app` | `MEUGGrYPxKk17hCr7wpT6s8dtNokZj5U2L57vjYMS8e` |
-| ER US (2.0) | `https://devnet-us.magicblock.app` | `MUS3hc9TCw4cGC12vHNoYcCGzJG1txjgQLZWVoeNHNd` |
+| ER Asia (2.0.4) | `https://devnet-as.magicblock.app` | `MAS1Dt9qreoRMQ14YQuhg8UTZMMzDdKhmkZMECCzk57` |
+| ER EU (2.0.4) | `https://devnet-eu.magicblock.app` | `MEUGGrYPxKk17hCr7wpT6s8dtNokZj5U2L57vjYMS8e` |
+| ER US (2.0.4) | `https://devnet-us.magicblock.app` | `MUS3hc9TCw4cGC12vHNoYcCGzJG1txjgQLZWVoeNHNd` |
 | Local ER | `http://localhost:7799`, ws `:7800` | `mAGicPQYBMvcYveUZA5F5UNNwyHvfYh5xkLS2Fr1mev` |
 | Mainnet ER | contact MagicBlock | |
 
 We use **Asia**. Delegate every account to the same identity and send ER transactions to
 the matching endpoint. Do not use the router for delegation: it can place accounts on
-devnet-us (2.0), where cranks and commit receipts behave differently. Keep the region in
-one env var: `NEXT_PUBLIC_ER_REGION=as`. Check `getVersion` on the target ER before relying
-on version-specific behavior (2.0 reports `core`, 1.x reports `magicblock-core`).
+another region. Keep the region in one env var: `NEXT_PUBLIC_ER_REGION=as` (the app,
+scripts and indexer all read it). Check `getVersion` on the target ER before relying on
+version-specific behavior (2.0 reports `core`, 1.x reports `magicblock-core`). Slot length
+also differs: 10 ms on the 2.0 ERs (measured 2026-11-24), 50 ms on 1.x and in MagicSVM.
 
 ## 3. Program skeleton
 
@@ -129,34 +130,42 @@ visible on the base layer. Not required for correctness.
 
 ## 5. Cranks (the 100 ms tick)
 
-ER validator 1.x runs `MagicBlockInstruction::ScheduleTask` on the Magic program. Use the
-SDK's `crank` feature:
+Both validator lines accept `MagicBlockInstruction::ScheduleTask` on the Magic program: 1.x
+runs it in a built-in scheduler, 2.0 forwards it to a Hydra crank. Use the SDK's `crank`
+feature:
 
 ```rust
-#[allow(deprecated)] // the Hydra replacement only exists on validator 2.0
+#[allow(deprecated)] // the SDK points at Hydra's own API; ScheduleTask works on 1.x and 2.0
 use ephemeral_rollups_sdk::crank::{CancelCrankCpi, ScheduleCrankCpi, ScheduleTaskArgs};
 // ScheduleTaskArgs { task_id: i64, execution_interval_millis: i64, iterations: i64,
 //                    instructions: Vec<Instruction> }
 ```
 
-- `task_id` is global per validator. Derive it from program id, arena and run nonce so it
-  can't collide with another app's task.
+- `task_id` is global per validator on 1.x (namespaced per authority on 2.0). Derive it
+  from arena and run nonce so it can't collide with another app's task.
 - `tick_ix` lists `arena`, `runner_balance`, `house_balance` as writable.
 - Pass the arena as `AccountInfo` in the scheduling context so Anchor doesn't overwrite it
   with stale data after the CPI.
 - The arena PDA is the task authority: `ScheduleCrankCpi { payer: arena, .. }.invoke_signed`
-  with the arena seeds. Its crank signer is then fixed per arena and needs no storage.
+  with the arena seeds.
 - Schedule from inside the ER after the arena is delegated. Keep preflight on for schedule
   and cancel transactions: on the ER, `skipPreflight` only hides errors.
-- **Permissioned tick:** the scheduler can sign for one PDA,
-  `[b"crank-executor", task_authority]` under `Crank11111111111111111111111111111111111111`.
-  Add it read-only as a signer to `tick_ix` and require it in `tick`. Then only the crank
-  can call `tick`, which stops anyone from speeding up a run by spamming it.
+- **No signer in `tick_ix`.** 1.x let the scheduler sign for
+  `[b"crank-executor", task_authority]` under `Crank111…`, and `tick` required it. 2.0
+  rejects any signer meta in a scheduled instruction ("scheduled crank instructions cannot
+  include signer accounts", `MissingRequiredSignature`), which broke every `start_run` when
+  the public ERs moved to 2.0. `tick` is now open to anyone and rate-limited instead:
+  `Config.min_tick_slots` is the fewest ER slots between two ticks that advance an arena
+  (8 on 2.0's 10 ms slots, 2 in MagicSVM's 50 ms), so spamming `tick` cannot play a run
+  faster than the crank. It is a Config value because slot length changes between
+  validator versions.
+- On 2.0 a Hydra crank only fires while a `hydra-cranker` runs for that ER. Confirm ticks
+  advance after a deploy (watch `sim.t` on a live arena); if they do not, a client can send
+  `tick` itself, and the slot guard keeps that safe.
 
 Spike result (local 1.1.1 ER, see [spike-results.md](spike-results.md)): 100 ms cranks ran
-100 of 100 times at 100 ms ± 4 ms, cost the payer nothing, cancel stopped within one tick,
-and the crank-signer `tick` worked while a direct call was rejected. No keeper process or
-slot guard is needed.
+100 of 100 times at 100 ms ± 4 ms, cost the payer nothing and cancel stopped within one
+tick.
 
 ## 6. Session keys
 

@@ -364,6 +364,7 @@
           "house": "8qbHbw2BbbTHBW1sbeqakYXVKRQM8Ne7pLK7m6CVfeR",
           "liquidity": "50000000",
           "maxBuy": "18446744073709551615",
+          "minTickSlots": 8,
           "nitroFee": "500000",
           "openBps": [
             8500,
@@ -373,7 +374,7 @@
           "runnerFeeBps": 100
         }
       },
-      "data": "17eb73e8a86001e70202020202020202020202020202020202020202020202020202020202020202c800640040420f000000000040787d010000000080f0fa0200000000ffffffffffffffff20a107000000000034219411dc05",
+      "data": "17eb73e8a86001e70202020202020202020202020202020202020202020202020202020202020202c800640040420f000000000040787d010000000080f0fa0200000000ffffffffffffffff20a107000000000034219411dc0508",
       "keys": [
         {
           "isSigner": true,
@@ -420,6 +421,7 @@
           "house": "8qbHbw2BbbTHBW1sbeqakYXVKRQM8Ne7pLK7m6CVfeR",
           "liquidity": "50000000",
           "maxBuy": "18446744073709551615",
+          "minTickSlots": 8,
           "nitroFee": "500000",
           "openBps": [
             8500,
@@ -429,7 +431,7 @@
           "runnerFeeBps": 100
         }
       },
-      "data": "1d9efcbf0a53db630202020202020202020202020202020202020202020202020202020202020202c800640040420f000000000040787d010000000080f0fa0200000000ffffffffffffffff20a107000000000034219411dc05",
+      "data": "1d9efcbf0a53db630202020202020202020202020202020202020202020202020202020202020202c800640040420f000000000040787d010000000080f0fa0200000000ffffffffffffffff20a107000000000034219411dc0508",
       "keys": [
         {
           "isSigner": true,
@@ -444,6 +446,32 @@
       ],
       "layer": "base",
       "name": "updateConfig",
+      "programId": "6D65tPwcsoSoPK2qcXD87jcUQpMxwCjfX7tX7tKARiZ4"
+    },
+    {
+      "args": {
+        "admin": "4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"
+      },
+      "data": "c6a47c0fba0bd496",
+      "keys": [
+        {
+          "isSigner": true,
+          "isWritable": true,
+          "pubkey": "4vJ9JU1bJJE96FWSJKvHsmmFADCg4gpZQff4P3bkLKi"
+        },
+        {
+          "isSigner": false,
+          "isWritable": true,
+          "pubkey": "BwF2fRi8vCXBUAuJx1GajG61ymKAF4rFE9QRTi4YdWyu"
+        },
+        {
+          "isSigner": false,
+          "isWritable": false,
+          "pubkey": "11111111111111111111111111111111"
+        }
+      ],
+      "layer": "base",
+      "name": "resizeConfig",
       "programId": "6D65tPwcsoSoPK2qcXD87jcUQpMxwCjfX7tX7tKARiZ4"
     },
     {

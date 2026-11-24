@@ -4,10 +4,7 @@ import { VRF_EPHEMERAL_QUEUE, VRF_EPHEMERAL_TEST_QUEUE } from "./constants.ts";
 export type Layer = "base" | "er";
 export type Cluster = "devnet" | "local";
 
-/**
- * ER regions running validator 1.x, the line our pinned MagicBlock SDK targets. devnet-us
- * runs 2.0, where cranks and commits behave differently, so it is left out on purpose.
- */
+/** ER regions the app may use; every account must be delegated to the same one. */
 export const ER_REGIONS = ["as", "eu"] as const;
 export type ErRegion = (typeof ER_REGIONS)[number];
 

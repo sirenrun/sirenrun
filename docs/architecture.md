@@ -8,7 +8,7 @@ Program-side crates were compile-tested together (see [magicblock.md](magicblock
 | Layer | Choice | Why |
 |---|---|---|
 | Program | Rust, **Anchor 1.2.2**, Solana (Agave) CLI **4.1.2** | Latest stable Anchor; 4.1.2 is the Solana version its release notes recommend. |
-| MagicBlock (Rust) | `ephemeral-rollups-sdk` **0.18.0** (`anchor`, `vrf`, `crank`); `session-keys` **3.1.1** (`no-entrypoint`) | 0.18 works with MagicBlock validator 1.x and 2.0. The public Asia ER runs 1.x, so the 0.20 line (2.0 only) is not an option yet. |
+| MagicBlock (Rust) | `ephemeral-rollups-sdk` **0.18.0** (`anchor`, `vrf`, `crank`); `session-keys` **3.1.1** (`no-entrypoint`) | 0.18 works with MagicBlock validator 1.x and 2.0. The public ERs run 2.0.4 since 2026-11-24; the 0.20 line's `#[vrf]` does not compile, so it is not an option yet. |
 | Token | `anchor-spl` 1.2.2, one SPL mint "tUSDC" (6 decimals) we create on devnet | Real token flow without real money. |
 | Monorepo | **pnpm 11** workspaces, Node **24 LTS** | Shared `sim`, `sdk`, `test-vectors` packages between app and tests. |
 | Web app | **Next.js 16** (App Router) + **React 19.3** + **TypeScript 6.0** | TypeScript 7 is out, but `typescript-eslint` supports only `<6.1`. |
@@ -129,7 +129,7 @@ sequenceDiagram
   its target (`"base" | "er"`). `createConnections` tags each `Connection` with its layer
   (`BaseConnection` / `ErConnection`), so passing one where the other is expected fails to
   compile, and `assertLayer` checks the tag at runtime. Regions are limited to `as` and
-  `eu` (validator 1.x); `us` runs 2.0 and is rejected.
+  `eu`; every account must be delegated to the same one (we use `as`).
 
 ## TypeScript SDK (`packages/sdk`)
 

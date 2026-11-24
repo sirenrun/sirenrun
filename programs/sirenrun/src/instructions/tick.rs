@@ -4,14 +4,6 @@ use crate::state::{
     Arena, ArenaStatus, Balance, Config, TickTerms, ARENA_SEED, BALANCE_SEED, CONFIG_SEED, MARKETS,
 };
 
-pub const CRANK_PROGRAM_ID: Pubkey = pubkey!("Crank11111111111111111111111111111111111111");
-
-/// The only signer the MagicBlock scheduler can attach to a scheduled instruction for the
-/// task authority, here the arena PDA.
-pub fn crank_signer_pda(arena: &Pubkey) -> Pubkey {
-    Pubkey::find_program_address(&[b"crank-executor", arena.as_ref()], &CRANK_PROGRAM_ID).0
-}
-
 #[event]
 pub struct LineCrossed {
     pub arena: Pubkey,
@@ -42,6 +34,8 @@ pub struct NitroUsed {
     pub fee: u64,
 }
 
+/// No signer: validator 2.0 runs cranks on Hydra, which rejects any signer in a scheduled
+/// instruction. Anyone may send `tick`; `Config.min_tick_slots` keeps a run at crank speed.
 #[derive(Accounts)]
 pub struct Tick<'info> {
     #[account(mut, seeds = [ARENA_SEED, &[arena.id]], bump = arena.bump)]
@@ -52,19 +46,21 @@ pub struct Tick<'info> {
     pub house_balance: Account<'info, Balance>,
     #[account(seeds = [CONFIG_SEED], bump = config.bump)]
     pub config: Account<'info, Config>,
-    #[account(address = crank_signer_pda(&arena.key()))]
-    pub crank_signer: Signer<'info>,
 }
 
 /// `nonce` pins the call to one run, so leftover iterations of an earlier run's crank are
-/// no-ops instead of a second clock.
+/// no-ops instead of a second clock. A tick too soon after the last one is also a no-op, not
+/// an error, so a crank that fires early is not retried and backed off.
 pub fn tick(ctx: Context<Tick>, nonce: u32) -> Result<()> {
     let arena = &mut ctx.accounts.arena;
-    if arena.nonce != nonce {
+    if arena.nonce != nonce || arena.status == ArenaStatus::Idle {
+        return Ok(());
+    }
+    let config = &ctx.accounts.config;
+    if !arena.claim_tick_slot(Clock::get()?.slot, config.min_tick_slots) {
         return Ok(());
     }
     let was_settled = arena.status == ArenaStatus::Settled;
-    let config = &ctx.accounts.config;
     let effects = arena.advance(TickTerms {
         entry_fee: config.entry_fee,
         nitro_fee: config.nitro_fee,

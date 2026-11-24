@@ -14,7 +14,6 @@ use ephemeral_rollups_sdk::vrf::types::SerializableAccountMeta;
 use session_keys::{Session, SessionTokenV2};
 
 use crate::constants::{MAX_LIVE_TICKS, SEED_TIMEOUT_TICKS, SETTLE_TICKS, STAGING_TICKS, TICK_MS};
-use crate::instructions::tick::crank_signer_pda;
 use crate::session::authorize;
 use crate::state::{Arena, Balance, Config, RunTerms, ARENA_SEED, BALANCE_SEED, CONFIG_SEED};
 
@@ -82,6 +81,8 @@ pub fn start_run<'info>(ctx: Context<'info, StartRun<'info>>) -> Result<()> {
     )?;
 
     let slot = Clock::get()?.slot;
+    // Counts as the last tick, so the staging countdown cannot be rushed from the start.
+    arena.claim_tick_slot(slot, 0);
     let mut caller_seed = [0u8; 32];
     caller_seed[0] = arena.id;
     caller_seed[1..5].copy_from_slice(&arena.nonce.to_le_bytes());
@@ -117,8 +118,9 @@ pub fn start_run<'info>(ctx: Context<'info, StartRun<'info>>) -> Result<()> {
     schedule_ticks(ctx.accounts)
 }
 
-/// The arena PDA is the task authority, so the crank signer is fixed per arena and `tick`
-/// can verify it without storing anything.
+/// The arena PDA is the task authority. The scheduled `tick` carries no signer: validator
+/// 2.0 (Hydra) rejects one, and `tick` is rate-limited by `Config.min_tick_slots` instead.
+/// `ScheduleTask` is deprecated in the SDK but is what both 1.x and 2.0 accept.
 #[allow(deprecated)]
 fn schedule_ticks<'info>(accounts: &'info StartRun<'info>) -> Result<()> {
     let arena = &accounts.arena;
@@ -130,7 +132,6 @@ fn schedule_ticks<'info>(accounts: &'info StartRun<'info>) -> Result<()> {
             AccountMeta::new(accounts.runner_balance.key(), false),
             AccountMeta::new(accounts.house_balance.key(), false),
             AccountMeta::new_readonly(accounts.config.key(), false),
-            AccountMeta::new_readonly(crank_signer_pda(&arena_key), true),
         ],
         data: crate::instruction::Tick { nonce: arena.nonce }.data(),
     };

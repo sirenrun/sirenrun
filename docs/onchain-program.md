@@ -47,8 +47,11 @@ Seeds: `[b"config"]`
 | nitro_fee | u64 | charged per nitro charge fired, e.g. 0.5 tUSDC |
 | open_bps | [u16; 3] | opening RIDE (YES) price per line, e.g. [8500, 4500, 1500] |
 | bump, vault_bump | u8, u8 | |
+| min_tick_slots | u8 | fewest ER slots between two ticks that advance an arena; 0 = no limit. 8 on validator 2.0 (10 ms slots, crank every 10) |
 
-188 bytes. Read-only inside the ER (the ER reads non-delegated base accounts; verify
+189 bytes. A Config written before `min_tick_slots` is 188 bytes and cannot load as
+`Config`; `resize_config` grows it once (the `update-config` script sends it first when
+needed). Read-only inside the ER (the ER reads non-delegated base accounts; verify
 this in the MagicBlock spike).
 
 ### `Balance`: one per user (and one for the house), delegated to the ER
@@ -73,7 +76,7 @@ Seeds: `[b"arena", &[id]]`
 |---|---|---|
 | id, bump | u8, u8 | |
 | status | u8 enum | 0 Idle, 1 Staging, 2 Live, 3 Settled |
-| phase_ticks | u16 | ticks spent in Staging or Settled |
+| phase_ticks | u16 | low byte: ticks spent in Staging or Settled (at most 150); high byte: low 8 bits of the ER slot of the last tick that advanced the arena (the `min_tick_slots` guard). Packed so delegated arenas keep their layout; the SDK exposes only the low byte as `phaseTicks` |
 | nonce | u32 | run counter, +1 at each start |
 | runner | Pubkey | driver wallet |
 | seed_ready | bool | |
@@ -94,7 +97,7 @@ line; `ride_cost` is Σ net over RIDE buys; `ride_back_bps` is set on a bust (se
 ride_back_bps [u16; 3]`.
 
 641 bytes. Instructions take it as `Box<Account<Arena>>`: on the stack it pushed `start_run`
-and `tick` past the 4 KB frame. No slot guard: `tick` only accepts the crank signer (see [spike-results.md](spike-results.md)), so `last_tick_slot` was dropped.
+and `tick` past the 4 KB frame.
 
 ## Instructions
 
@@ -104,6 +107,7 @@ Legend: **B** = base layer, **ER** = ephemeral rollup, **S** = signer may be a s
 |---|---|---|---|---|
 | 1 | `init_config(params)` | B | admin | Create Config + vault |
 | 2 | `update_config(params)` | B | admin | Tune fees/amounts |
+| 2a | `resize_config()` | B | admin | Grow a 188-byte Config to 189 (`min_tick_slots = 0`); no-op on a current one |
 | 3 | `init_balance()` | B | user | Create Balance |
 | 4 | `deposit(amount)` | B | user | user ATA → vault, `available += amount` |
 | 5 | `withdraw(amount)` | B | user | vault → user ATA, `available -= amount` |
@@ -113,7 +117,7 @@ Legend: **B** = base layer, **ER** = ephemeral rollup, **S** = signer may be a s
 | 9 | `delegate_arena(id)` | B | admin | Delegate Arena |
 | 10 | `start_run()` | ER | driver (S) | Begin staging, request VRF, schedule crank |
 | 11 | `vrf_callback_seed(randomness, nonce)` | ER | VRF program only | Store seed |
-| 12 | `tick()` | ER | crank / keeper | Advance staging, sim, markets, settlement |
+| 12 | `tick()` | ER | anyone (the crank) | Advance staging, sim, markets, settlement; rate-limited by `min_tick_slots` |
 | 13 | `set_input(target_lane, nitro)` | ER | driver (S) | Steering |
 | 14 | `buy(market, side, amount, min_shares)` | ER | trader (S) | FPMM buy |
 | 15 | `claim(entry_index)` | ER | trader (S) | Pay winnings / refund voids |
@@ -166,16 +170,19 @@ Effects:
    (below), `status = open`, `resolved_tick = 0`, `no_profit = ride_cost = ride_back_bps = 0`.
 3. Reset sim per [game-design.md](game-design.md) (`car_x = 2 * LANE_WIDTH`, `target_lane = 2`, `speed = SPEED_START`,
    `police_gap = GAP_START`, `nitro_left = 3`, …). `runner_fees = 0`.
-4. `nonce += 1`, `runner = signer's authority`, `status = Staging`, `phase_ticks = 0`,
+4. `nonce += 1`, `runner = signer's authority`, `status = Staging`, phase count 0, the
+   current slot recorded as the last tick (so the countdown cannot be rushed),
    `seed_ready = false`.
 5. Request randomness (ephemeral queue), `caller_seed` from `(arena.id, nonce, slot)`,
    callback args include `nonce`.
 6. Schedule crank: `tick(nonce)` every `TICK_MS`, iterations
    `STAGING_TICKS + SEED_TIMEOUT_TICKS + MAX_LIVE_TICKS + SETTLE_TICKS`, accounts
-   `[arena, runner_balance, house_balance, config, crank_signer]`. The arena PDA is the task
-   authority (signs the schedule with its seeds), so `crank_signer =
-   PDA([b"crank-executor", arena], Crank11111111111111111111111111111111111111)`.
-   `task_id` = i64 from `nonce` LE (4 bytes) + the first 4 bytes of the arena key.
+   `[arena, runner_balance, house_balance, config]`, no signer: validator 2.0 runs
+   scheduled tasks on Hydra, which rejects any signer meta in a scheduled instruction
+   (`MissingRequiredSignature`; the 1.x crank-signer PDA broke every `start_run` when the
+   public ERs moved to 2.0 on 2026-11-24). The arena PDA is the task authority (signs the
+   schedule with its seeds). `task_id` = i64 from `nonce` LE (4 bytes) + the first 4 bytes
+   of the arena key.
 
 Steps 5 and 6 together cost ~40k CU (MagicSVM), so no `arm_run` split is needed.
 Session checks use `session::authorize` (same rule as `session_auth_or`), because that
@@ -188,15 +195,19 @@ Guarded by `#[vrf_callback]`. If `arena.status == Staging && nonce == arena.nonc
 
 ### `tick` (ER)
 Args: `nonce`. Accounts: `arena` (mut), `runner_balance` (mut, PDA of `arena.runner`),
-`house_balance` (mut, PDA of `config.house`), `config`, `crank_signer` (signer, must equal
-the arena's crank signer PDA). Only the scheduled crank can produce that signature.
-If `nonce != arena.nonce` the call is a no-op, so a previous run's leftover iterations never
-tick a newer run. The state machine is `Arena::advance` (unit-tested without Anchor); the
+`house_balance` (mut, PDA of `config.house`), `config`. No signer, so anyone may send it.
+If `nonce != arena.nonce` or the arena is Idle the call is a no-op, so a previous run's
+leftover iterations never tick a newer run. Then the slot guard: if fewer than
+`config.min_tick_slots` ER slots passed since the last tick that advanced the arena, the
+call is a no-op (not an error, so an early crank is not retried); otherwise the slot is
+recorded. Spamming `tick` therefore cannot play a run faster than the crank, which would
+cut the driver's reaction time and favour BUST. Only 8 bits of the slot are kept: after a
+stall of exactly a multiple of 256 slots one tick is refused, and the next goes through. The state machine is `Arena::advance` (unit-tested without Anchor); the
 handler applies its payouts with checked math and emits `RunSettled` on entering Settled.
 
 - **Idle:** no-op (leftover crank iterations).
-- **Staging:** `phase_ticks += 1`. If `phase_ticks >= STAGING_TICKS && seed_ready` → Live.
-  If `phase_ticks >= STAGING_TICKS + SEED_TIMEOUT_TICKS && !seed_ready` → **abort**: refund runner
+- **Staging:** phase count += 1. If it reaches `STAGING_TICKS && seed_ready` → Live.
+  If it reaches `STAGING_TICKS + SEED_TIMEOUT_TICKS && !seed_ready` → **abort**: refund runner
   `entry_fee + bond` (house returns entry), return liquidity to house (each market's
   `yes_r + house_yes`, which still equals `liquidity` because `buy` needs the seed), all
   markets VOID, push result, → Settled.
@@ -207,7 +218,7 @@ handler applies its payouts with checked math and emits `RunSettled` on entering
   for each open market: if `t >= line` → resolve YES at `t` and credit the house (see
   settlement below). If `busted` → every open market resolves NO at `t`, then
   **settle run**.
-- **Settled:** `phase_ticks += 1`; at `SETTLE_TICKS` → Idle.
+- **Settled:** phase count += 1; at `SETTLE_TICKS` → Idle.
 
 Settlement when a market resolves (mid-run or at bust): the house is the LP, so it gets
 its winning-side tokens, the pool's plus those it kept at the opening: YES → credit house
@@ -222,7 +233,7 @@ Settle run (once, at bust or hard stop):
   down; 0 without RIDE buys): the house pays it back to that line's losing RIDE holders as they
   claim, and keeps any rest. A hard stop at 150 s has passed every line, so nothing is owed.
 - Push `RunResult` into `results[results_head]`, advance head mod 16.
-- `status = Settled`, `phase_ticks = 0`. `emit!(RunSettled { … })`.
+- `status = Settled`, phase count 0. `emit!(RunSettled { … })`.
 
 Why only what BUST won: anyone may be the driver betting BUST from another wallet, so a bust
 must take at least everything BUST holders win, or crashing on purpose would pay. Nothing

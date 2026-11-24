@@ -28,6 +28,7 @@ import {
   startRunIx,
   undelegateBalanceIx,
   updateConfigIx,
+  resizeConfigIx,
   withdrawIx,
   type Authority,
   type Balance,
@@ -62,6 +63,7 @@ function params(v: unknown): ConfigParams {
     maxBuy: big(p.maxBuy),
     nitroFee: big(p.nitroFee),
     openBps: (p.openBps as number[]).map(num) as [number, number, number],
+    minTickSlots: num(p.minTickSlots),
   };
 }
 
@@ -75,6 +77,7 @@ const builders: Record<string, (a: Args) => LayerInstruction<"base" | "er">> = {
   initConfig: (a) =>
     initConfigIx({ admin: key(a.admin), mint: key(a.mint), params: params(a.params) }),
   updateConfig: (a) => updateConfigIx({ admin: key(a.admin), params: params(a.params) }),
+  resizeConfig: (a) => resizeConfigIx({ admin: key(a.admin) }),
   initBalance: (a) => initBalanceIx({ owner: key(a.owner) }),
   deposit: (a) => depositIx({ owner: key(a.owner), mint: key(a.mint), amount: big(a.amount) }),
   withdraw: (a) =>

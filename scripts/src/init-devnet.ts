@@ -54,6 +54,8 @@ if (config === null) {
         maxBuy: 50n * TOKEN_UNIT,
         nitroFee: TOKEN_UNIT / 4n,
         openBps: [8_500, 4_500, 1_500],
+        // Validator 2.0 runs 10 ms slots and the crank every 10; 8 leaves room for jitter.
+        minTickSlots: 8,
       },
     }),
   ]);

@@ -61,5 +61,7 @@ Each crank test scheduled one task that increments a delegated counter and store
 1. Drive `tick` with a scheduled crank at 100 ms, one task per run, cancelled at settle.
 2. Make `tick` crank-only with the crank-signer PDA, using the arena's authority as the task
    authority. This replaces the `last_tick_slot` slot guard; the keeper fallback is not
-   needed.
+   needed. **Superseded 2026-11-24:** validator 2.0 rejects signers in scheduled
+   instructions, so `tick` is open and rate-limited by `Config.min_tick_slots` (see
+   [magicblock.md](magicblock.md#5-cranks-the-100-ms-tick)).
 3. Sessions: create `SessionTokenV2` on the base layer with no lamport top-up.
