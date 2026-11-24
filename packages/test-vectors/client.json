@@ -754,12 +754,13 @@
         "auth": {
           "signer": "CktRuQ2mttgRGkXJtyksdKHjUdc2C4TgDzyB98oEzy8"
         },
+        "bond": "25000000",
         "house": "8qbHbw2BbbTHBW1sbeqakYXVKRQM8Ne7pLK7m6CVfeR",
         "id": 0,
         "oracleQueue": "5hBR571xnXppuCPveTrctfTU7tJLSN94nq7kv7FRK5Tc",
         "runner": "CktRuQ2mttgRGkXJtyksdKHjUdc2C4TgDzyB98oEzy8"
       },
-      "data": "48d4015b3dba0234",
+      "data": "48d4015b3dba023440787d0100000000",
       "keys": [
         {
           "isSigner": true,
@@ -1019,12 +1020,13 @@
           "sessionToken": "9BN984uVdgtyrs7tapxVr2hQnnjnthf2ooctpEGMnPjG",
           "signer": "LbUiWL3xVV8hTFYBVdbTNrpDo41NKS6o3LHHuDzjfcY"
         },
+        "bond": "25000000",
         "house": "8qbHbw2BbbTHBW1sbeqakYXVKRQM8Ne7pLK7m6CVfeR",
         "id": 0,
         "oracleQueue": "5hBR571xnXppuCPveTrctfTU7tJLSN94nq7kv7FRK5Tc",
         "runner": "CktRuQ2mttgRGkXJtyksdKHjUdc2C4TgDzyB98oEzy8"
       },
-      "data": "48d4015b3dba0234",
+      "data": "48d4015b3dba023440787d0100000000",
       "keys": [
         {
           "isSigner": true,

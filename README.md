@@ -39,7 +39,9 @@ wins. The lobby shows driver and trader leaderboards. Preview the layouts offlin
 
 ## How a run works
 
-1. **Drive.** A driver pays a small entry fee and a bond and starts a run on an idle channel.
+1. **Drive.** A driver pays a small entry fee, picks a bond (5 to 50 tUSDC) and starts a run
+   on an idle channel. BUST winnings are capped at the bond, so a bigger bond opens a bigger
+   BUST market and more fees for the driver, with more at risk.
    A 10 s countdown rolls the course from verifiable randomness. Then the car moves forward
    on its own; the driver changes lanes around traffic and roadblocks and has three nitro
    charges, paid per charge used (unused ones cost nothing). Every hit costs speed, the police get faster every second, and the run ends
@@ -50,7 +52,7 @@ wins. The lobby shows driver and trader leaderboards. Preview the layouts offlin
 3. **Settle.** A line resolves RIDE the tick the run passes it, or BUST the tick the car is
    caught. Winning shares pay 1 tUSDC each and are claimed automatically. The driver earns
    the 2% fee on every trade on their run, plus half of what BUST bettors lost on each line
-   they pass, and gets the 5 tUSDC bond back after it. On a bust, the bond only covers what
+   they pass, and gets the bond back after it. On a bust, the bond only covers what
    BUST bets won; that goes to the fans who bet RIDE on the busted lines, or to the house if
    there were none. If nobody bet against the driver, they lose nothing. See [Run economics](docs/onchain-program.md#run-economics).
 
@@ -182,7 +184,6 @@ pnpm -r typecheck && pnpm -r test      # sim parity, SDK, app
 - Client-side prediction for the driver's own car, reconciled with each snapshot.
 - Commit the arena to Solana at the end of every run.
 - Selling positions before a line resolves.
-- Driver-chosen bond sizes (a bigger bond allows a bigger BUST market).
 - Before any mainnet use: an audit, the upgrade authority on a multisig, and an emergency
   pause that never blocks claims or withdrawals.
 

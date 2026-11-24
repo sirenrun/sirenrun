@@ -46,4 +46,6 @@ pub enum SirenrunError {
     ArenaNotSettled,
     #[msg("This line resolves in a moment; trading on it has closed")]
     LineClosing,
+    #[msg("Bond is outside the allowed range")]
+    InvalidBond,
 }

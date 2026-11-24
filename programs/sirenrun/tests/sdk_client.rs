@@ -328,8 +328,9 @@ fn er_instructions() -> Vec<Value> {
                 "house": house.to_string(),
                 "id": 0,
                 "oracleQueue": DEFAULT_EPHEMERAL_QUEUE.to_string(),
+                "bond": "25000000",
             }),
-            instruction::StartRun {},
+            instruction::StartRun { bond: 25_000_000 },
             accounts::StartRun {
                 signer,
                 session_token,

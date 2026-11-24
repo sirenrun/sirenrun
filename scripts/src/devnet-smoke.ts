@@ -181,6 +181,7 @@ await sendEr(er, driver.session.keypair, [
     house,
     id: ARENA,
     oracleQueue: endpoints.oracleQueue,
+    bond: config.bond,
   }),
 ]);
 log("start_run sent by the driver's session key");

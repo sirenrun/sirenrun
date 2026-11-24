@@ -182,3 +182,49 @@ fn a_bust_pays_bust_from_the_pool_and_refunds_ride_from_the_bond() {
         .sum();
     assert_eq!(world.token_amount(world.vault), available);
 }
+
+#[test]
+fn the_driver_picks_a_bond_between_the_minimum_and_ten_times_it() {
+    let (mut world, _) = world_with_spectator();
+    let user = world.user.insecure_clone();
+    let runner = key(&user);
+    let min = world.params().bond;
+    for bond in [min - 1, min * 10 + 1] {
+        assert_eq!(
+            custom_code(world.start_run_with_bond(&user, &runner, 0, bond)),
+            u32::from(SirenrunError::InvalidBond),
+            "bond {bond}"
+        );
+    }
+    assert_eq!(world.arena(Ephemeral, 0).status, ArenaStatus::Idle);
+}
+
+/// BUST winnings across the open lines are capped at the run's bond, so a driver who posts
+/// more lets more BUST money in. 10 tUSDC of BUST on the 30 s line (opened at RIDE 85%) wins
+/// about 26.3: over the 25 minimum, under 50.
+#[test]
+fn a_bigger_bond_lets_more_bust_in() {
+    for (multiple, fits) in [(1, false), (2, true)] {
+        let mut world = World::ready();
+        world.ready_for_runs(60 * TUSDC);
+        let spectator = Keypair::new();
+        world.join(&spectator, 50 * TUSDC);
+        let user = world.user.insecure_clone();
+        let (runner, fan) = (key(&user), key(&spectator));
+        let bond = world.params().bond * multiple;
+        world
+            .start_run_with_bond(&user, &runner, 0, bond)
+            .expect("start_run");
+        world.advance_slot();
+        assert_eq!(world.arena(Ephemeral, 0).bond, bond);
+        let result = world.buy(&spectator, &fan, 0, 0, Side::No, 10 * TUSDC, 0);
+        if fits {
+            result.expect("bust fits under a 2x bond");
+        } else {
+            assert_eq!(
+                custom_code(result),
+                u32::from(SirenrunError::NoInterestCapReached)
+            );
+        }
+    }
+}

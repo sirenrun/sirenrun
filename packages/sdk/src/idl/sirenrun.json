@@ -1230,7 +1230,12 @@
           "address": "11111111111111111111111111111111"
         }
       ],
-      "args": []
+      "args": [
+        {
+          "name": "bond",
+          "type": "u64"
+        }
+      ]
     },
     {
       "name": "tick",
@@ -1837,6 +1842,11 @@
       "code": 6021,
       "name": "LineClosing",
       "msg": "This line resolves in a moment; trading on it has closed"
+    },
+    {
+      "code": 6022,
+      "name": "InvalidBond",
+      "msg": "Bond is outside the allowed range"
     }
   ],
   "types": [
