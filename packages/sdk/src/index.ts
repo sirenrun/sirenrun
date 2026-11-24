@@ -105,6 +105,7 @@ export {
   startRunIx,
   undelegateBalanceIx,
   updateConfigIx,
+  resizeConfigIx,
   withdrawIx,
   type ConfigParams,
 } from "./ix/sirenrun.ts";

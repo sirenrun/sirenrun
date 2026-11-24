@@ -27,6 +27,10 @@ pub mod sirenrun {
         instructions::update_config(ctx, params)
     }
 
+    pub fn resize_config(ctx: Context<ResizeConfig>) -> Result<()> {
+        instructions::resize_config(ctx)
+    }
+
     pub fn init_balance(ctx: Context<InitBalance>) -> Result<()> {
         instructions::init_balance(ctx)
     }

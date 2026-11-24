@@ -88,7 +88,7 @@ fn admin_recovers_a_settled_arena_and_it_runs_again() {
     world.recover_arena(&admin, 0).expect("recover_arena");
     let recovered = world.arena(Ephemeral, 0);
     assert_eq!(
-        (recovered.status, recovered.phase_ticks),
+        (recovered.status, recovered.phase()),
         (ArenaStatus::Idle, 0)
     );
     assert_eq!(recovered.nonce, settled.nonce);

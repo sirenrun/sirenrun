@@ -229,6 +229,8 @@ impl World {
             max_buy: 50 * TUSDC,
             nitro_fee: TUSDC / 2,
             open_bps: [8_500, 4_500, 1_500],
+            // MagicSVM models 50 ms slots, so the 100 ms crank fires every 2 slots.
+            min_tick_slots: 2,
         }
     }
 
@@ -396,6 +398,18 @@ impl World {
         self.send(Ephemeral, signer, ix)
     }
 
+    pub fn resize_config(&mut self, signer: &Keypair) -> Result<(), TransactionError> {
+        let ix = ix(
+            instruction::ResizeConfig {},
+            accounts::ResizeConfig {
+                admin: key(signer),
+                config: self.config,
+                system_program: system_program::ID,
+            },
+        );
+        self.send(Base, signer, ix)
+    }
+
     pub fn recover_arena(&mut self, signer: &Keypair, id: u8) -> Result<(), TransactionError> {
         let ix = ix(
             instruction::RecoverArena {},
@@ -529,7 +543,7 @@ impl World {
         self.send(Ephemeral, signer, ix)
     }
 
-    /// Sends `tick` without the crank: `signer` stands in for the crank signer PDA.
+    /// Sends `tick` outside the crank, paid by `signer`: anyone may, the slot guard decides.
     pub fn tick_directly(
         &mut self,
         signer: &Keypair,
@@ -544,7 +558,6 @@ impl World {
                 runner_balance: balance_pda(&arena.runner),
                 house_balance: balance_pda(&key(&self.admin)),
                 config: self.config,
-                crank_signer: key(signer),
             },
         );
         self.send(Ephemeral, signer, ix)

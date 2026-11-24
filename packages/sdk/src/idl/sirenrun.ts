@@ -1034,6 +1034,53 @@ export type Sirenrun = {
       "args": []
     },
     {
+      "name": "resizeConfig",
+      "discriminator": [
+        198,
+        164,
+        124,
+        15,
+        186,
+        11,
+        212,
+        150
+      ],
+      "accounts": [
+        {
+          "name": "admin",
+          "writable": true,
+          "signer": true
+        },
+        {
+          "name": "config",
+          "docs": [
+            "owner, discriminator and admin are checked by hand; the seeds pin the address."
+          ],
+          "writable": true,
+          "pda": {
+            "seeds": [
+              {
+                "kind": "const",
+                "value": [
+                  99,
+                  111,
+                  110,
+                  102,
+                  105,
+                  103
+                ]
+              }
+            ]
+          }
+        },
+        {
+          "name": "systemProgram",
+          "address": "11111111111111111111111111111111"
+        }
+      ],
+      "args": []
+    },
+    {
       "name": "setInput",
       "discriminator": [
         139,
@@ -1275,10 +1322,6 @@ export type Sirenrun = {
               }
             ]
           }
-        },
-        {
-          "name": "crankSigner",
-          "signer": true
         }
       ],
       "args": [
@@ -1826,6 +1869,11 @@ export type Sirenrun = {
           },
           {
             "name": "phaseTicks",
+            "docs": [
+              "Low byte: ticks spent in Staging or Settled (at most 150). High byte: low 8 bits of",
+              "the ER slot of the last tick that advanced the arena, for the `min_tick_slots` guard.",
+              "Packed so the account layout stays the same for arenas already delegated."
+            ],
             "type": "u16"
           },
           {
@@ -2045,6 +2093,16 @@ export type Sirenrun = {
           {
             "name": "vaultBump",
             "type": "u8"
+          },
+          {
+            "name": "minTickSlots",
+            "docs": [
+              "Fewest ER slots between two ticks that advance an arena; 0 turns the guard off. `tick`",
+              "is open to anyone, so this is what stops a run being played faster than the crank.",
+              "Slot length differs between validators (10 ms on 2.0, 50 ms on 1.x), hence a setting.",
+              "Last field, so `resize_config` can grow a Config written before it existed."
+            ],
+            "type": "u8"
           }
         ]
       }
@@ -2094,6 +2152,10 @@ export type Sirenrun = {
                 3
               ]
             }
+          },
+          {
+            "name": "minTickSlots",
+            "type": "u8"
           }
         ]
       }

@@ -27,7 +27,15 @@ pub struct Config {
     pub open_bps: [u16; MARKETS],
     pub bump: u8,
     pub vault_bump: u8,
+    /// Fewest ER slots between two ticks that advance an arena; 0 turns the guard off. `tick`
+    /// is open to anyone, so this is what stops a run being played faster than the crank.
+    /// Slot length differs between validators (10 ms on 2.0, 50 ms on 1.x), hence a setting.
+    /// Last field, so `resize_config` can grow a Config written before it existed.
+    pub min_tick_slots: u8,
 }
+
+/// Size of a Config written before `min_tick_slots`; `resize_config` grows it to `SPACE`.
+pub const CONFIG_V1_SPACE: usize = 188;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Copy, Debug, PartialEq, Eq)]
 pub struct ConfigParams {
@@ -40,6 +48,7 @@ pub struct ConfigParams {
     pub max_buy: u64,
     pub nitro_fee: u64,
     pub open_bps: [u16; MARKETS],
+    pub min_tick_slots: u8,
 }
 
 impl ConfigParams {
@@ -72,6 +81,7 @@ impl Config {
         self.max_buy = params.max_buy;
         self.nitro_fee = params.nitro_fee;
         self.open_bps = params.open_bps;
+        self.min_tick_slots = params.min_tick_slots;
     }
 }
 
@@ -90,12 +100,14 @@ mod tests {
             max_buy: 50_000_000,
             nitro_fee: 500_000,
             open_bps: [8_500, 4_500, 1_500],
+            min_tick_slots: 8,
         }
     }
 
     #[test]
     fn space_matches_spec() {
-        assert_eq!(Config::SPACE, 188);
+        assert_eq!(Config::SPACE, 189);
+        assert_eq!(Config::SPACE, CONFIG_V1_SPACE + 1);
     }
 
     #[test]

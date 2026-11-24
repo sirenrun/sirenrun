@@ -143,6 +143,7 @@ fn base_instructions() -> Vec<Value> {
         max_buy: u64::MAX,
         nitro_fee: 500_000,
         open_bps: [8_500, 4_500, 1_500],
+        min_tick_slots: 8,
     };
     let params_json = json!({
         "house": house.to_string(),
@@ -154,6 +155,7 @@ fn base_instructions() -> Vec<Value> {
         "maxBuy": u64::MAX.to_string(),
         "nitroFee": "500000",
         "openBps": [8_500, 4_500, 1_500],
+        "minTickSlots": 8,
     });
     let user_token = get_associated_token_address(&user, &mint);
     let other_token = key(9);
@@ -181,6 +183,17 @@ fn base_instructions() -> Vec<Value> {
             json!({ "admin": admin.to_string(), "params": params_json }),
             instruction::UpdateConfig { params },
             accounts::UpdateConfig { admin, config },
+        ),
+        sirenrun_case(
+            "resizeConfig",
+            "base",
+            json!({ "admin": admin.to_string() }),
+            instruction::ResizeConfig {},
+            accounts::ResizeConfig {
+                admin,
+                config,
+                system_program: system_program::ID,
+            },
         ),
         sirenrun_case(
             "initBalance",

@@ -35,6 +35,8 @@ export interface ConfigParams {
   nitroFee: bigint;
   /** Opening RIDE price per line, in bps, each strictly between 0 and 10_000. */
   openBps: [number, number, number];
+  /** Fewest ER slots between two arena ticks (8 on the 10 ms slots of validator 2.0); 0 = no limit. */
+  minTickSlots: number;
 }
 
 function configArgs(p: ConfigParams) {
@@ -49,6 +51,7 @@ function configArgs(p: ConfigParams) {
       max_buy: u64(p.maxBuy),
       nitro_fee: u64(p.nitroFee),
       open_bps: [...p.openBps],
+      min_tick_slots: p.minTickSlots,
     },
   };
 }
@@ -83,6 +86,11 @@ export function updateConfigIx(a: { admin: PublicKey; params: ConfigParams }) {
     admin: a.admin,
     config: configPda().address,
   });
+}
+
+/** Admin, once per deployment: grows a Config written before `minTickSlots` existed. */
+export function resizeConfigIx(a: { admin: PublicKey }) {
+  return base("resize_config", {}, { admin: a.admin, config: configPda().address });
 }
 
 export function initBalanceIx(a: { owner: PublicKey }) {

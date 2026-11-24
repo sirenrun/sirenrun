@@ -150,6 +150,9 @@ pub struct Arena {
     pub id: u8,
     pub bump: u8,
     pub status: ArenaStatus,
+    /// Low byte: ticks spent in Staging or Settled (at most 150). High byte: low 8 bits of
+    /// the ER slot of the last tick that advanced the arena, for the `min_tick_slots` guard.
+    /// Packed so the account layout stays the same for arenas already delegated.
     pub phase_ticks: u16,
     pub nonce: u32,
     pub runner: Pubkey,
@@ -210,6 +213,35 @@ pub struct RunTerms {
 impl Arena {
     pub const SPACE: usize = 8 + Self::INIT_SPACE;
 
+    /// Ticks spent in the current Staging or Settled phase.
+    pub fn phase(&self) -> u32 {
+        u32::from(self.phase_ticks & 0xff)
+    }
+
+    fn set_phase(&mut self, ticks: u8) {
+        self.phase_ticks = (self.phase_ticks & 0xff00) | u16::from(ticks);
+    }
+
+    fn next_phase(&mut self) -> u32 {
+        let ticks = (self.phase_ticks as u8).saturating_add(1);
+        self.set_phase(ticks);
+        u32::from(ticks)
+    }
+
+    /// Claims `slot` for a tick: false (the tick must do nothing) when fewer than `min_slots`
+    /// slots passed since the last tick that advanced the arena. Only the low 8 bits of the
+    /// slot are kept, so after a stall of a multiple of 256 slots one tick can be refused;
+    /// the next one goes through.
+    pub fn claim_tick_slot(&mut self, slot: u64, min_slots: u8) -> bool {
+        let slot = slot as u8;
+        let last = (self.phase_ticks >> 8) as u8;
+        if slot.wrapping_sub(last) < min_slots {
+            return false;
+        }
+        self.phase_ticks = (u16::from(slot) << 8) | (self.phase_ticks & 0xff);
+        true
+    }
+
     /// True while this arena's crank still writes `owner`'s balance: as the runner of a run
     /// that is not idle yet, or as the house while any run is not idle. Undelegating such a
     /// balance would make every later `tick` fail and leave the arena stuck.
@@ -225,7 +257,7 @@ impl Arena {
             SirenrunError::ArenaNotSettled
         );
         self.status = ArenaStatus::Idle;
-        self.phase_ticks = 0;
+        self.set_phase(0);
         Ok(())
     }
 
@@ -278,7 +310,7 @@ impl Arena {
             .ok_or(SirenrunError::MathOverflow)?;
         self.runner = runner;
         self.status = ArenaStatus::Staging;
-        self.phase_ticks = 0;
+        self.set_phase(0);
         self.seed_ready = false;
         self.seed = 0;
         self.sim = SimState::start().into();
@@ -305,10 +337,9 @@ impl Arena {
             ArenaStatus::Staging => self.advance_staging(terms.entry_fee),
             ArenaStatus::Live => self.advance_live(terms),
             ArenaStatus::Settled => {
-                self.phase_ticks = self.phase_ticks.saturating_add(1);
-                if u32::from(self.phase_ticks) >= SETTLE_TICKS {
+                if self.next_phase() >= SETTLE_TICKS {
                     self.status = ArenaStatus::Idle;
-                    self.phase_ticks = 0;
+                    self.set_phase(0);
                 }
                 Ok(TickEffects::default())
             }
@@ -324,11 +355,10 @@ impl Arena {
     }
 
     fn advance_staging(&mut self, entry_fee: u64) -> Result<TickEffects> {
-        self.phase_ticks = self.phase_ticks.saturating_add(1);
-        let ticks = u32::from(self.phase_ticks);
+        let ticks = self.next_phase();
         if ticks >= STAGING_TICKS && self.seed_ready {
             self.status = ArenaStatus::Live;
-            self.phase_ticks = 0;
+            self.set_phase(0);
             return Ok(TickEffects::default());
         }
         if ticks < STAGING_TICKS + SEED_TIMEOUT_TICKS {
@@ -464,7 +494,7 @@ impl Arena {
         };
         self.results_head = ((head + 1) % RESULTS) as u8;
         self.status = ArenaStatus::Settled;
-        self.phase_ticks = 0;
+        self.set_phase(0);
     }
 }
 
@@ -913,8 +943,59 @@ mod tests {
         let nonce = arena.nonce;
         arena.recover().unwrap();
         assert_eq!(
-            (arena.status, arena.phase_ticks, arena.nonce),
+            (arena.status, arena.phase(), arena.nonce),
             (ArenaStatus::Idle, 0, nonce)
         );
+    }
+
+    #[test]
+    fn a_tick_too_soon_after_the_last_is_refused() {
+        let mut arena = staged(true);
+        assert!(arena.claim_tick_slot(1_000, 8));
+        for slot in 1_001..1_008 {
+            assert!(!arena.claim_tick_slot(slot, 8), "slot {slot}");
+        }
+        assert!(arena.claim_tick_slot(1_008, 8));
+        assert!(!arena.claim_tick_slot(1_008, 8));
+        assert!(arena.claim_tick_slot(1_018, 8));
+    }
+
+    #[test]
+    fn zero_min_slots_lets_every_tick_through() {
+        let mut arena = staged(true);
+        assert!(arena.claim_tick_slot(5, 0));
+        assert!(arena.claim_tick_slot(5, 0));
+    }
+
+    #[test]
+    fn the_slot_guard_survives_wraparound_and_long_stalls() {
+        let mut arena = staged(true);
+        assert!(arena.claim_tick_slot(250, 8));
+        assert!(arena.claim_tick_slot(258, 8));
+        // A stall of exactly 256 slots looks like no time passed: one tick is refused, the
+        // crank's next one (10 slots later on 2.0) goes through.
+        assert!(!arena.claim_tick_slot(258 + 256, 8));
+        assert!(arena.claim_tick_slot(258 + 266, 8));
+        assert!(arena.claim_tick_slot(258 + 266 + 1_000, 8));
+    }
+
+    #[test]
+    fn the_slot_byte_does_not_disturb_the_phase_count() {
+        let mut arena = staged(true);
+        assert!(arena.claim_tick_slot(0xab, 0));
+        for _ in 1..STAGING_TICKS {
+            arena.advance(terms()).unwrap();
+        }
+        assert_eq!(arena.phase(), STAGING_TICKS - 1);
+        assert_eq!(arena.phase_ticks >> 8, 0xab);
+        arena.advance(terms()).unwrap();
+        assert_eq!((arena.status, arena.phase()), (ArenaStatus::Live, 0));
+        assert_eq!(arena.phase_ticks >> 8, 0xab);
+    }
+
+    #[test]
+    fn the_longest_staging_fits_the_phase_byte() {
+        assert!(STAGING_TICKS + SEED_TIMEOUT_TICKS <= u32::from(u8::MAX));
+        assert!(SETTLE_TICKS <= u32::from(u8::MAX));
     }
 }

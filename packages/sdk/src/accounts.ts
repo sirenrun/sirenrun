@@ -27,6 +27,8 @@ export interface Config {
   openBps: number[];
   bump: number;
   vaultBump: number;
+  /** Fewest ER slots between two ticks that advance an arena; 0 means no limit. */
+  minTickSlots: number;
 }
 
 export interface PositionEntry {
@@ -93,6 +95,7 @@ export interface Arena {
   id: number;
   bump: number;
   status: ArenaStatus;
+  /** Ticks spent in Staging or Settled (the low byte of `phase_ticks` onchain). */
   phaseTicks: number;
   nonce: number;
   runner: PublicKey;
@@ -127,6 +130,7 @@ interface RawConfig {
   open_bps: number[];
   bump: number;
   vault_bump: number;
+  min_tick_slots: number;
 }
 
 interface RawEntry {
@@ -252,6 +256,7 @@ export function decodeConfig(data: Buffer): Config {
     openBps: [...raw.open_bps],
     bump: raw.bump,
     vaultBump: raw.vault_bump,
+    minTickSlots: raw.min_tick_slots,
   };
 }
 
@@ -280,7 +285,8 @@ export function decodeArena(data: Buffer): Arena {
     id: raw.id,
     bump: raw.bump,
     status: variant(raw.status, ARENA_STATUSES),
-    phaseTicks: raw.phase_ticks,
+    // The high byte is the last tick's slot, kept for the program's rate guard.
+    phaseTicks: raw.phase_ticks & 0xff,
     nonce: raw.nonce,
     runner: raw.runner,
     seedReady: raw.seed_ready,

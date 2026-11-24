@@ -17,6 +17,25 @@ The default base RPC is `https://rpc.magicblock.app/devnet`: `api.devnet.solana.
 rate-limits a browser that subscribes and polls (HTTP 429). Set `NEXT_PUBLIC_BASE_RPC` to
 use another, e.g. a keyed provider for a public demo.
 
+## Validator 2.0 upgrade (2026-11-24)
+
+The public ERs moved to MagicBlock validator 2.0.4 (10 ms slots, Hydra cranks), and every
+`start_run` failed with `MissingRequiredSignature`: the scheduled `tick` carried the 1.x
+crank-signer PDA, which 2.0 rejects. The fix drops that signer and rate-limits `tick` with
+`Config.min_tick_slots` (see [onchain-program.md](onchain-program.md#tick-er)). Config grows
+from 188 to 189 bytes, so after deploying, migrate it before anything else reads it:
+
+```bash
+anchor build
+solana program deploy target/deploy/sirenrun.so --program-id 6D65tPwcsoSoPK2qcXD87jcUQpMxwCjfX7tX7tKARiZ4 -u devnet
+pnpm --filter @sirenrun/scripts update-config -- --min-tick-slots 8           # dry run
+pnpm --filter @sirenrun/scripts update-config -- --min-tick-slots 8 --apply   # resize + set
+```
+
+Until that last step, every instruction that loads Config fails. Then start a run and check
+that `sim.t` climbs about 10 per second; on 2.0 the crank only fires while MagicBlock runs a
+Hydra cranker for the ER.
+
 ## Smoke run (2026-11-21)
 
 Fresh program id for the run-economics account layout (Config 188 bytes, Arena 641); the
